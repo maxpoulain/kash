@@ -142,6 +142,7 @@ This repository includes shared skills in `.claude/skills/`:
 
 | Skill | Description |
 |-------|-------------|
+| `/backlog plan <feature-id>` | Decompose a feature into tasks (interactive) |
 | `/backlog` | Create, start, and complete backlog items |
 | `/commit` | Generate conventional commits with emoji |
 | `/check` | Run pre-commit checks |
