@@ -16,6 +16,7 @@ Initialiser le backend FastAPI avec la structure de base.
 - Pydantic v2
 - SQLAlchemy 2.0 (async)
 - Uvicorn
+- uv (gestionnaire de packages et d'environnement)
 
 ## Structure cible
 
@@ -33,7 +34,8 @@ backend/
 │   └── services/
 │       └── __init__.py
 ├── tests/
-├── requirements.txt
+├── pyproject.toml
+├── uv.lock
 ├── Dockerfile
 └── .env.example
 ```
