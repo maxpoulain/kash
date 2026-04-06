@@ -22,7 +22,6 @@ kash/
 
 ## Critères d'acceptance
 
-- [ ] Repo GitHub créé
 - [ ] Structure de dossiers en place
 - [ ] README avec instructions de setup
 - [ ] docker-compose pour lancer les deux services en local
