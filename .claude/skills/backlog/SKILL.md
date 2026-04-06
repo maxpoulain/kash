@@ -85,7 +85,9 @@ Complete an in-progress item:
 2. Verify clean working state
 3. `git mv in-progress/{file} done/{file}`
 4. `git commit -m "chore: complete {name} ✅"`
-5. Prompt: "Ready for PR: gh pr create --title '{name}' ..."
+5. Prompt: "Ready for PR: gh pr create --title '<type>: <description> <emoji>' ..."
+   - PR title must follow conventional commits: `<type>: <description> <emoji>` (same format as commit messages)
+   - Derive type and emoji from the nature of the work (feat ✨, fix 🐛, refactor ♻️, etc.)
 
 **Errors**:
 - On main without id → "Error: On main branch, id-or-name required."

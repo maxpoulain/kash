@@ -69,6 +69,12 @@ The 5-digit number is a **stable ID**, not priority.
     - **Direct push** (docs, chores, single-file fixes): `git merge --ff-only <branch>`
     - **PR required** (infra, features, complex refactors): create PR, merge with **rebase**
 
+PR titles follow the same conventional commits format as commit messages:
+```
+<type>: <description> <emoji>
+```
+Example: `feat: init backend FastAPI with uv ✨`
+
 For PR-required changes, always rebase and verify before merge:
 1. `git fetch origin`
 2. `git rebase origin/main`
