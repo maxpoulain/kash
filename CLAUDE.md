@@ -38,12 +38,13 @@ Emojis:
 
 ## Backlog Workflow
 
-Backlog lives in `docs/backlog/` with three states:
+Backlog lives in `docs/backlog/` with four folders:
 
 ```
-todo/         → items to do (XXXXX-name.md)
-in-progress/  → currently being worked on
-done/         → completed
+features/     → Macro ideas and epics (will be broken into todo items)
+todo/         → Items to do (XXXXX-name.md)
+in-progress/  → Currently being worked on
+done/         → Completed
 ```
 
 The 5-digit number is a **stable ID**, not priority.

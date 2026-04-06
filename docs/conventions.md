@@ -13,6 +13,7 @@
 
 ```
 docs/backlog/
+├── features/     # Macro ideas and epics (will be broken into todo items)
 ├── todo/         # Items to do (XXXXX-name.md)
 ├── in-progress/  # Currently being worked on
 └── done/         # Completed increments
