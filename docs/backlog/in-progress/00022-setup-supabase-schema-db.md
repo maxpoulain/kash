@@ -57,15 +57,16 @@ Configurer le projet Supabase et créer le schéma de base de données.
 **Test Checklist:**
 - [x] `supabase start` runs successfully
 - [x] Can connect to local Supabase from backend
-- [ ] Can connect to production Supabase from backend
+- [x] Can connect to production Supabase from backend
 
 **Progress:**
 - [x] Supabase CLI installed
 - [x] Local project initialized (`supabase init`)
 - [x] Local Supabase running (ports 54321-54324)
 - [x] Backend env variables configured
-- [ ] Supabase login completed
-- [ ] Production project created
+- [x] Supabase login completed
+- [x] Production project created (bszdijhvmdtrjohthqne)
+- [x] Local project linked to production
 
 ### Phase 2: Database Schema Design
 
@@ -357,4 +358,4 @@ Migrations are timestamped SQL files in `supabase/migrations/` — fully version
 
 **Phase:** 1 - Supabase Project Setup
 
-**Status:** In Progress
+**Status:** ✅ Complete — Ready for Phase 2
