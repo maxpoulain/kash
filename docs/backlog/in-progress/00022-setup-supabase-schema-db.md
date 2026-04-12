@@ -53,6 +53,8 @@ Configurer le projet Supabase et créer le schéma de base de données.
 3. Configure `supabase/config.toml` for local development
 4. Create production project (via dashboard or `supabase projects create`)
 5. Set up environment variables in backend for Supabase connection
+6. Update docker-compose.yml to use Supabase instead of local Postgres
+7. Update justfile with Supabase commands
 
 **Test Checklist:**
 - [x] `supabase start` runs successfully
@@ -67,6 +69,8 @@ Configurer le projet Supabase et créer le schéma de base de données.
 - [x] Supabase login completed
 - [x] Production project created (bszdijhvmdtrjohthqne)
 - [x] Local project linked to production
+- [x] docker-compose.yml updated (removed local Postgres, added Supabase env)
+- [x] justfile updated with Supabase commands
 
 ### Phase 2: Database Schema Design
 
