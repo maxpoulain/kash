@@ -37,6 +37,14 @@ db-reset:
 db-push:
     supabase db push
 
+# Create a new migration file
+db-migration-new name:
+    supabase migration new {{name}}
+
+# Generate migration from current schema diff (useful after making changes in Studio)
+db-diff name="changes":
+    supabase db diff -f {{name}}
+
 # Check Supabase status
 supabase-status:
     supabase status

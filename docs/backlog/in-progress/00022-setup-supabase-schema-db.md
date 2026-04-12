@@ -7,32 +7,48 @@
 
 ## Description
 
-Configurer le projet Supabase et créer le schéma de base de données.
+Configurer le projet Supabase et créer les tables core pour l'authentification et les households.
 
-## Tables à créer
+## Approach
 
-### Core
+**Incremental table creation:** Instead of creating all tables upfront, we create tables only when needed for a feature. This ensures the schema evolves with the actual requirements.
+
+## Tables for this increment
+
+### Core (needed for auth)
 
 - `households` — foyers (unité de partage)
-- `users` — utilisateurs (liés à un household)
-- `accounts` — comptes bancaires / épargne
+- `users` — utilisateurs (liés à un household, extends `auth.users`)
 
-### Budget
+## Future tables (with their features)
 
-- `categories` — catégories de budget
-- `monthly_budgets` — allocations mensuelles par catégorie
-- `transactions` — transactions
+- `accounts` → with Accounts feature
+- `categories` → with Budget feature
+- `monthly_budgets` → with Budget feature
+- `transactions` → with Transactions feature
+- `goals` → with Goals feature
+- `household_invitations` → with Mode Foyer Partagé feature (`00013`)
 
-### Goals
+## Household joining model
 
-- `goals` — objectifs d'épargne
+Every user gets a household automatically at signup (household of 1). Joining someone else's household works via invitation:
+
+1. Maria invites Max by email → creates a `household_invitations` record with a unique token
+2. Max receives a link, clicks it, and accepts
+3. A single DB transaction:
+   - Updates `users.household_id` to Maria's household for Max
+   - Migrates all of Max's owned data (accounts, etc.) to Maria's household
+   - Deletes Max's now-empty household
+4. Max is now a member of Maria's household
+
+**This is a prerequisite for `00013-mode-foyer-partage`.** The `household_invitations` table and the join transaction logic will be implemented in that feature.
 
 ## Critères d'acceptance
 
 - [ ] Projet Supabase créé
-- [ ] Tables créées avec le schéma
-- [ ] Row Level Security configuré (users voient leur household uniquement)
-- [ ] Migrations gérées (optionnel mais recommandé)
+- [ ] Core tables créées (`households`, `users`)
+- [ ] Row Level Security configuré sur les core tables
+- [ ] Migrations gérées avec Supabase CLI
 
 ---
 
@@ -72,164 +88,109 @@ Configurer le projet Supabase et créer le schéma de base de données.
 - [x] docker-compose.yml updated (removed local Postgres, added Supabase env)
 - [x] justfile updated with Supabase commands
 
-### Phase 2: Database Schema Design
+### Phase 2: Core Auth Tables
 
-**Goal:** Create SQL migrations for all tables with proper relationships.
+**Goal:** Create SQL migrations for authentication and household setup only.
+
+**Rationale:** Following an incremental approach, we only create tables needed for the current feature. Additional tables (accounts, categories, transactions, goals) will be created with their respective features.
+
+**Design Decisions:**
+
+- **Household is mandatory.** Created automatically at signup (household of 1). A user always belongs to exactly one household. There is no "no household" state in the app.
+- **Personal vs shared at the account level, not the household level.** When a second member joins, the household becomes a household of 2. Accounts carry an `is_shared` flag — personal accounts are only visible to their creator, shared accounts are visible to all household members.
+- **No `email` on `users`.** Email lives in `auth.users` — duplicating it creates a sync hazard. Fetch it via join when needed.
+- **`created_by` on `households`.** Tracks who owns the household (needed for future invite/delete flows).
 
 **Schema Design:**
 
 ```sql
--- Core tables
+-- Core auth tables
 households (
-  id: uuid primary key default gen_random_uuid(),
-  name: text not null,
+  id:         uuid primary key default gen_random_uuid(),
+  name:       text not null,
+  created_by: uuid references auth.users(id) on delete set null,
   created_at: timestamptz default now(),
   updated_at: timestamptz default now()
 )
 
 users (
-  id: uuid primary key references auth.users(id) on delete cascade,
-  email: text not null unique,
-  household_id: uuid references households(id) on delete set null,
+  id:           uuid primary key references auth.users(id) on delete cascade,
+  household_id: uuid not null references households(id) on delete restrict,
   display_name: text,
-  created_at: timestamptz default now(),
-  updated_at: timestamptz default now()
-)
-
-accounts (
-  id: uuid primary key default gen_random_uuid(),
-  household_id: uuid references households(id) on delete cascade,
-  name: text not null,
-  type: text not null check (type in ('checking', 'savings', 'credit', 'investment', 'other')),
-  balance: numeric(12,2) default 0,
-  currency: text default 'EUR',
-  is_active: boolean default true,
-  created_at: timestamptz default now(),
-  updated_at: timestamptz default now()
-)
-
--- Budget tables
-categories (
-  id: uuid primary key default gen_random_uuid(),
-  household_id: uuid references households(id) on delete cascade,
-  name: text not null,
-  type: text not null check (type in ('income', 'expense', 'savings')),
-  color: text,
-  icon: text,
-  is_active: boolean default true,
-  created_at: timestamptz default now(),
-  updated_at: timestamptz default now()
-)
-
-monthly_budgets (
-  id: uuid primary key default gen_random_uuid(),
-  household_id: uuid references households(id) on delete cascade,
-  category_id: uuid references categories(id) on delete cascade,
-  year: integer not null,
-  month: integer not null check (month between 1 and 12),
-  allocated_amount: numeric(12,2) not null default 0,
-  created_at: timestamptz default now(),
-  updated_at: timestamptz default now(),
-  unique(household_id, category_id, year, month)
-)
-
-transactions (
-  id: uuid primary key default gen_random_uuid(),
-  household_id: uuid references households(id) on delete cascade,
-  account_id: uuid references accounts(id) on delete cascade,
-  category_id: uuid references categories(id) on delete set null,
-  amount: numeric(12,2) not null,
-  currency: text default 'EUR',
-  description: text,
-  transaction_date: date not null,
-  transaction_type: text not null check (transaction_type in ('income', 'expense', 'transfer')),
-  transfer_to_account_id: uuid references accounts(id) on delete set null,
-  created_at: timestamptz default now(),
-  updated_at: timestamptz default now()
-)
-
--- Goals tables
-goals (
-  id: uuid primary key default gen_random_uuid(),
-  household_id: uuid references households(id) on delete cascade,
-  name: text not null,
-  target_amount: numeric(12,2) not null,
-  current_amount: numeric(12,2) default 0,
-  deadline: date,
-  color: text,
-  icon: text,
-  is_active: boolean default true,
-  created_at: timestamptz default now(),
-  updated_at: timestamptz default now()
+  created_at:   timestamptz default now(),
+  updated_at:   timestamptz default now()
 )
 ```
+
+**Note on `accounts` (created with the Accounts feature):**
+When `accounts` is created, it will include:
+- `created_by uuid not null references users(id)` — who owns the account
+- `is_shared boolean not null default true` — shared with all household members or personal only
+
+**Signup flow (enforces the NOT NULL constraint):**
+1. Supabase Auth creates the `auth.users` record
+2. A database trigger (or backend call) immediately creates a `household` + a `users` row
+3. The user lands in the app already inside a household
 
 **Steps:**
 1. Create migration: `supabase migration new create_core_tables`
-2. Add SQL for households, users, accounts
-3. Create migration: `supabase migration new create_budget_tables`
-4. Add SQL for categories, monthly_budgets, transactions
-5. Create migration: `supabase migration new create_goals_tables`
-6. Add SQL for goals
-7. Run migrations locally: `supabase db reset`
+2. Add SQL for `households` and `users` tables
+3. Add trigger or document backend responsibility for auto-creating household on signup
+4. Run migrations locally: `supabase db reset`
 
 **Test Checklist:**
-- [ ] All migrations run successfully
-- [ ] Tables exist with correct columns and types
-- [ ] Foreign key constraints are in place
-- [ ] Check constraints work as expected
-- [ ] Unique constraints are correct
+- [x] Migration runs successfully
+- [x] Tables exist with correct columns and types
+- [x] Foreign key constraints are in place
+- [x] `users.id` references `auth.users(id)` correctly
+- [x] `users.household_id` is NOT NULL — no user can exist without a household
+- [x] Signup creates a household automatically
 
 ### Phase 3: Row Level Security (RLS)
 
-**Goal:** Users can only see data from their own household.
+**Goal:** Users can only see data from their own household. Within a household, personal accounts are only visible to their creator.
 
 **RLS Strategy:**
-Each table has RLS policies based on `household_id`. Users access data through their `household_id` relationship.
 
 ```sql
--- Example policy pattern for all tables
-CREATE POLICY "Users can view their household data" ON table_name
-  FOR SELECT USING (
-    household_id IN (
-      SELECT household_id FROM users WHERE id = auth.uid()
-    )
-  );
+-- Helper function (avoids repeated subqueries)
+CREATE OR REPLACE FUNCTION current_household_id()
+RETURNS uuid LANGUAGE sql STABLE AS $$
+  SELECT household_id FROM users WHERE id = auth.uid()
+$$;
 
-CREATE POLICY "Users can insert their household data" ON table_name
-  FOR INSERT WITH CHECK (
-    household_id IN (
-      SELECT household_id FROM users WHERE id = auth.uid()
-    )
-  );
+-- Households: members see their own household only
+CREATE POLICY "households_select" ON households FOR SELECT USING (
+  id = current_household_id()
+);
 
-CREATE POLICY "Users can update their household data" ON table_name
-  FOR UPDATE USING (
-    household_id IN (
-      SELECT household_id FROM users WHERE id = auth.uid()
-    )
-  );
+-- Users: see all members of your household
+CREATE POLICY "users_select" ON users FOR SELECT USING (
+  household_id = current_household_id()
+);
 
-CREATE POLICY "Users can delete their household data" ON table_name
-  FOR DELETE USING (
-    household_id IN (
-      SELECT household_id FROM users WHERE id = auth.uid()
-    )
-  );
+-- Accounts (future, defined here for reference):
+-- See account if it's shared in your household, OR you created it
+CREATE POLICY "accounts_select" ON accounts FOR SELECT USING (
+  household_id = current_household_id()
+  AND (is_shared = true OR created_by = auth.uid())
+);
 ```
 
 **Steps:**
-1. Enable RLS on all tables: `ALTER TABLE ... ENABLE ROW LEVEL SECURITY;`
-2. Create helper function to get current user's household_id
-3. Apply policies to each table
-4. Create migration for RLS policies
-5. Test with different user contexts
+1. Enable RLS on `households` and `users`
+2. Create `current_household_id()` helper function
+3. Create SELECT, INSERT, UPDATE, DELETE policies on both tables
+4. Test with two users in the same household and two users in different households
 
 **Test Checklist:**
-- [ ] User A cannot see User B's household data
-- [ ] User A can see their own household data
+- [ ] User A cannot see User B's household
+- [ ] User A and User B (same household) can see each other in `users`
+- [ ] User A cannot see User B (different household) in `users`
 - [ ] SELECT, INSERT, UPDATE, DELETE all respect RLS
-- [ ] RLS policies work in local and production environments
+- [ ] `current_household_id()` helper works correctly
+
+**Note:** `accounts` RLS (including `is_shared` logic) will be defined in the Accounts feature migration.
 
 ### Phase 4: Backend Integration
 
@@ -360,6 +321,6 @@ Migrations are timestamped SQL files in `supabase/migrations/` — fully version
 
 ## Current Phase
 
-**Phase:** 1 - Supabase Project Setup
+**Phase:** 2 - Core Auth Tables
 
-**Status:** ✅ Complete — Ready for Phase 2
+**Status:** ✅ Complete — Ready for Phase 3
