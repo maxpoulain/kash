@@ -349,4 +349,4 @@ Migrations are timestamped SQL files in `supabase/migrations/` — fully version
 
 **Phase:** 1 - Supabase Project Setup
 
-**Status:** Ready to start
+**Status:** In Progress
