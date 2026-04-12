@@ -1,0 +1,206 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-nunito);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-fredoka);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-xp: var(--xp);
+  --color-xp-foreground: var(--xp-foreground);
+  --color-coin: var(--coin);
+  --color-coin-foreground: var(--coin-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.25);
+  --radius-2xl: calc(var(--radius) * 1.5);
+  --radius-3xl: calc(var(--radius) * 2);
+  --radius-4xl: calc(var(--radius) * 2.5);
+}
+
+:root {
+  /* PiggyBank Finance Design System - Light Mode */
+  --background: #faf9f7;
+  --foreground: #1f2937;
+  --card: #ffffff;
+  --card-foreground: #1f2937;
+  --popover: #ffffff;
+  --popover-foreground: #1f2937;
+
+  /* Primary: Coral Pink - Brand identity, CTAs, highlights */
+  --primary: #f87171;
+  --primary-foreground: #ffffff;
+
+  /* Secondary: Soft Mint - Success states, income indicators */
+  --secondary: #bbf7d0;
+  --secondary-foreground: #166534;
+
+  /* Accent: Golden Yellow - Coins, rewards, achievements */
+  --accent: #fcd34d;
+  --accent-foreground: #92400e;
+
+  /* Muted: Warm gray backgrounds */
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+
+  /* Destructive: Warm Red - Expenses, warnings, errors */
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  /* Gamification Colors */
+  --success: #34d399;
+  --success-foreground: #064e3b;
+  --warning: #fbbf24;
+  --warning-foreground: #78350f;
+  --xp: #818cf8;
+  --xp-foreground: #ffffff;
+  --coin: #fbbf24;
+  --coin-foreground: #78350f;
+
+  /* UI Elements */
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #f87171;
+  --radius: 0.75rem;
+
+  /* Chart colors */
+  --chart-1: #f87171;
+  --chart-2: #bbf7d0;
+  --chart-3: #fcd34d;
+  --chart-4: #818cf8;
+  --chart-5: #34d399;
+
+  /* Sidebar */
+  --sidebar: #faf9f7;
+  --sidebar-foreground: #1f2937;
+  --sidebar-primary: #f87171;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f3f4f6;
+  --sidebar-accent-foreground: #1f2937;
+  --sidebar-border: #e5e7eb;
+  --sidebar-ring: #f87171;
+}
+
+.dark {
+  /* PiggyBank Finance Design System - Dark Mode */
+  --background: #1f2937;
+  --foreground: #f9fafb;
+  --card: #374151;
+  --card-foreground: #f9fafb;
+  --popover: #374151;
+  --popover-foreground: #f9fafb;
+
+  /* Primary: Coral Pink - slightly muted for dark mode */
+  --primary: #f87171;
+  --primary-foreground: #ffffff;
+
+  /* Secondary: Soft Mint - darker for dark mode */
+  --secondary: #166534;
+  --secondary-foreground: #bbf7d0;
+
+  /* Accent: Golden Yellow - preserved vibrancy */
+  --accent: #fbbf24;
+  --accent-foreground: #451a03;
+
+  /* Muted */
+  --muted: #374151;
+  --muted-foreground: #9ca3af;
+
+  /* Destructive: Warm Red */
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  /* Gamification Colors - Dark Mode */
+  --success: #10b981;
+  --success-foreground: #ffffff;
+  --warning: #f59e0b;
+  --warning-foreground: #451a03;
+  --xp: #6366f1;
+  --xp-foreground: #ffffff;
+  --coin: #f59e0b;
+  --coin-foreground: #451a03;
+
+  /* UI Elements */
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #f87171;
+
+  /* Chart colors */
+  --chart-1: #f87171;
+  --chart-2: #34d399;
+  --chart-3: #fbbf24;
+  --chart-4: #818cf8;
+  --chart-5: #34d399;
+
+  /* Sidebar */
+  --sidebar: #1f2937;
+  --sidebar-foreground: #f9fafb;
+  --sidebar-primary: #f87171;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #374151;
+  --sidebar-accent-foreground: #f9fafb;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: #f87171;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+
+  /* Typography scale per design system */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+
+  /* Monospace for financial figures */
+  .font-mono-numbers {
+    font-family: var(--font-geist-mono), ui-monospace, monospace;
+    font-feature-settings: "tnum";
+    font-variant-numeric: tabular-nums;
+  }
+}
