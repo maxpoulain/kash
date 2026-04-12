@@ -1,5 +1,8 @@
 version: "3.8"
 
+# Requires Supabase to be running locally: supabase start
+# Supabase provides the database on port 54322
+
 services:
   frontend:
     build:
@@ -10,6 +13,8 @@ services:
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_SUPABASE_URL=http://host.docker.internal:54321
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -25,31 +30,17 @@ services:
       - "8000:8000"
     environment:
       - ENVIRONMENT=development
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/kash
+      # Connect to local Supabase database
+      - SUPABASE_URL=http://host.docker.internal:54321
+      - SUPABASE_ANON_KEY=sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH
+      - SUPABASE_SERVICE_ROLE_KEY=sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz
+      - SUPABASE_DB_URL=postgresql://postgres:postgres@host.docker.internal:54322/postgres
     volumes:
       - ./backend:/app
       - /app/.venv
     command: /app/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    depends_on:
-      - db
     networks:
       - kash-network
-
-  db:
-    image: postgres:16-alpine
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=kash
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - kash-network
-
-volumes:
-  postgres_data:
 
 networks:
   kash-network:
