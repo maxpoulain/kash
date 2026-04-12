@@ -287,6 +287,48 @@ Create settings for:
 
 ---
 
+## Migration Strategy: Supabase vs Alembic
+
+**Decision:** Use Supabase migrations only. Do not add Alembic.
+
+### Why not Alembic?
+
+| Factor | Supabase | Alembic |
+|--------|----------|---------|
+| **RLS policies** | Native support | Raw SQL only, awkward |
+| **Deploy workflow** | `supabase db push` | Separate process needed |
+| **Local dev** | `supabase start` handles everything | Needs manual Postgres setup |
+| **Tool chain** | One tool (Supabase CLI) | Two tools (Supabase + Alembic) |
+| **Team onboarding** | Simple | More complex |
+
+### When would Alembic make sense?
+
+- Complex data migrations requiring Python logic
+- Multi-database setups (not just Supabase)
+- Existing Alembic workflows we can't change
+
+### Supabase migration workflow
+
+```bash
+# Create migration
+supabase migration new add_user_preferences
+
+# Edit SQL in: supabase/migrations/20240112120000_add_user_preferences.sql
+
+# Test locally (applies all migrations to fresh DB)
+supabase db reset
+
+# Deploy to production
+supabase db push
+
+# Generate migration from current state diff
+supabase db diff -f changes
+```
+
+Migrations are timestamped SQL files in `supabase/migrations/` — fully version controlled.
+
+---
+
 ## Open Questions
 
 1. **Multi-tenancy:** Should we use Supabase Auth for users or custom auth?
