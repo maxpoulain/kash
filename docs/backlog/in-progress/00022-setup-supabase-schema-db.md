@@ -47,7 +47,7 @@ Every user gets a household automatically at signup (household of 1). Joining so
 
 - [ ] Projet Supabase créé
 - [ ] Core tables créées (`households`, `users`)
-- [ ] Row Level Security configuré sur les core tables
+- [x] Row Level Security configuré sur les core tables
 - [ ] Migrations gérées avec Supabase CLI
 
 ---
@@ -184,40 +184,46 @@ CREATE POLICY "accounts_select" ON accounts FOR SELECT USING (
 4. Test with two users in the same household and two users in different households
 
 **Test Checklist:**
-- [ ] User A cannot see User B's household
-- [ ] User A and User B (same household) can see each other in `users`
-- [ ] User A cannot see User B (different household) in `users`
-- [ ] SELECT, INSERT, UPDATE, DELETE all respect RLS
-- [ ] `current_household_id()` helper works correctly
+- [x] User A cannot see User B's household
+- [x] User A and User B (same household) can see each other in `users`
+- [x] User A cannot see User B (different household) in `users`
+- [x] SELECT, INSERT, UPDATE, DELETE all respect RLS
+- [x] `current_household_id()` helper works correctly
 
 **Note:** `accounts` RLS (including `is_shared` logic) will be defined in the Accounts feature migration.
 
-### Phase 4: Backend Integration
+### Phase 4: Backend Integration (No Auth)
 
-**Goal:** Connect FastAPI backend to Supabase.
+**Goal:** Connect FastAPI backend to Supabase without implementing JWT/auth middleware.
+
+**Rationale:** Authentication and JWT validation will be implemented in a dedicated auth feature. This phase focuses on client setup and health checks only.
 
 **Dependencies:**
 Add to `backend/pyproject.toml`:
 - `supabase>=2.0` (Supabase Python client)
-- `python-jose[cryptography]>=3.3` (JWT validation)
 
 **Configuration:**
 Create settings for:
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY` (for admin operations)
-- `SUPABASE_ANON_KEY` (for client-side operations)
 
 **Steps:**
 1. Add Supabase dependency to backend
 2. Create `app/core/supabase.py` client configuration
-3. Create `app/core/auth.py` for JWT validation middleware
-4. Add Supabase connection health check to `/health` endpoint
+3. Create separate `/health/db` endpoint for database health check
+4. Update main `/health` endpoint to include Supabase connection status
 5. Update `.env.example` with Supabase variables
+
+**Deferred to Auth Feature:**
+- `python-jose[cryptography]` for JWT validation
+- `SUPABASE_ANON_KEY` (for client-side operations)
+- `app/core/auth.py` JWT middleware
+- Protected routes with JWT validation
 
 **Test Checklist:**
 - [ ] Backend can connect to Supabase
-- [ ] `/health` endpoint includes Supabase connection status
-- [ ] JWT validation works for protected routes
+- [ ] `/health` endpoint includes basic Supabase status
+- [ ] `/health/db` endpoint performs actual DB connectivity check
 - [ ] Service role key can bypass RLS when needed
 
 ### Phase 5: Migration Management
@@ -321,6 +327,6 @@ Migrations are timestamped SQL files in `supabase/migrations/` — fully version
 
 ## Current Phase
 
-**Phase:** 2 - Core Auth Tables
+**Phase:** 3 - Row Level Security
 
-**Status:** ✅ Complete — Ready for Phase 3
+**Status:** ✅ Complete — Ready for Phase 4

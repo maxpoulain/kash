@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 
+from app.routers import health
+
 app = FastAPI(title="Kash API", version="0.1.0")
 
-
-@app.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok"}
+app.include_router(health.router)
