@@ -55,9 +55,17 @@ Configurer le projet Supabase et créer le schéma de base de données.
 5. Set up environment variables in backend for Supabase connection
 
 **Test Checklist:**
-- [ ] `supabase start` runs successfully
-- [ ] Can connect to local Supabase from backend
+- [x] `supabase start` runs successfully
+- [x] Can connect to local Supabase from backend
 - [ ] Can connect to production Supabase from backend
+
+**Progress:**
+- [x] Supabase CLI installed
+- [x] Local project initialized (`supabase init`)
+- [x] Local Supabase running (ports 54321-54324)
+- [x] Backend env variables configured
+- [ ] Supabase login completed
+- [ ] Production project created
 
 ### Phase 2: Database Schema Design
 
