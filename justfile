@@ -1,5 +1,14 @@
 # Kash monorepo tasks
 
+# Run everything: Supabase + frontend + backend
+dev-all:
+    #!/usr/bin/env bash
+    set -e
+    echo "Starting Supabase..."
+    supabase status &>/dev/null || supabase start
+    echo "Starting docker-compose (frontend + backend)..."
+    docker-compose up
+
 # Run full stack (requires supabase start first)
 dev:
     docker-compose up
