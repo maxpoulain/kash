@@ -87,9 +87,9 @@ Create a single task in `docs/backlog/todo/` (use when not decomposing a full fe
 
 ---
 
-### `/backlog start <id-or-name> [--with-branch]`
+### `/backlog start <id-or-name>`
 
-Move item from `todo/` to `in-progress/`:
+Move item from `todo/` to `in-progress/` and create a branch:
 
 1. **Resolve item**: Match `id-or-name` against items in `todo/` (partial OK if unique)
 2. **Validate state**:
@@ -98,39 +98,32 @@ Move item from `todo/` to `in-progress/`:
 3. **Move**: `git mv todo/{file} in-progress/{file}`
 4. **Commit**: `git commit -m "chore: start {ID}-{name} 🚀"`
 5. **Push**: `git push origin main`
-6. **Branch (optional)**:
-    - Without `--with-branch`: Stay on main (direct push workflow)
-    - With `--with-branch`: `git checkout -b {name}`
+6. **Branch**: always create — `git checkout -b {ID}-{name}`
 
 **Errors**:
 - Not found → "Error: No match for '{term}' in todo/. Try: /backlog status"
 - Multiple matches → "Error: Multiple matches: {list}. Use full ID."
-- Branch exists → "Error: Branch '{name}' exists. Delete or choose different name."
+- Branch exists → "Error: Branch '{ID}-{name}' exists. Delete or checkout it."
 
 ---
 
 ### `/backlog done [id-or-name]`
 
-Complete an in-progress item:
+Complete an in-progress item and open a PR:
 
-**If on main branch** (direct push workflow):
-1. `id-or-name` required (error if missing)
-2. Resolve item in `in-progress/`
-3. `git mv in-progress/{file} done/{file}`
-4. `git commit -m "chore: complete {ID}-{name} ✅"`
-5. `git push origin main`
-
-**If on feature branch**:
-1. Auto-detect from branch name if `id-or-name` not provided
-2. Verify clean working state
-3. `git mv in-progress/{file} done/{file}`
-4. `git commit -m "chore: complete {ID}-{name} ✅"`
-5. Prompt: "Ready for PR: gh pr create --title '<type>: <description> <emoji>' ..."
-   - PR title must follow conventional commits: `<type>: <description> <emoji>` (same format as commit messages)
+1. **Validate**: must be on a feature branch (error if on main: "Error: /backlog done must be run from a feature branch, not main.")
+2. Auto-detect task from branch name if `id-or-name` not provided
+3. Verify clean working state
+4. `git mv in-progress/{file} done/{file}`
+5. `git commit -m "chore: complete {ID}-{name} ✅"`
+6. `git fetch origin && git rebase origin/main`
+7. `git push origin HEAD`
+8. Create PR: `gh pr create --title '<type>: <description> <emoji>'`
+   - PR title follows conventional commits: `<type>: <description> <emoji>`
    - Derive type and emoji from the nature of the work (feat ✨, fix 🐛, refactor ♻️, etc.)
 
 **Errors**:
-- On main without id → "Error: On main branch, id-or-name required."
+- On main → "Error: /backlog done must be run from a feature branch, not main."
 - No match → "Error: No item matching '{term}' in in-progress/."
 - Uncommitted changes → "Warning: Uncommitted changes. Commit first."
 

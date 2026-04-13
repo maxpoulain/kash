@@ -59,15 +59,22 @@ The 5-digit number is a **stable ID**, not priority.
 6. Commit to main: `chore: start <XXXXX-name> 🚀`
 7. Push main immediately: `git push origin main`
 8. Verify `origin/main` includes that commit
-9. Create feature branch: `git checkout -b <name>`
+9. Create feature branch: `git checkout -b <XXXXX-name>`
+
+### Branch strategy
+
+- **Always use a branch** for every task (features, fixes, chores)
+- Branch name = task ID + name: `XXXXX-name`
+- Direct push to main only for: backlog state changes (`chore: add`, `chore: start`, `chore: complete`)
 
 ### Completing work
 
 1. Move item from `in-progress/` to `done/`
 2. Commit on branch
-3. Merge to main:
-    - **Direct push** (docs, chores, single-file fixes): `git merge --ff-only <branch>`
-    - **PR required** (infra, features, complex refactors): create PR, merge with **rebase**
+3. All work goes through PR — no exceptions:
+    - `git fetch origin && git rebase origin/main`
+    - `gh pr create --title '<type>: <description> <emoji>'`
+    - Merge with `gh pr merge --rebase`
 
 PR titles follow the same conventional commits format as commit messages:
 ```
