@@ -1,25 +1,37 @@
 # Kash monorepo tasks
 
+# Detect docker compose command (v2 plugin or v1 standalone)
+docker_compose := if `which docker-compose 2>/dev/null | wc -l | tr -d ' '` == "1" { "docker-compose" } else { "docker compose" }
+
 # Run everything: Supabase + frontend + backend
 dev-all:
     #!/usr/bin/env bash
     set -e
     echo "Starting Supabase..."
     supabase status &>/dev/null || supabase start
-    echo "Starting docker-compose (frontend + backend)..."
-    docker-compose up
+    echo "Starting docker compose (frontend + backend)..."
+    {{docker_compose}} up
+
+# Rebuild docker images (run after adding dependencies)
+dev-build:
+    {{docker_compose}} build
+
+# Rebuild and restart everything from scratch
+dev-rebuild:
+    {{docker_compose}} down -v
+    {{docker_compose}} up --build
 
 # Run full stack (requires supabase start first)
 dev:
-    docker-compose up
+    {{docker_compose}} up
 
 # Stop docker-compose services (keeps Supabase running)
 dev-stop:
-    docker-compose down
+    {{docker_compose}} down
 
 # Tail logs from docker-compose
 dev-logs:
-    docker-compose logs -f
+    {{docker_compose}} logs -f
 
 # Start Supabase local development (database + auth + storage)
 db-start:
