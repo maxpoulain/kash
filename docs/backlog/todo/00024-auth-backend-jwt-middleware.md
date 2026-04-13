@@ -10,9 +10,9 @@ Sécuriser le backend FastAPI en vérifiant les JWT émis par Supabase, et expos
 
 ## Périmètre
 
-- Ajouter `python-jose[cryptography]` aux dépendances
-- Créer une dépendance FastAPI `get_current_user` qui vérifie le JWT depuis le header `Authorization: Bearer`
-- Récupérer la clé publique Supabase pour valider la signature
+- Ajouter `PyJWT[crypto]` aux dépendances
+- Récupérer la clé publique Supabase via JWKS (`{supabase_url}/auth/v1/.well-known/jwks.json`) au démarrage
+- Créer une dépendance FastAPI `get_current_user` qui vérifie le JWT localement (zéro appel réseau)
 - Route `GET /api/me` : retourne les infos du JWT + lookup en base (id, email, household)
 - Retourner 401 si token absent ou invalide
 
