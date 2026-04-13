@@ -52,11 +52,11 @@ The 5-digit number is a **stable ID**, not priority.
 ### Starting work
 
 1. Create file in `todo/`: `XXXXX-name.md`
-2. Commit to main: `chore: add <name> 📋`
+2. Commit to main: `chore: add <XXXXX-name> 📋`
 3. Push main immediately: `git push origin main`
 4. Verify `origin/main` includes that commit
 5. Move item from `todo/` to `in-progress/`
-6. Commit to main: `chore: start <name> 🚀`
+6. Commit to main: `chore: start <XXXXX-name> 🚀`
 7. Push main immediately: `git push origin main`
 8. Verify `origin/main` includes that commit
 9. Create feature branch: `git checkout -b <name>`

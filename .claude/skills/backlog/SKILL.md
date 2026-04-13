@@ -45,7 +45,7 @@ Decompose a feature into one or more tasks interactively — **do not create any
      depends_on: {task-id} (if applicable)
      ---
      ```
-   - Commit all at once: `git commit -m "chore: add tasks for {feature-name} 📋"`
+   - Commit all at once: `git commit -m "chore: add {ID}-{name} 📋"` (one commit per task, or one commit listing all IDs)
    - Push to main
 
 **Errors**:
@@ -77,7 +77,7 @@ Create a single task in `docs/backlog/todo/` (use when not decomposing a full fe
    ```
 3. **Commit to main**:
    - Must be on `main` branch with clean working directory
-   - `git add . && git commit -m "chore: add {name} 📋"`
+   - `git add . && git commit -m "chore: add {ID}-{name} 📋"`
    - `git push origin main`
 
 **Errors**:
@@ -96,7 +96,7 @@ Move item from `todo/` to `in-progress/`:
     - Must be on `main` branch (error if on feature branch: "Error: Already on '{branch}'. Checkout main first.")
     - Clean working directory
 3. **Move**: `git mv todo/{file} in-progress/{file}`
-4. **Commit**: `git commit -m "chore: start {name} 🚀"`
+4. **Commit**: `git commit -m "chore: start {ID}-{name} 🚀"`
 5. **Push**: `git push origin main`
 6. **Branch (optional)**:
     - Without `--with-branch`: Stay on main (direct push workflow)
@@ -117,14 +117,14 @@ Complete an in-progress item:
 1. `id-or-name` required (error if missing)
 2. Resolve item in `in-progress/`
 3. `git mv in-progress/{file} done/{file}`
-4. `git commit -m "chore: complete {name} ✅"`
+4. `git commit -m "chore: complete {ID}-{name} ✅"`
 5. `git push origin main`
 
 **If on feature branch**:
 1. Auto-detect from branch name if `id-or-name` not provided
 2. Verify clean working state
 3. `git mv in-progress/{file} done/{file}`
-4. `git commit -m "chore: complete {name} ✅"`
+4. `git commit -m "chore: complete {ID}-{name} ✅"`
 5. Prompt: "Ready for PR: gh pr create --title '<type>: <description> <emoji>' ..."
    - PR title must follow conventional commits: `<type>: <description> <emoji>` (same format as commit messages)
    - Derive type and emoji from the nature of the work (feat ✨, fix 🐛, refactor ♻️, etc.)
