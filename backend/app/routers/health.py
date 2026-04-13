@@ -1,6 +1,6 @@
 """Health check endpoints."""
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app.core.supabase import get_supabase
@@ -30,7 +30,7 @@ async def health_db_check() -> dict[str, str]:
         supabase = get_supabase()
         # Simple query to verify connection using built-in PostgreSQL function
         # This executes: SELECT * FROM auth.users LIMIT 0
-        result = supabase.table("users").select("id").limit(1).execute()
+        supabase.table("users").select("id").limit(1).execute()
         return {"status": "ok", "db": "connected"}
     except Exception as e:
         return {"status": "error", "db": f"disconnected: {type(e).__name__}"}
