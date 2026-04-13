@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PiggyBank, TrendingUp, Target, Shield, Sparkles } from "lucide-react";
 import Link from "next/link";
@@ -16,8 +16,8 @@ export default function Home() {
             <span className="font-display text-2xl font-semibold">Kash</span>
           </Link>
           <div className="flex gap-3">
-            <Button variant="ghost">Sign In</Button>
-            <Button>Get Started</Button>
+            <Link href="/login" className={buttonVariants({ variant: "ghost" })}>Sign In</Link>
+            <Link href="/signup" className={buttonVariants()}>Get Started</Link>
           </div>
         </div>
       </header>
@@ -35,10 +35,8 @@ export default function Home() {
               Your personal finance companion that makes saving fun.
             </p>
             <div className="mt-10 flex justify-center gap-4">
-              <Button size="lg">Start Saving Free</Button>
-              <Button variant="outline" size="lg">
-                Learn More
-              </Button>
+              <Link href="/signup" className={buttonVariants({ size: "lg" })}>Start Saving Free</Link>
+              <Link href="#features" className={buttonVariants({ variant: "outline", size: "lg" })}>Learn More</Link>
             </div>
           </div>
         </section>
@@ -147,10 +145,8 @@ export default function Home() {
               Join thousands of people who are taking control of their finances with Kash.
             </p>
             <div className="mt-8 flex justify-center gap-4">
-              <Button size="lg">Create Free Account</Button>
-              <Button variant="outline" size="lg">
-                Contact Sales
-              </Button>
+              <Link href="/signup" className={buttonVariants({ size: "lg" })}>Create Free Account</Link>
+              <Link href="/login" className={buttonVariants({ variant: "outline", size: "lg" })}>Contact Sales</Link>
             </div>
           </div>
         </section>
