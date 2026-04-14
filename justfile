@@ -88,7 +88,7 @@ backend-test:
 # Run all checks (lint + typecheck + test)
 check:
     cd frontend && npm run lint
-    cd backend && uv run ruff check . && uv run pyright
+    cd backend && uv run ruff check . && uv run pyright && uv run pytest
 
 # Format code
 fmt:
