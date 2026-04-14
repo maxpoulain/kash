@@ -41,6 +41,9 @@ db-start:
 db-stop:
     supabase stop
 
+# Stop everything (docker-compose + Supabase)
+stop-all: dev-stop db-stop
+
 # Reset local database (apply all migrations)
 db-reset:
     supabase db reset
