@@ -74,6 +74,7 @@ Create a single task in `docs/backlog/todo/` (use when not decomposing a full fe
 
    ## Critères de validation
    - [ ] TODO: what must be true to consider this complete?
+   - [ ] Tests écrits et passants (`just check` passe)
    ```
 3. **Commit to main**:
    - Must be on `main` branch with clean working directory
@@ -114,7 +115,8 @@ Complete an in-progress item and open a PR:
 1. **Validate**: must be on a feature branch (error if on main: "Error: /backlog done must be run from a feature branch, not main.")
 2. Auto-detect task from branch name if `id-or-name` not provided
 3. Verify clean working state
-4. `git mv in-progress/{file} done/{file}`
+4. **Check tests**: verify `just check` passes — if tests are missing for new code, write them first
+5. `git mv in-progress/{file} done/{file}`
 5. `git commit -m "chore: complete {ID}-{name} ✅"`
 6. `git fetch origin && git rebase origin/main`
 7. `git push origin HEAD`
