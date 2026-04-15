@@ -126,3 +126,11 @@ fmt:
 # Run backend tests
 backend-test:
     cd backend && uv run pytest
+
+# Seed test user for E2E testing
+e2e-seed:
+    cd e2e && npm install && node scripts/seed-test-user.js
+
+# Open agent-browser for manual testing (app must be running)
+e2e-open:
+    cd e2e && npx agent-browser open http://localhost:3000

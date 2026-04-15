@@ -1,36 +1,48 @@
-# E2E Tests with Agent Browser
+# E2E Testing with Agent Browser
 
-End-to-end testing using [Vercel's Agent Browser](https://github.com/vercel-labs/agent-browser) for automated browser-based testing.
+Manual E2E testing setup using [agent-browser](https://github.com/vercel-labs/agent-browser) CLI.
 
 ## Goal
 
-Set up automated end-to-end tests that can verify key user flows by simulating real browser interactions.
+Enable Claude to test features end-to-end using the agent-browser CLI tool with a seeded test user.
 
-## Test Scope
+## Test User
 
-### Phase 1: Authentication
-- [ ] Sign-in flow test
-  - Navigate to login page
-  - Enter credentials
-  - Verify successful login
-  - Verify redirect to dashboard
+After running `just e2e-seed`:
+- **Email:** `test@example.com`
+- **Password:** `TestPassword123!`
 
-### Phase 2: Core Flows (Future)
-- [ ] Sign-up flow
-- [ ] Transaction creation
-- [ ] Budget viewing
-- [ ] Navigation between pages
+## Usage
+
+Claude will use agent-browser to manually test features:
+
+```bash
+# Start the dev environment
+just dev-local
+
+# In another terminal, seed test user (one-time)
+just e2e-seed
+
+# Open agent-browser
+just e2e-open
+
+# Or use agent-browser commands directly
+npx agent-browser open http://localhost:3000/login
+npx agent-browser type "#email" "test@example.com"
+npx agent-browser type "#password" "TestPassword123!"
+npx agent-browser click "button[type=submit]"
+npx agent-browser screenshot
+```
 
 ## Implementation Plan
 
-1. Install and configure agent-browser
-2. Create test directory structure
-3. Write sign-in test
-4. Add just command to run tests
-5. Integrate with CI pipeline
+1. [x] Install agent-browser CLI
+2. [x] Create test user seeding script
+3. [x] Add just commands (`e2e-seed`, `e2e-open`)
+4. [x] Document usage for Claude
 
 ## Verification Criteria
 
-- Tests run locally with `just e2e-test`
-- Tests can be run against local dev environment
-- Sign-in test passes with valid credentials
+- [x] `just e2e-seed` creates a test user
+- [x] `just e2e-open` launches agent-browser
+- [x] Claude can sign in with test credentials via agent-browser
