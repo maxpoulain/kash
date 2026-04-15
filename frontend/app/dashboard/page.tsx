@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
+import { TransactionSheet } from "@/components/transactions/transaction-sheet";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -17,6 +18,7 @@ export default async function DashboardPage() {
       <form action="/auth/signout" method="post">
         <Button variant="outline" type="submit">Sign out</Button>
       </form>
+      <TransactionSheet />
     </div>
   );
 }
