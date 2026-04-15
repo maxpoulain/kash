@@ -28,6 +28,13 @@ export async function getCategories(): Promise<Category[]> {
   return res.json();
 }
 
+export async function getTransactions(month?: string): Promise<Transaction[]> {
+  const url = month ? `/api/transactions?month=${month}` : "/api/transactions";
+  const res = await apiFetch(url);
+  if (!res.ok) throw new Error("Failed to fetch transactions");
+  return res.json();
+}
+
 export async function createTransaction(payload: CreateTransactionPayload): Promise<Transaction> {
   const res = await apiFetch("/api/transactions", {
     method: "POST",

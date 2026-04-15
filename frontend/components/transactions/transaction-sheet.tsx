@@ -12,12 +12,17 @@ import {
 } from "@/components/ui/sheet";
 import { TransactionForm } from "./transaction-form";
 
-export function TransactionSheet() {
+interface TransactionSheetProps {
+  onTransactionCreated?: () => void;
+}
+
+export function TransactionSheet({ onTransactionCreated }: TransactionSheetProps = {}) {
   const [open, setOpen] = useState(false);
 
   function handleSuccess() {
     setOpen(false);
     toast.success("Transaction enregistrée !");
+    onTransactionCreated?.();
   }
 
   return (
