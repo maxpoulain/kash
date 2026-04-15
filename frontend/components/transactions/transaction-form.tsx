@@ -19,7 +19,7 @@ import type { Category, TransactionType } from "@/types/api";
 
 const schema = z.object({
   type: z.enum(["income", "expense"]),
-  amount: z.coerce.number().positive("Le montant doit être positif"),
+  amount: z.number().positive("Le montant doit être positif"),
   category_id: z.string().uuid("Sélectionne une catégorie"),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date invalide"),
   note: z.string().max(200).optional(),
@@ -101,7 +101,7 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
       {/* Amount */}
       <div>
         <Input
-          {...register("amount")}
+          {...register("amount", { valueAsNumber: true })}
           type="number"
           inputMode="decimal"
           placeholder="0.00"
@@ -117,7 +117,7 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
       {/* Category */}
       <div>
         <Select
-          onValueChange={(v) => setValue("category_id", v)}
+          onValueChange={(v) => setValue("category_id", v as string)}
           disabled={loadingCategories}
         >
           <SelectTrigger>
