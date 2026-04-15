@@ -3,14 +3,27 @@
 # Detect docker compose command (v2 plugin or v1 standalone)
 docker_compose := if `which docker-compose 2>/dev/null | wc -l | tr -d ' '` == "1" { "docker-compose" } else { "docker compose" }
 
-# Run everything: Supabase + frontend + backend
+
+# =============================================================================
+# Docker Workflow (full containerization)
+# =============================================================================
+
+# Run everything in Docker: Supabase + frontend + backend
 dev-all:
     #!/usr/bin/env bash
     set -e
     echo "Starting Supabase..."
     supabase status &>/dev/null || supabase start
-    echo "Starting docker compose (frontend + backend)..."
+    echo "Building docker images (if needed)..."
+    {{docker_compose}} up --build
+
+# Run full stack in Docker (requires supabase start first)
+dev:
     {{docker_compose}} up
+
+# Stop docker-compose services (keeps Supabase running)
+dev-stop:
+    {{docker_compose}} down
 
 # Rebuild docker images (run after adding dependencies)
 dev-build:
@@ -21,17 +34,44 @@ dev-rebuild:
     {{docker_compose}} down -v
     {{docker_compose}} up --build
 
-# Run full stack (requires supabase start first)
-dev:
-    {{docker_compose}} up
-
-# Stop docker-compose services (keeps Supabase running)
-dev-stop:
-    {{docker_compose}} down
-
 # Tail logs from docker-compose
 dev-logs:
     {{docker_compose}} logs -f
+
+
+# =============================================================================
+# Local Workflow (direct process execution, no Docker for app services)
+# =============================================================================
+
+# Start all services locally: Supabase + backend + frontend in background (no Docker)
+dev-local:
+    #!/usr/bin/env bash
+    set -e
+    echo "Starting Supabase..."
+    supabase status &>/dev/null || supabase start
+    echo ""
+    echo "Starting backend and frontend in background..."
+    echo "Press Ctrl+C to stop all services"
+    echo ""
+    cd backend && uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload &
+    BACKEND_PID=$!
+    cd ../frontend && npm run dev &
+    FRONTEND_PID=$!
+    echo "Backend PID: $BACKEND_PID, Frontend PID: $FRONTEND_PID"
+    wait $BACKEND_PID $FRONTEND_PID
+
+# Run backend locally with hot reload (requires uv and supabase running)
+backend:
+    cd backend && uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+# Run frontend locally with hot reload (requires npm and supabase running)
+frontend:
+    cd frontend && npm run dev
+
+
+# =============================================================================
+# Database (Supabase)
+# =============================================================================
 
 # Start Supabase local development (database + auth + storage)
 db-start:
@@ -68,22 +108,10 @@ supabase-status:
 studio:
     open http://127.0.0.1:54323
 
-# Run backend locally with hot reload (requires uv and supabase running)
-backend:
-    cd backend && uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-# Run frontend locally with hot reload (requires npm and supabase running)
-frontend:
-    cd frontend && npm run dev
-
-# Run both backend and frontend in parallel (requires tmux or similar, or run in separate terminals)
-both:
-    @echo "Run 'just backend' and 'just frontend' in separate terminals"
-    @echo "Or use 'just dev' to run everything in docker-compose"
-
-# Run backend tests
-backend-test:
-    cd backend && uv run pytest
+# =============================================================================
+# Quality & Testing
+# =============================================================================
 
 # Run all checks (lint + typecheck + test)
 check:
@@ -94,3 +122,7 @@ check:
 fmt:
     cd backend && uv run ruff format .
     cd frontend && npm run lint -- --fix
+
+# Run backend tests
+backend-test:
+    cd backend && uv run pytest
