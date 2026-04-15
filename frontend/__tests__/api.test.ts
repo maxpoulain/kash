@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { getCategories, createTransaction } from "@/lib/api";
+import { getCategories, createTransaction, getTransactions } from "@/lib/api";
 
 // Mock the Supabase client used by apiFetch
 vi.mock("@/lib/supabase/client", () => ({
@@ -44,6 +44,40 @@ describe("getCategories", () => {
     mockFetch.mockResolvedValueOnce({ ok: false });
 
     await expect(getCategories()).rejects.toThrow("Failed to fetch categories");
+  });
+});
+
+describe("getTransactions", () => {
+  it("fetches all transactions without month filter", async () => {
+    const transactions = [
+      { id: "t1", amount: 50, type: "expense", date: "2026-04-15", category_id: null, note: null },
+    ];
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => transactions });
+
+    const result = await getTransactions();
+
+    expect(result).toEqual(transactions);
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/transactions"),
+      expect.anything()
+    );
+  });
+
+  it("appends month query param when provided", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => [] });
+
+    await getTransactions("2026-04");
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/transactions?month=2026-04"),
+      expect.anything()
+    );
+  });
+
+  it("throws on non-ok response", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false });
+
+    await expect(getTransactions("2026-04")).rejects.toThrow("Failed to fetch transactions");
   });
 });
 
