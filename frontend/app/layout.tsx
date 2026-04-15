@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fredoka, Nunito, Geist_Mono } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const fredoka = Fredoka({
@@ -40,7 +41,10 @@ export default function RootLayout({
       lang="en"
       className={`${fredoka.variable} ${nunito.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans">
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

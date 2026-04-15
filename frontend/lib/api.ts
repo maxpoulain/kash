@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import type { Category, CreateTransactionPayload, Transaction } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -19,6 +20,21 @@ async function getAuthHeaders(): Promise<HeadersInit> {
   }
 
   return { Authorization: `Bearer ${session.access_token}` };
+}
+
+export async function getCategories(): Promise<Category[]> {
+  const res = await apiFetch("/api/categories");
+  if (!res.ok) throw new Error("Failed to fetch categories");
+  return res.json();
+}
+
+export async function createTransaction(payload: CreateTransactionPayload): Promise<Transaction> {
+  const res = await apiFetch("/api/transactions", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to create transaction");
+  return res.json();
 }
 
 export async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
