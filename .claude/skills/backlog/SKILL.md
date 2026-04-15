@@ -58,6 +58,7 @@ Decompose a feature into one or more tasks interactively — **do not create any
 Create a single task in `docs/backlog/todo/` (use when not decomposing a full feature):
 
 1. **Find next ID**: Scan `todo/`, `in-progress/`, `done/`, and `features/` for highest 5-digit ID, increment by 1
+   - **Parallel session conflict**: If `git push origin main` fails (rejected), another session claimed the same ID. Pull, re-scan for the new highest ID, rename the file, and push again.
 2. **Create file**: `docs/backlog/todo/{ID}-{name}.md` with template:
    ```markdown
    ---
@@ -116,7 +117,8 @@ Complete an in-progress item and open a PR:
 2. Auto-detect task from branch name if `id-or-name` not provided
 3. Verify clean working state
 4. **Check tests**: verify `just check` passes — if tests are missing for new code, write them first
-5. `git mv in-progress/{file} done/{file}`
+5. **Check for open PRs on the same ID**: run `gh pr list --state open` — if another PR targets the same task ID, do not rename or move files until that PR is merged or closed
+6. `git mv in-progress/{file} done/{file}`
 5. `git commit -m "chore: complete {ID}-{name} ✅"`
 6. `git fetch origin && git rebase origin/main`
 7. `git push origin HEAD`
