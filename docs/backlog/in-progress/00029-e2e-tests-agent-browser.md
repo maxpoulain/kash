@@ -46,3 +46,14 @@ npx agent-browser screenshot
 - [x] `just e2e-seed` creates a test user
 - [x] `just e2e-open` launches agent-browser
 - [x] Claude can sign in with test credentials via agent-browser
+
+## Test Result
+
+Successfully tested sign-in flow using agent-browser:
+
+1. Created test user via sign-up: `test@example.com`
+2. Signed out
+3. Signed in with credentials
+4. Verified dashboard loads with user email displayed
+
+![Dashboard after sign-in](../../e2e/dashboard-screenshot.png)
