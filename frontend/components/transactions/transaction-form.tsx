@@ -88,8 +88,8 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
             className={`flex-1 py-2 text-sm font-medium transition-colors ${
               selectedType === t
                 ? t === "expense"
-                  ? "bg-destructive text-destructive-foreground"
-                  : "bg-secondary text-secondary-foreground"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-accent text-accent-foreground"
                 : "bg-background text-muted-foreground"
             }`}
           >
