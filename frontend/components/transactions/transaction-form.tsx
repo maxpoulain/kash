@@ -52,6 +52,7 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
   });
 
   const selectedType = useWatch({ control, name: "type" }) as TransactionType;
+  const selectedCategoryId = useWatch({ control, name: "category_id" });
 
   useEffect(() => {
     getCategories()
@@ -121,7 +122,14 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
           disabled={loadingCategories}
         >
           <SelectTrigger>
-            <SelectValue placeholder={loadingCategories ? "Chargement…" : "Catégorie"} />
+            <SelectValue placeholder={loadingCategories ? "Chargement…" : "Catégorie"}>
+              {selectedCategoryId
+                ? (() => {
+                    const cat = categories.find((c) => c.id === selectedCategoryId);
+                    return cat ? `${cat.icon ? cat.icon + " " : ""}${cat.name}` : null;
+                  })()
+                : null}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {filteredCategories.map((c) => (
