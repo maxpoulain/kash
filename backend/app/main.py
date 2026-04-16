@@ -6,18 +6,12 @@ from app.routers import health, transactions, users
 
 app = FastAPI(title="Kash API", version="0.1.0")
 
-_origins = (
-    ["*"]
-    if settings.environment == "development"
-    else [
-        "https://kash.vercel.app",
-        "https://*.vercel.app",
-    ]
-)
+_is_dev = settings.environment == "development"
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_origins,
+    allow_origins=["*"] if _is_dev else ["https://kash.vercel.app"],
+    allow_origin_regex=None if _is_dev else r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
