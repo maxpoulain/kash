@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, Package } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { getTransactions, getCategories } from "@/lib/api";
+import { CATEGORY_ICONS } from "@/lib/category-icons";
 import type { Category, Transaction } from "@/types/api";
 
 function formatMonth(month: string): string {
@@ -63,11 +65,11 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
     .filter((t) => t.type === "income")
     .reduce((sum, t) => sum + t.amount, 0);
 
-  function getCategoryLabel(categoryId: string | null): string {
-    if (!categoryId) return "Sans catégorie";
+  function getCategoryInfo(categoryId: string | null) {
+    if (!categoryId) return { name: "Sans catégorie", Icon: Package };
     const cat = categories.find((c) => c.id === categoryId);
-    if (!cat) return "Sans catégorie";
-    return cat.icon ? `${cat.icon} ${cat.name}` : cat.name;
+    if (!cat) return { name: "Sans catégorie", Icon: Package };
+    return { name: cat.name, Icon: CATEGORY_ICONS[cat.name] ?? Package };
   }
 
   const isCurrentMonth = month === currentMonth();
@@ -104,9 +106,9 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
             -{totalExpense.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}
           </p>
         </div>
-        <div className="rounded-xl bg-accent/20 p-3 text-center">
+        <div className="rounded-xl bg-success/10 p-3 text-center">
           <p className="text-xs text-muted-foreground">Revenus</p>
-          <p className="font-semibold text-accent-foreground">
+          <p className="font-semibold text-success">
             +{totalIncome.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}
           </p>
         </div>
@@ -126,17 +128,33 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
               key={t.id}
               className="flex items-center justify-between rounded-xl bg-card px-4 py-3 ring-1 ring-border/50"
             >
-              <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium">{getCategoryLabel(t.category_id)}</span>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(t.date).toLocaleDateString("fr-FR")}
-                  {t.note ? ` · ${t.note}` : ""}
-                </span>
+              <div className="flex items-center gap-3">
+                {(() => {
+                  const { name, Icon } = getCategoryInfo(t.category_id);
+                  return (
+                    <>
+                      <div className={cn(
+                        "w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
+                        t.type === "expense" ? "bg-primary/10 text-primary" : "bg-success/10 text-success"
+                      )}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-sm font-medium">{name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(t.date).toLocaleDateString("fr-FR")}
+                          {t.note ? ` · ${t.note}` : ""}
+                        </span>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
               <span
-                className={`text-sm font-semibold ${
-                  t.type === "expense" ? "text-primary" : "text-accent-foreground"
-                }`}
+                className={cn(
+                  "text-sm font-semibold",
+                  t.type === "expense" ? "text-primary" : "text-success"
+                )}
               >
                 {t.type === "expense" ? "-" : "+"}
                 {t.amount.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}

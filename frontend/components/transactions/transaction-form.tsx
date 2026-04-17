@@ -9,21 +9,9 @@ import { fr } from "date-fns/locale";
 import {
   ArrowDownRight,
   ArrowUpRight,
-  Briefcase,
   CalendarIcon,
-  Car,
-  Clapperboard,
-  Coins,
-  Gift,
-  Heart,
-  Home,
-  Music,
-  Package,
-  ShoppingCart,
-  Smartphone,
-  Sparkles,
-  Utensils,
 } from "lucide-react";
+import { CATEGORY_ICONS } from "@/lib/category-icons";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,21 +30,6 @@ import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field
 
 import { getCategories, createTransaction } from "@/lib/api";
 import type { Category, TransactionType } from "@/types/api";
-
-const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  Loyer: Home,
-  Courses: ShoppingCart,
-  Transport: Car,
-  Restaurants: Utensils,
-  Santé: Heart,
-  Loisirs: Clapperboard,
-  Abonnements: Smartphone,
-  Salaire: Briefcase,
-  Autre: Package,
-  Investissement: Coins,
-  "Cadeau reçu": Gift,
-  "Autre revenu": Sparkles,
-};
 
 function CategoryIcon({ name, className }: { name: string; className?: string }) {
   const Icon = CATEGORY_ICONS[name] ?? Package;
@@ -258,8 +231,21 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
                     mode="single"
                     selected={selectedDate ? parseISO(selectedDate) : undefined}
                     onSelect={(d) => d && setValue("date", format(d, "yyyy-MM-dd"))}
+                    disabled={{ after: new Date() }}
+                    endMonth={new Date()}
                     locale={fr}
                   />
+                  <div className="border-t p-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => setValue("date", today())}
+                    >
+                      Aujourd'hui
+                    </Button>
+                  </div>
                 </PopoverContent>
               </Popover>
               <FieldError errors={[errors.date]} />
