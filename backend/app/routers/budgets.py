@@ -2,6 +2,7 @@
 
 import re
 from typing import cast
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -139,7 +140,10 @@ async def get_budget_summary(
     month: str,
     claims: dict = Depends(get_current_user),
 ) -> BudgetSummary:
-    """Return allocated vs spent per category for the month."""
+    """Return allocated vs spent per category for the month.
+
+    Works even without a budget: shows real spending with allocated=0.
+    """
     _validate_month(month)
     household_id = _get_household_id(claims["sub"])
     supabase = get_supabase()
@@ -154,19 +158,19 @@ async def get_budget_summary(
     )
     rows = cast(list[dict], budget_result.data if isinstance(budget_result.data, list) else [])
     budget_row: dict | None = rows[0] if rows else None
-    if not budget_row:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Budget not found")
 
-    # Fetch allocations with category names
-    alloc_result = (
-        supabase.table("budget_allocations")
-        .select("category_id, amount, categories(id, name)")
-        .eq("budget_id", budget_row["id"])
-        .execute()
-    )
-    allocations = cast(list[dict], alloc_result.data or [])
+    # Fetch allocations only if a budget exists
+    allocations: list[dict] = []
+    if budget_row:
+        alloc_result = (
+            supabase.table("budget_allocations")
+            .select("category_id, amount, categories(id, name)")
+            .eq("budget_id", budget_row["id"])
+            .execute()
+        )
+        allocations = cast(list[dict], alloc_result.data or [])
 
-    # Fetch transactions for the month
+    # Fetch expense transactions for the month
     year, m = month.split("-")
     next_year, next_month = (int(year), int(m) + 1) if int(m) < 12 else (int(year) + 1, 1)
     tx_result = (
@@ -180,20 +184,23 @@ async def get_budget_summary(
     )
     transactions = cast(list[dict], tx_result.data or [])
 
-    # Build spent map per category
     spent_map: dict[str, float] = {}
     for tx in transactions:
         cat_id = tx["category_id"]
         if cat_id:
             spent_map[cat_id] = spent_map.get(cat_id, 0.0) + tx["amount"]
 
-    categories: list[CategorySummary] = []
+    # Build summaries from allocations first
+    categories_seen: set[str] = set()
+    category_summaries: list[CategorySummary] = []
+
     for alloc in allocations:
         cat_id = str(alloc["category_id"])
         cat_name = alloc["categories"]["name"] if alloc.get("categories") else "Inconnue"
         allocated = float(alloc["amount"])
         spent = spent_map.get(cat_id, 0.0)
-        categories.append(
+        categories_seen.add(cat_id)
+        category_summaries.append(
             CategorySummary(
                 category_id=alloc["category_id"],
                 category_name=cat_name,
@@ -203,16 +210,39 @@ async def get_budget_summary(
             )
         )
 
-    total_allocated = sum(c.allocated for c in categories)
-    total_spent = sum(c.spent for c in categories)
+    # Add categories with spending but no allocation
+    unallocated_ids = [cid for cid in spent_map if cid not in categories_seen]
+    if unallocated_ids:
+        cat_result = (
+            supabase.table("categories")
+            .select("id, name")
+            .in_("id", unallocated_ids)
+            .execute()
+        )
+        cat_name_map = {str(c["id"]): c["name"] for c in cast(list[dict], cat_result.data or [])}
+        for cat_id in unallocated_ids:
+            spent = spent_map[cat_id]
+            category_summaries.append(
+                CategorySummary(
+                    category_id=UUID(cat_id),
+                    category_name=cat_name_map.get(cat_id, "Inconnue"),
+                    allocated=0.0,
+                    spent=spent,
+                    remaining=-spent,
+                )
+            )
+
+    income = float(budget_row["income"]) if budget_row else 0.0
+    total_allocated = sum(c.allocated for c in category_summaries)
+    total_spent = sum(c.spent for c in category_summaries)
 
     return BudgetSummary(
         month=month,
-        income=float(budget_row["income"]),
+        income=income,
         total_allocated=total_allocated,
         total_spent=total_spent,
-        over_budget=total_allocated > float(budget_row["income"]),
-        categories=categories,
+        over_budget=total_allocated > income if income > 0 else False,
+        categories=category_summaries,
     )
 
 

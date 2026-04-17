@@ -141,15 +141,7 @@ describe("getBudgetSummary", () => {
     );
   });
 
-  it("returns null on 404", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: false, status: 404 });
-
-    const result = await getBudgetSummary("2026-04");
-
-    expect(result).toBeNull();
-  });
-
-  it("throws on non-404 error", async () => {
+  it("throws on error", async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
 
     await expect(getBudgetSummary("2026-04")).rejects.toThrow("Failed to fetch budget summary");
