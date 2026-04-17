@@ -115,7 +115,7 @@ studio:
 
 # Run all checks (lint + typecheck + test)
 check:
-    cd frontend && npm run lint && npm run test
+    cd frontend && npm run lint && npm run typecheck && npm run test
     cd backend && uv run ruff check . && uv run pyright && uv run pytest
 
 # Format code
