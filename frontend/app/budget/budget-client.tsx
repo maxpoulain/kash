@@ -39,6 +39,7 @@ export function BudgetClient() {
   const [income, setIncome] = useState("0");
   const [allocations, setAllocations] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const userMadeChange = useRef(false);
@@ -46,12 +47,15 @@ export function BudgetClient() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     userMadeChange.current = false;
     try {
-      const [cats, sum] = await Promise.all([
-        getCategories(),
-        getBudgetSummary(month),
-      ]);
+      const cats = await getCategories().catch((e) => {
+        throw new Error(`Catégories: ${e.message}`);
+      });
+      const sum = await getBudgetSummary(month).catch((e) => {
+        throw new Error(`Résumé budget: ${e.message}`);
+      });
       setCategories(cats);
       setSummary(sum);
       if (sum) {
@@ -67,8 +71,10 @@ export function BudgetClient() {
         setIncome("0");
         setAllocations({});
       }
-    } catch {
-      toast.error("Erreur lors du chargement");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[BudgetClient] load error:", err);
+      setLoadError(msg);
     } finally {
       setLoading(false);
     }
@@ -165,6 +171,11 @@ export function BudgetClient() {
 
       {loading ? (
         <p className="py-8 text-center text-sm text-muted-foreground">Chargement…</p>
+      ) : loadError ? (
+        <div className="flex flex-col items-center gap-4 py-12 text-center">
+          <p className="text-sm text-destructive">{loadError}</p>
+          <Button variant="outline" onClick={load}>Réessayer</Button>
+        </div>
       ) : (
         <>
           {/* Income input */}
