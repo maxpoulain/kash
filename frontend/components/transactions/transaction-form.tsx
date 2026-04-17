@@ -243,7 +243,7 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
                       className="w-full"
                       onClick={() => setValue("date", today())}
                     >
-                      Aujourd'hui
+                      {"Aujourd'hui"}
                     </Button>
                   </div>
                 </PopoverContent>

@@ -6,7 +6,6 @@ import {
   Gift,
   Heart,
   Home,
-  Music,
   Package,
   ShoppingCart,
   Smartphone,
