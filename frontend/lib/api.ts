@@ -44,9 +44,8 @@ export async function createTransaction(payload: CreateTransactionPayload): Prom
   return res.json();
 }
 
-export async function getBudgetSummary(month: string): Promise<BudgetSummary | null> {
+export async function getBudgetSummary(month: string): Promise<BudgetSummary> {
   const res = await apiFetch(`/api/budgets/${month}/summary`);
-  if (res.status === 404) return null;
   if (!res.ok) throw new Error("Failed to fetch budget summary");
   return res.json();
 }

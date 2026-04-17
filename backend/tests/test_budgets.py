@@ -278,7 +278,8 @@ async def test_get_summary_without_token_returns_401():
 
 
 @pytest.mark.asyncio
-async def test_get_summary_not_found_returns_404():
+async def test_get_summary_without_budget_returns_empty_summary():
+    """No budget configured → returns 200 with income=0 and no categories."""
     with (
         patch("app.core.auth.get_jwks_client") as mock_jwks,
         patch("app.core.auth.jwt.decode", return_value=FAKE_CLAIMS),
@@ -288,14 +289,74 @@ async def test_get_summary_not_found_returns_404():
         _mock_auth(mock_jwks)
         supabase = MagicMock()
         mock_supabase.return_value = supabase
-        _budget_limit_mock(supabase, [])
+
+        # No budget row
+        budget_result = MagicMock()
+        budget_result.data = []
+        supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value = budget_result
+
+        # No transactions
+        tx_result = MagicMock()
+        tx_result.data = []
+        supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.gte.return_value.lt.return_value.execute.return_value = tx_result
 
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get(
                 "/api/budgets/2026-04/summary",
                 headers={"Authorization": "Bearer faketoken"},
             )
-    assert response.status_code == 404
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["income"] == 0.0
+    assert data["categories"] == []
+    assert data["over_budget"] is False
+
+
+@pytest.mark.asyncio
+async def test_get_summary_without_budget_shows_unallocated_spending():
+    """No budget configured but transactions exist → returns spending with allocated=0."""
+    cat_id = CATEGORY_ID
+    fake_tx = {"category_id": cat_id, "amount": 500.0, "type": "expense"}
+    fake_cat = {"id": cat_id, "name": "Courses"}
+
+    with (
+        patch("app.core.auth.get_jwks_client") as mock_jwks,
+        patch("app.core.auth.jwt.decode", return_value=FAKE_CLAIMS),
+        patch("app.routers.budgets._get_household_id", return_value=HOUSEHOLD_ID),
+        patch("app.routers.budgets.get_supabase") as mock_supabase,
+    ):
+        _mock_auth(mock_jwks)
+        supabase = MagicMock()
+        mock_supabase.return_value = supabase
+
+        budget_result = MagicMock()
+        budget_result.data = []
+        supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value = budget_result
+
+        tx_result = MagicMock()
+        tx_result.data = [fake_tx]
+        supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.gte.return_value.lt.return_value.execute.return_value = tx_result
+
+        cat_result = MagicMock()
+        cat_result.data = [fake_cat]
+        supabase.table.return_value.select.return_value.in_.return_value.execute.return_value = cat_result
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get(
+                "/api/budgets/2026-04/summary",
+                headers={"Authorization": "Bearer faketoken"},
+            )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["income"] == 0.0
+    assert len(data["categories"]) == 1
+    cat = data["categories"][0]
+    assert cat["allocated"] == 0.0
+    assert cat["spent"] == 500.0
+    assert cat["remaining"] == -500.0
+    assert cat["category_name"] == "Courses"
 
 
 @pytest.mark.asyncio

@@ -58,19 +58,14 @@ export function BudgetClient() {
       });
       setCategories(cats);
       setSummary(sum);
-      if (sum) {
-        setIncome(String(sum.income));
-        const allocs: Record<string, string> = {};
-        for (const cat of sum.categories) {
-          if (cat.category_id && cat.allocated > 0) {
-            allocs[cat.category_id] = String(cat.allocated);
-          }
+      setIncome(String(sum.income));
+      const allocs: Record<string, string> = {};
+      for (const cat of sum.categories) {
+        if (cat.category_id && cat.allocated > 0) {
+          allocs[cat.category_id] = String(cat.allocated);
         }
-        setAllocations(allocs);
-      } else {
-        setIncome("0");
-        setAllocations({});
       }
+      setAllocations(allocs);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error("[BudgetClient] load error:", err);
@@ -100,7 +95,6 @@ export function BudgetClient() {
         await saveBudget(month, { income: incomeNum, allocations: allocationList });
         const updated = await getBudgetSummary(month);
         setSummary(updated);
-        toast.success("Budget enregistré");
       } catch {
         toast.error("Erreur lors de la sauvegarde");
       } finally {
@@ -242,8 +236,9 @@ export function BudgetClient() {
               const catSummary = summary?.categories.find((c) => c.category_id === cat.id);
               const allocated = parseFloat(allocations[cat.id] ?? "0") || 0;
               const spent = catSummary?.spent ?? 0;
-              const progress = allocated > 0 ? Math.min(spent / allocated, 1) : 0;
               const isOverSpent = allocated > 0 && spent > allocated;
+              const isUnallocated = allocated === 0 && spent > 0;
+              const progress = allocated > 0 ? Math.min(spent / allocated, 1) : (isUnallocated ? 1 : 0);
 
               return (
                 <div
@@ -277,7 +272,7 @@ export function BudgetClient() {
                       <div
                         className={cn(
                           "h-full rounded-full transition-all duration-300",
-                          isOverSpent ? "bg-destructive" : "bg-primary"
+                          isOverSpent ? "bg-destructive" : isUnallocated ? "bg-warning" : "bg-primary"
                         )}
                         style={{ width: `${progress * 100}%` }}
                       />
