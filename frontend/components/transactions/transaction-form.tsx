@@ -10,6 +10,7 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   CalendarIcon,
+  Package,
 } from "lucide-react";
 import { CATEGORY_ICONS } from "@/lib/category-icons";
 import { cn } from "@/lib/utils";
