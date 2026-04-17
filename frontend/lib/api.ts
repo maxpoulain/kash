@@ -45,16 +45,14 @@ export async function createTransaction(payload: CreateTransactionPayload): Prom
 }
 
 export async function getBudgetSummary(month: string): Promise<BudgetSummary | null> {
-  const [year, m] = month.split("-");
-  const res = await apiFetch(`/api/budgets/${year}/${m}/summary`);
+  const res = await apiFetch(`/api/budgets/${month}/summary`);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error("Failed to fetch budget summary");
   return res.json();
 }
 
 export async function saveBudget(month: string, payload: BudgetUpsert): Promise<BudgetOut> {
-  const [year, m] = month.split("-");
-  const res = await apiFetch(`/api/budgets/${year}/${m}`, {
+  const res = await apiFetch(`/api/budgets/${month}`, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
@@ -63,10 +61,8 @@ export async function saveBudget(month: string, payload: BudgetUpsert): Promise<
 }
 
 export async function copyBudgetFrom(targetMonth: string, sourceMonth: string): Promise<BudgetOut> {
-  const [targetYear, targetM] = targetMonth.split("-");
-  const [sourceYear, sourceM] = sourceMonth.split("-");
   const res = await apiFetch(
-    `/api/budgets/${targetYear}/${targetM}/copy-from/${sourceYear}/${sourceM}`,
+    `/api/budgets/${targetMonth}/copy-from/${sourceMonth}`,
     { method: "POST" }
   );
   if (!res.ok) throw new Error("Failed to copy budget");

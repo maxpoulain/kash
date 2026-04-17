@@ -136,7 +136,7 @@ describe("getBudgetSummary", () => {
 
     expect(result).toEqual(summary);
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/api/budgets/2026/04/summary"),
+      expect.stringContaining("/api/budgets/2026-04/summary"),
       expect.anything()
     );
   });
@@ -167,7 +167,7 @@ describe("saveBudget", () => {
 
     expect(result).toEqual(budget);
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/api/budgets/2026/04"),
+      expect.stringContaining("/api/budgets/2026-04"),
       expect.objectContaining({ method: "PUT", body: JSON.stringify(payload) })
     );
   });
@@ -189,7 +189,7 @@ describe("copyBudgetFrom", () => {
 
     expect(result).toEqual(budget);
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/api/budgets/2026/04/copy-from/2026/03"),
+      expect.stringContaining("/api/budgets/2026-04/copy-from/2026-03"),
       expect.objectContaining({ method: "POST" })
     );
   });
