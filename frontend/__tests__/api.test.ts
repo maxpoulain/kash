@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { getCategories, createTransaction, getTransactions } from "@/lib/api";
+import { getCategories, createTransaction, getTransactions, getBudgetSummary, saveBudget, copyBudgetFrom } from "@/lib/api";
 
 // Mock the Supabase client used by apiFetch
 vi.mock("@/lib/supabase/client", () => ({
@@ -114,5 +114,89 @@ describe("createTransaction", () => {
     await expect(
       createTransaction({ amount: 10, type: "expense", category_id: "uuid", date: "2026-04-15" })
     ).rejects.toThrow("Failed to create transaction");
+  });
+});
+
+describe("getBudgetSummary", () => {
+  const summary = {
+    month: "2026-04",
+    income: 3000,
+    total_allocated: 2500,
+    total_spent: 1200,
+    over_budget: false,
+    categories: [
+      { category_id: "cat-1", category_name: "Loyer", allocated: 1000, spent: 1000, remaining: 0 },
+    ],
+  };
+
+  it("returns summary on success", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => summary });
+
+    const result = await getBudgetSummary("2026-04");
+
+    expect(result).toEqual(summary);
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/budgets/2026/04/summary"),
+      expect.anything()
+    );
+  });
+
+  it("returns null on 404", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 404 });
+
+    const result = await getBudgetSummary("2026-04");
+
+    expect(result).toBeNull();
+  });
+
+  it("throws on non-404 error", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+
+    await expect(getBudgetSummary("2026-04")).rejects.toThrow("Failed to fetch budget summary");
+  });
+});
+
+describe("saveBudget", () => {
+  const payload = { income: 3000, allocations: [{ category_id: "cat-1", amount: 1000 }] };
+  const budget = { id: "b-1", household_id: "hh-1", month: "2026-04", income: 3000, over_budget: false, allocations: [], created_at: "", updated_at: "" };
+
+  it("sends PUT request and returns budget", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => budget });
+
+    const result = await saveBudget("2026-04", payload);
+
+    expect(result).toEqual(budget);
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/budgets/2026/04"),
+      expect.objectContaining({ method: "PUT", body: JSON.stringify(payload) })
+    );
+  });
+
+  it("throws on non-ok response", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 400 });
+
+    await expect(saveBudget("2026-04", payload)).rejects.toThrow("Failed to save budget");
+  });
+});
+
+describe("copyBudgetFrom", () => {
+  const budget = { id: "b-2", household_id: "hh-1", month: "2026-04", income: 2500, over_budget: false, allocations: [], created_at: "", updated_at: "" };
+
+  it("sends POST to copy-from endpoint", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => budget });
+
+    const result = await copyBudgetFrom("2026-04", "2026-03");
+
+    expect(result).toEqual(budget);
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/budgets/2026/04/copy-from/2026/03"),
+      expect.objectContaining({ method: "POST" })
+    );
+  });
+
+  it("throws on non-ok response", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 404 });
+
+    await expect(copyBudgetFrom("2026-04", "2026-03")).rejects.toThrow("Failed to copy budget");
   });
 });
