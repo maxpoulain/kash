@@ -20,7 +20,7 @@ export function BottomNav({ onAdd }: BottomNavProps) {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card md:hidden">
       <div className="mx-auto flex max-w-lg items-center justify-around p-2">
         {navItems.filter((i) => i.side === "left").map(({ href, label, icon: Icon }) => (
           <Link

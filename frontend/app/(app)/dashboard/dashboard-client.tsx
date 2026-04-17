@@ -21,7 +21,7 @@ export function DashboardClient() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-lg flex-col px-4 pb-24 pt-6">
+    <div className="mx-auto flex min-h-screen max-w-lg flex-col px-4 pb-24 pt-6 md:pb-6">
       <h1 className="mb-6 font-display text-2xl font-semibold">Mes transactions</h1>
       <TransactionList refreshKey={refreshKey} />
       <TransactionSheet
