@@ -4,6 +4,11 @@ feature: design-system
 
 # Update Transactions Page to Use Design System Components
 
+## Mockups
+
+- **Desktop**: `docs/mockups/desktop-transactions.html` — Ledger with filters
+- **Mobile Detail**: `docs/mockups/mobile-txn-detail.html` — Transaction detail + categorize
+
 ## Objectif
 Refactor the transactions page (transaction-list.tsx and related components) to fully adopt the Kash Design System components, tokens, and patterns established in the design-system-ideas folder.
 
@@ -45,6 +50,38 @@ Refactor the transactions page (transaction-list.tsx and related components) to 
 5. **Empty state**: Replace basic empty text with piggy companion illustration
 6. **Month navigation**: Use icon buttons (square variant) from design system
 7. **Amount display**: Use mono font with proper currency formatting
+
+## Implementation Changes
+
+### Updated `transaction-list.tsx`
+
+1. **Month Navigation**
+   - Icon buttons with `rounded-[10px]` square radius per design spec
+   - `font-display` with `tracking-tight` for month heading
+   - Consistent hover states with `hover:bg-muted`
+
+2. **Metric Cards**
+   - `rounded-2xl` border radius per design system
+   - Labels use `font-mono text-[10px] uppercase tracking-[0.15em]`
+   - Values use `font-display text-2xl` with `tracking-tight`
+   - Proper semantic colors: `text-warning` for expenses, `text-success` for income
+
+3. **Transaction List Items**
+   - Category icons in `rounded-[10px]` containers with tonal backgrounds
+   - Expense icons: `bg-pig/15 text-pig-deep`
+   - Income icons: `bg-accent-soft text-accent`
+   - Amounts use `font-mono tabular-nums tracking-tight`
+   - Date labels use `font-mono uppercase tracking-[0.12em]`
+
+4. **Empty State**
+   - Dashed border container (`border-dashed border-border`)
+   - Piggy mascot in muted rounded container (`bg-muted`)
+   - `font-display` heading with `tracking-tight`
+   - Max-width constraint for readability
+
+5. **Loading State**
+   - Added proper loading spinner in card container
+   - Consistent with design system card patterns
 
 ## Screenshots
 

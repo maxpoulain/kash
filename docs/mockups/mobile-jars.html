@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en" data-direction="balanced" data-fontpair="unified">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Kash · Jars</title>
+<link rel="stylesheet" href="../styles/tokens.css?v=4"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Familjen+Grotesk:wght@400;500;600&family=Bricolage+Grotesque:wght@400;500;600&family=Unbounded:wght@400;500;600&family=Space+Grotesk:wght@400;500&display=swap">
+<style>
+  html, body { margin: 0; padding: 0; background: var(--bg-sunk, #ece4d6); color: var(--ink); font-family: var(--font-sans); min-height: 100vh; }
+  html.dark body { background: #0f0d0b; }
+  .page-shell { display: flex; flex-direction: column; min-height: 100vh; }
+  .page-header {
+    padding: 18px 28px;
+    display: flex; align-items: center; justify-content: space-between; gap: 20px;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-elev);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .page-crumbs { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; color: var(--ink-3); text-transform: uppercase; }
+  .page-crumbs a { color: var(--ink-3); text-decoration: none; }
+  .page-crumbs a:hover { color: var(--ink); }
+  .page-crumbs .sep { opacity: 0.4; }
+  .page-title { font-family: var(--font-display); font-size: 20px; font-weight: 500; letter-spacing: -0.02em; }
+  .page-title .sub { font-family: var(--font-sans); font-size: 12px; color: var(--ink-3); margin-left: 10px; font-weight: 400; }
+  .dir-switch { display: flex; gap: 2px; background: var(--bg-sunk); border-radius: 999px; padding: 3px; font-family: var(--font-mono); }
+  .dir-switch button {
+    border: 0; background: transparent; padding: 6px 12px; border-radius: 999px;
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-2); cursor: pointer; font-family: inherit;
+  }
+  .dir-switch button[data-active="true"] { background: var(--ink); color: var(--bg); }
+  .stage { flex: 1; display: grid; place-items: center; padding: 40px 24px; }
+  .phone-shell {
+    width: 380px; height: 800px;
+    background: var(--bg);
+    border-radius: 46px;
+    box-shadow: 0 30px 80px rgba(20, 15, 8, 0.18), 0 0 0 10px #17140f, 0 0 0 11px rgba(0,0,0,0.3);
+    overflow: hidden;
+    position: relative;
+  }
+  .phone-shell::before {
+    content: ''; position: absolute;
+    top: 14px; left: 50%; transform: translateX(-50%);
+    width: 110px; height: 32px; border-radius: 24px;
+    background: #000; z-index: 100;
+  }
+  .phone-shell::after {
+    content: ''; position: absolute;
+    bottom: 8px; left: 50%; transform: translateX(-50%);
+    width: 124px; height: 4px; border-radius: 3px;
+    background: rgba(0,0,0,0.25); z-index: 100; pointer-events: none;
+  }
+  .phone-shell > div { height: 100%; }
+  .stage-controls { margin-top: 20px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; text-align: center; }
+  .desktop-stage { padding: 32px; display: block; }
+  .desktop-stage .window-wrap { max-width: 1320px; margin: 0 auto; }
+</style>
+</head>
+<body>
+<div class="page-shell">
+  <header class="page-header">
+    <div>
+      <div class="page-crumbs">
+        <a href="../Kash Mockups.html">Mockups</a>
+        <span class="sep">/</span>
+        <span>Mobile</span>
+      </div>
+      <div class="page-title" style="margin-top: 4px;">Jars <span class="sub">All savings goals</span></div>
+    </div>
+    <div class="dir-switch" id="dir">
+      <button data-k="safe">Safe</button>
+      <button data-k="balanced">Balanced</button>
+      <button data-k="bold">Bold</button>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <button id="darkTog" style="background: var(--bg-sunk); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: 11px; cursor: pointer; color: var(--ink); font-family: var(--font-mono); letter-spacing: 0.08em;">☀ LIGHT</button>
+      <a href="../Kash Mockups.html" style="text-decoration: none; color: var(--ink-2); font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px;">← ALL</a>
+    </div>
+  </header>
+  <main class="stage">
+    <div>
+      <div class="phone-shell">
+        <div id="root"></div>
+      </div>
+      <div class="stage-controls">Jars · 380 × 800</div>
+    </div>
+  </main>
+</div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="../components/primitives.jsx"></script>
+<script type="text/babel" src="../components/mobile-screens.jsx"></script>
+<script type="text/babel" src="../components/mobile-extra.jsx"></script>
+
+<script type="text/babel">
+const Comp = window.ScreenJars;
+ReactDOM.createRoot(document.getElementById('root')).render(<Comp/>);
+</script>
+
+<script>
+const saved = localStorage.getItem('kash_dir') || 'balanced';
+document.documentElement.setAttribute('data-direction', saved);
+const savedFont = localStorage.getItem('kash_font') || 'unified';
+document.documentElement.setAttribute('data-fontpair', savedFont);
+document.querySelectorAll('#dir button').forEach(b => {
+  b.dataset.active = String(b.dataset.k === saved);
+  b.addEventListener('click', () => {
+    const k = b.dataset.k;
+    document.documentElement.setAttribute('data-direction', k);
+    localStorage.setItem('kash_dir', k);
+    document.querySelectorAll('#dir button').forEach(x => x.dataset.active = String(x.dataset.k === k));
+  });
+});
+const dark = localStorage.getItem('kash_dark') === '1';
+document.documentElement.classList.toggle('dark', dark);
+const tog = document.getElementById('darkTog');
+tog.textContent = dark ? '☾ DARK' : '☀ LIGHT';
+tog.addEventListener('click', () => {
+  const d = !document.documentElement.classList.contains('dark');
+  document.documentElement.classList.toggle('dark', d);
+  localStorage.setItem('kash_dark', d ? '1' : '0');
+  tog.textContent = d ? '☾ DARK' : '☀ LIGHT';
+});
+</script>
+
+</body>
+</html>
