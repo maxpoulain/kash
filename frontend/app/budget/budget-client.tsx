@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { getCategories, getBudgetSummary, saveBudget, copyBudgetFrom } from "@/lib/api";
 import { CATEGORY_ICONS } from "@/lib/category-icons";
-import { BottomNav } from "@/components/nav/bottom-nav";
+import { AppLayout } from "@/components/layout/app-layout";
 import type { BudgetSummary, Category } from "@/types/api";
 
 function formatMonth(month: string): string {
@@ -138,8 +138,9 @@ export function BudgetClient() {
   const isCurrentMonth = month === currentMonth();
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-lg flex-col px-4 pb-24 pt-6">
-      <h1 className="mb-6 font-display text-2xl font-semibold">Budget</h1>
+    <AppLayout>
+    <div className="mx-auto flex min-h-screen max-w-2xl flex-col px-4 pb-28 pt-6 lg:px-8 lg:pb-10 lg:pt-8">
+      <h1 className="mb-6 font-display text-2xl font-medium tracking-tight">Budget</h1>
 
       {/* Month navigation */}
       <div className="mb-4 flex items-center justify-between">
@@ -297,7 +298,7 @@ export function BudgetClient() {
         </>
       )}
 
-      <BottomNav />
     </div>
+    </AppLayout>
   );
 }

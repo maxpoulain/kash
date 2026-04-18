@@ -100,15 +100,15 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
 
       {/* Monthly summary */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl bg-primary/10 p-3 text-center">
-          <p className="text-xs text-muted-foreground">Dépenses</p>
-          <p className="font-semibold text-primary">
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Dépenses</p>
+          <p className="mt-1 font-display text-xl font-medium tracking-tight text-primary">
             -{totalExpense.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}
           </p>
         </div>
-        <div className="rounded-xl bg-success/10 p-3 text-center">
-          <p className="text-xs text-muted-foreground">Revenus</p>
-          <p className="font-semibold text-success">
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Revenus</p>
+          <p className="mt-1 font-display text-xl font-medium tracking-tight text-success">
             +{totalIncome.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}
           </p>
         </div>
@@ -126,7 +126,7 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
           {transactions.map((t) => (
             <li
               key={t.id}
-              className="flex items-center justify-between rounded-xl bg-card px-4 py-3 ring-1 ring-border/50"
+              className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3"
             >
               <div className="flex items-center gap-3">
                 {(() => {
@@ -134,14 +134,14 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
                   return (
                     <>
                       <div className={cn(
-                        "w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
-                        t.type === "expense" ? "bg-primary/10 text-primary" : "bg-success/10 text-success"
+                        "h-9 w-9 shrink-0 rounded-[10px] flex items-center justify-center",
+                        t.type === "expense" ? "bg-primary/15 text-primary" : "bg-success/15 text-success"
                       )}>
-                        <Icon className="w-4 h-4" />
+                        <Icon className="h-4 w-4" />
                       </div>
                       <div className="flex flex-col gap-0.5">
                         <span className="text-sm font-medium">{name}</span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                           {new Date(t.date).toLocaleDateString("fr-FR")}
                           {t.note ? ` · ${t.note}` : ""}
                         </span>
@@ -152,7 +152,7 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
               </div>
               <span
                 className={cn(
-                  "text-sm font-semibold",
+                  "font-mono text-sm font-semibold",
                   t.type === "expense" ? "text-primary" : "text-success"
                 )}
               >

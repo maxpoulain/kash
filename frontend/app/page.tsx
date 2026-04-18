@@ -10,7 +10,7 @@ export default function Home() {
       <header className="border-b border-border/50 bg-card/50 px-4 py-4 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <div className="flex size-10 items-center justify-center rounded-[10px] bg-primary text-primary-foreground shadow-[inset_0_-2px_0_rgba(0,0,0,0.15)]">
               <PiggyBank className="size-6" />
             </div>
             <span className="font-display text-2xl font-semibold">Kash</span>
@@ -157,7 +157,7 @@ export default function Home() {
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <div className="flex items-center gap-2">
-              <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <div className="flex size-8 items-center justify-center rounded-[8px] bg-primary text-primary-foreground shadow-[inset_0_-2px_0_rgba(0,0,0,0.15)]">
                 <PiggyBank className="size-5" />
               </div>
               <span className="font-display text-lg font-semibold">Kash</span>

@@ -272,13 +272,9 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
 
           <Button
             type="submit"
+            variant={isExpense ? "piggy" : "secondary"}
             disabled={isSubmitting}
-            className={cn(
-              "w-full h-14 md:h-11 rounded-full text-lg md:text-base font-semibold transition-all border-0",
-              isExpense
-                ? "bg-primary hover:bg-primary/90"
-                : "bg-success hover:bg-success/90 text-white"
-            )}
+            className="w-full h-14 md:h-11 text-lg md:text-base"
           >
             {isSubmitting ? (
               <div className="flex items-center gap-2">

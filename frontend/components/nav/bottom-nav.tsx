@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, PiggyBank, Plus } from "lucide-react";
+import { LayoutDashboard, PiggyBank, Plus, BarChart3, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BottomNavProps {
@@ -15,49 +15,44 @@ export function BottomNav({ onAdd }: BottomNavProps) {
   const handleAdd = onAdd ?? (() => router.push("/dashboard?add=1"));
 
   const navItems = [
-    { href: "/dashboard", label: "Transactions", icon: LayoutDashboard, side: "left" as const },
-    { href: "/budget", label: "Budget", icon: PiggyBank, side: "right" as const },
+    { href: "/dashboard", label: "Home", icon: LayoutDashboard },
+    { href: "/budget", label: "Budget", icon: PiggyBank },
+    null, // add button placeholder
+    { href: "/budget#stats", label: "Stats", icon: BarChart3 },
+    { href: "/dashboard#profile", label: "Profile", icon: User },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card">
-      <div className="mx-auto flex max-w-lg items-center justify-around p-2">
-        {navItems.filter((i) => i.side === "left").map(({ href, label, icon: Icon }) => (
+    <nav className="fixed bottom-3 left-3 right-3 z-50 flex items-center justify-around rounded-full bg-foreground px-3 py-2.5 shadow-[0_12px_30px_-10px_rgba(0,0,0,0.3)] lg:hidden">
+      {navItems.map((item, i) => {
+        if (!item) {
+          return (
+            <button
+              key="add"
+              onClick={handleAdd}
+              aria-label="Ajouter une transaction"
+              className="-mt-7 flex h-12 w-12 items-center justify-center rounded-full border-2 border-foreground bg-primary text-foreground shadow-[0_8px_20px_-6px_rgba(0,0,0,0.3),inset_0_-3px_0_rgba(0,0,0,0.2)] transition-transform hover:scale-105 active:scale-95"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
+          );
+        }
+        const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href.split("#")[0]) && !item.href.includes("#"));
+        return (
           <Link
-            key={href}
-            href={href}
+            key={item.href}
+            href={item.href}
             className={cn(
-              "flex flex-col items-center gap-1 rounded-xl px-4 py-2 text-xs font-medium transition-all",
-              pathname === href ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              "flex flex-col items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-all",
+              isActive
+                ? "bg-background text-foreground"
+                : "text-background/55 hover:text-background/80"
             )}
           >
-            <Icon className="h-5 w-5" />
-            <span>{label}</span>
+            <item.icon className="h-[18px] w-[18px]" />
           </Link>
-        ))}
-
-        <button
-          onClick={handleAdd}
-          aria-label="Ajouter une transaction"
-          className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md transition-transform hover:scale-105 active:scale-95"
-        >
-          <Plus className="h-6 w-6" />
-        </button>
-
-        {navItems.filter((i) => i.side === "right").map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className={cn(
-              "flex flex-col items-center gap-1 rounded-xl px-4 py-2 text-xs font-medium transition-all",
-              pathname === href ? "text-primary" : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Icon className="h-5 w-5" />
-            <span>{label}</span>
-          </Link>
-        ))}
-      </div>
+        );
+      })}
     </nav>
   );
 }
