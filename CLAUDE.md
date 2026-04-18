@@ -5,6 +5,7 @@
 - Never add `Co-Authored-By` to commit messages
 - Keep `CLAUDE.md` and `docs/` in sync
 - Each commit is a release candidate - keep main deployable
+- **Never merge a PR without explicit user approval** — always create the PR, then stop and wait for the user to say "merge it"
 
 ## Operational CLI Defaults
 
