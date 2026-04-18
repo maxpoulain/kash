@@ -126,3 +126,6 @@ logs
 *.sqlite
 *.sqlite3
 .env*.local
+
+# Design system ideas (local scratchpad)
+design-system-ideas/
