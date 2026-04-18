@@ -401,7 +401,7 @@ function SectionPiggy() {
           <Piggy size={70} mood="neutral" fill={0.3} />
           <div>
             <p className="font-display text-base font-medium">Careful…</p>
-            <p className="text-xs" style={{ color: "var(--warning)" }}>You're at 83% of Restaurants budget.</p>
+            <p className="text-xs" style={{ color: "var(--warning)" }}>{"You're"} at 83% of Restaurants budget.</p>
           </div>
         </div>
       </div>
@@ -551,7 +551,7 @@ function SectionFeedback() {
       <div className="flex flex-col items-center rounded-2xl border border-dashed border-border bg-card py-10 px-5 text-center">
         <Piggy size={110} mood="sleep" fill={0} />
         <h3 className="mt-2 font-display text-xl font-medium tracking-tight">Your piggy is hungry.</h3>
-        <p className="mt-1.5 max-w-xs text-[13px] text-muted-foreground">Create your first jar and drop a coin in. Small amounts count — that's the whole point.</p>
+        <p className="mt-1.5 max-w-xs text-[13px] text-muted-foreground">{"Create your first jar and drop a coin in. Small amounts count — that's the whole point."}</p>
         <button className="mt-5 rounded-full px-5 py-3 font-semibold text-sm cursor-pointer shadow-[inset_0_-3px_0_var(--pig-shadow)]" style={{ background: "var(--pig)", color: "var(--foreground)" }}>
           Create your first jar
         </button>
@@ -590,7 +590,7 @@ function SectionModals() {
               <h3 className="font-display text-xl font-medium tracking-tight">Confirm transfer</h3>
               <button className="flex h-7 w-7 items-center justify-center rounded-lg bg-muted text-sm cursor-pointer">×</button>
             </div>
-            <p className="mb-4 text-[13px] text-muted-foreground">You're moving money between jars.</p>
+            <p className="mb-4 text-[13px] text-muted-foreground">{"You're"} moving money between jars.</p>
             <div className="mb-4 flex items-center justify-between rounded-xl bg-muted p-3.5">
               <div><p className="font-mono text-[10px] text-muted-foreground">FROM</p><p className="text-[13px] font-medium">Emergency</p></div>
               <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
@@ -697,13 +697,13 @@ function SectionType() {
         <div>
           <p className="mb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Display — Fraunces</p>
           <p className="font-display text-5xl font-medium leading-tight tracking-tight">$12,847.30</p>
-          <p className="mt-1 font-display text-3xl font-medium tracking-tight">Save like it's a game.</p>
+          <p className="mt-1 font-display text-3xl font-medium tracking-tight">{"Save like it's a game."}</p>
           <p className="mt-1 font-display text-xl font-medium">Thrifty Saver · Level 7</p>
         </div>
         <div>
           <p className="mb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Body — DM Sans</p>
           <p className="text-base leading-relaxed text-foreground">Track your spending, build savings habits, and reach your financial goals. Every coin counts.</p>
-          <p className="mt-1 text-sm text-muted-foreground">Small amounts add up — that's the whole point of Kash.</p>
+          <p className="mt-1 text-sm text-muted-foreground">{"Small amounts add up — that's the whole point of Kash."}</p>
         </div>
         <div>
           <p className="mb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Mono — JetBrains Mono</p>
@@ -754,7 +754,7 @@ export default function DesignSystemPage() {
             <Piggy size={60} mood="happy" fill={0.7} />
             <div>
               <p className="font-display text-lg font-medium">Kash</p>
-              <p className="text-xs text-muted-foreground">Save like it's a game. Spend like a grown-up.</p>
+              <p className="text-xs text-muted-foreground">{"Save like it's a game. Spend like a grown-up."}</p>
             </div>
           </div>
           <p className="font-mono text-[11px] text-muted-foreground">DS · v0.2 · Fraunces · DM Sans · JetBrains Mono</p>

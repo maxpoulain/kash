@@ -43,33 +43,24 @@ export function DashboardClient() {
         </div>
 
         {/* Hero summary card */}
-        <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-muted to-card p-5">
-          <div className="flex items-center justify-between gap-4">
+        <div className="relative overflow-hidden rounded-[20px] p-5" style={{ background: 'linear-gradient(135deg, var(--pig) 0%, var(--coin) 160%)' }}>
+          <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-                Piggy Total
+              <p className="font-mono text-[10px] uppercase tracking-widest" style={{ color: 'var(--pig-shadow)' }}>
+                Total savings
               </p>
-              <div className="mt-1 font-display text-4xl font-medium leading-none tracking-tight">
+              <div className="mt-1.5 font-display text-[44px] font-medium leading-none tracking-tight">
                 —
               </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Track your transactions below
-              </p>
+              <span className="mt-2 inline-block rounded-full bg-foreground px-2.5 py-0.5 text-xs font-semibold text-background">
+                Track below
+              </span>
             </div>
-            {/* Piggy bank icon */}
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-primary/20">
-              <KashLogo size="lg" variant="default" />
+            {/* Piggy mascot */}
+            <div className="shrink-0 -mb-1">
+              <KashLogo size="xl" variant="default" />
             </div>
           </div>
-
-          {/* Decorative sparkle */}
-          <svg
-            className="absolute right-24 top-4 opacity-40"
-            width="40" height="30" viewBox="0 0 40 30" fill="none"
-          >
-            <path d="M20 5 L21.8 10.2 L27 12 L21.8 13.8 L20 19 L18.2 13.8 L13 12 L18.2 10.2 Z" fill="currentColor" className="text-primary" />
-            <path d="M32 15 L32.9 17.5 L35.5 18.5 L32.9 19.5 L32 22 L31.1 19.5 L28.5 18.5 L31.1 17.5 Z" fill="currentColor" className="text-primary/60" />
-          </svg>
         </div>
 
         {/* Transaction list */}

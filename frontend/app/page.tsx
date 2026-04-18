@@ -73,7 +73,7 @@ export default function Home() {
 
               <Card className="border-border/50">
                 <CardHeader>
-                  <div className="mb-3 flex size-12 items-center justify-center rounded-xl bg-accent/20 text-accent-foreground">
+                  <div className="mb-3 flex size-12 items-center justify-center rounded-xl bg-accent/15 text-accent">
                     <Target className="size-6" />
                   </div>
                   <CardTitle>Set Goals</CardTitle>

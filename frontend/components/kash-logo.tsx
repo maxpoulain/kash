@@ -90,8 +90,8 @@ function KashLogoDefault({ className }: { className?: string }) {
       <circle cx="44" cy="30" r="0.8" className="fill-card" />
       
       {/* Coin slot on top - signature element */}
-      <rect x="24" y="20" width="12" height="4" rx="2" className="fill-accent" />
-      <rect x="26" y="21.5" width="8" height="1" rx="0.5" className="fill-accent-foreground/40" />
+      <rect x="24" y="20" width="12" height="4" rx="2" className="fill-coin" />
+      <rect x="26" y="21.5" width="8" height="1" rx="0.5" className="fill-coin-foreground/40" />
       
       {/* Curly tail */}
       <path 
@@ -105,8 +105,8 @@ function KashLogoDefault({ className }: { className?: string }) {
       <ellipse cx="46" cy="40" rx="3" ry="2" className="fill-chart-5/40" />
       
       {/* Coin going in - adds dynamism */}
-      <circle cx="30" cy="14" r="4" className="fill-accent" />
-      <text x="30" y="16" textAnchor="middle" className="fill-accent-foreground/60" fontSize="5" fontWeight="bold">$</text>
+      <circle cx="30" cy="14" r="4" className="fill-coin" />
+      <text x="30" y="16" textAnchor="middle" className="fill-coin-foreground/60" fontSize="5" fontWeight="bold">$</text>
     </svg>
   )
 }
@@ -140,7 +140,7 @@ function KashLogoMinimal({ className }: { className?: string }) {
       <circle cx="41" cy="32" r="2.5" className="fill-foreground/70" />
       
       {/* Coin slot */}
-      <rect x="25" y="22" width="10" height="3" rx="1.5" className="fill-accent" />
+      <rect x="25" y="22" width="10" height="3" rx="1.5" className="fill-coin" />
       
       {/* Tail - simplified */}
       <path d="M14 36 C10 36, 9 32, 11 30" className="stroke-primary-foreground/95 fill-none" strokeWidth="2.5" strokeLinecap="round" />
@@ -202,7 +202,7 @@ function KashLogoFull({ className }: { className?: string }) {
       
       {/* Coin slot with gradient */}
       <rect x="23" y="18" width="14" height="5" rx="2.5" fill="url(#kash-coin-gradient)" />
-      <rect x="26" y="19.5" width="8" height="2" rx="1" className="fill-accent-foreground/30" />
+      <rect x="26" y="19.5" width="8" height="2" rx="1" className="fill-coin-foreground/30" />
       
       {/* Sparkle on slot */}
       <circle cx="35" cy="19" r="1" className="fill-white/60" />
@@ -222,9 +222,9 @@ function KashLogoFull({ className }: { className?: string }) {
       <path d="M48 44 Q51 46, 54 44" className="stroke-primary/40" strokeWidth="1" strokeLinecap="round" fill="none" />
       
       {/* Coin with shine */}
-      <circle cx="30" cy="12" r="5" className="fill-accent" />
+      <circle cx="30" cy="12" r="5" className="fill-coin" />
       <circle cx="30" cy="12" r="3.5" className="fill-coin/80" stroke="none" />
-      <text x="30" y="14" textAnchor="middle" className="fill-accent-foreground/70" fontSize="6" fontWeight="bold">$</text>
+      <text x="30" y="14" textAnchor="middle" className="fill-coin-foreground/70" fontSize="6" fontWeight="bold">$</text>
       <ellipse cx="28" cy="10" rx="2" ry="1" className="fill-white/40" />
     </svg>
   )
@@ -333,7 +333,7 @@ export function KashFavicon({ className }: { className?: string }) {
       {/* Eye */}
       <circle cx="21" cy="16" r="1.5" className="fill-foreground/70" />
       {/* Coin slot */}
-      <rect x="11" y="10" width="6" height="2" rx="1" className="fill-accent" />
+      <rect x="11" y="10" width="6" height="2" rx="1" className="fill-coin" />
       {/* Legs */}
       <rect x="8" y="23" width="3" height="4" rx="1.5" className="fill-primary-foreground/95" />
       <rect x="17" y="23" width="3" height="4" rx="1.5" className="fill-primary-foreground/95" />
