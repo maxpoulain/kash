@@ -6,6 +6,7 @@ import { TransactionSheet } from "@/components/transactions/transaction-sheet";
 import { TransactionList } from "@/components/transactions/transaction-list";
 import { AppLayout } from "@/components/layout/app-layout";
 import { KashLogo } from "@/components/kash-logo";
+import { Piggy } from "@/components/kash-piggy";
 
 export function DashboardClient() {
   const [refreshKey, setRefreshKey] = useState(0);
@@ -37,28 +38,48 @@ export function DashboardClient() {
               My finances
             </h1>
           </div>
+          {/* Mobile logo — KashLogo for brand mark */}
           <div className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-border bg-card lg:hidden">
             <KashLogo size="xs" />
           </div>
         </div>
 
-        {/* Hero summary card */}
-        <div className="relative overflow-hidden rounded-[20px] p-5" style={{ background: 'linear-gradient(135deg, var(--pig) 0%, var(--coin) 160%)' }}>
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <p className="font-mono text-[10px] uppercase tracking-widest" style={{ color: 'var(--pig-shadow)' }}>
-                Total savings
+        {/* Hero card — pig-to-gold gradient per design spec */}
+        <div
+          className="relative overflow-hidden rounded-[20px] p-5"
+          style={{ background: "linear-gradient(135deg, var(--pig) 0%, var(--gold) 160%)" }}
+        >
+          {/* Sparkles */}
+          <svg
+            className="absolute right-24 top-4 opacity-60"
+            width="80" height="60" viewBox="0 0 80 60" fill="none"
+            aria-hidden
+          >
+            <path d="M40 10 L42 16 L48 18 L42 20 L40 26 L38 20 L32 18 L38 16 Z" fill="white" opacity="0.7" />
+            <path d="M60 30 L61 33 L64 34 L61 35 L60 38 L59 35 L56 34 L59 33 Z" fill="white" opacity="0.5" />
+            <circle cx="20" cy="25" r="2" fill="white" opacity="0.5" />
+          </svg>
+
+          <div className="flex items-end justify-between gap-4">
+            <div className="min-w-0 pb-1">
+              <p
+                className="font-mono text-[11px] uppercase tracking-widest"
+                style={{ color: "var(--pig-shadow)" }}
+              >
+                Piggy total
               </p>
-              <div className="mt-1.5 font-display text-[44px] font-medium leading-none tracking-tight">
+              <div className="mt-1 font-display text-[42px] font-medium leading-none tracking-tight">
                 —
               </div>
-              <span className="mt-2 inline-block rounded-full bg-foreground px-2.5 py-0.5 text-xs font-semibold text-background">
-                Track below
-              </span>
+              <div className="mt-2.5 flex items-center gap-2">
+                <span className="rounded-full bg-foreground px-2.5 py-0.5 text-[11px] font-semibold text-background">
+                  Track below
+                </span>
+              </div>
             </div>
-            {/* Piggy mascot */}
-            <div className="shrink-0 -mb-1">
-              <KashLogo size="xl" variant="default" />
+            {/* Piggy mascot — exact design spec */}
+            <div className="-mb-2 shrink-0">
+              <Piggy size={110} mood="happy" fill={0.72} coin />
             </div>
           </div>
         </div>

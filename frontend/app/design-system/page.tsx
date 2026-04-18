@@ -9,6 +9,7 @@ import {
   Car, ArrowUpRight, ArrowDownRight, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Piggy as PiggyMascot, PiggyMark } from "@/components/kash-piggy";
 
 // ─── Layout helpers ───────────────────────────────────────────────────────────
 function Section({ num, title, desc, children }: {
@@ -48,46 +49,8 @@ function Spec({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ─── Piggy SVG (side-profile) ─────────────────────────────────────────────────
-function Piggy({ size = 120, mood = "happy", fill = 0.5, coin = false }: {
-  size?: number; mood?: string; fill?: number; coin?: boolean;
-}) {
-  const W = 240, H = 200;
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} width={size} height={(size * H) / W} aria-hidden>
-      <ellipse cx="120" cy="186" rx="82" ry="6" fill="var(--pig-shadow)" opacity="0.18" />
-      <rect x="66" y="140" width="22" height="36" rx="6" fill="var(--pig-deep)" />
-      <rect x="154" y="140" width="22" height="36" rx="6" fill="var(--pig-deep)" />
-      <rect x="82" y="140" width="22" height="38" rx="6" fill="var(--pig)" />
-      <rect x="140" y="140" width="22" height="38" rx="6" fill="var(--pig)" />
-      <path d="M 36 110 C 36 72, 78 50, 124 50 C 176 50, 214 76, 214 114 C 214 146, 186 160, 152 160 L 86 160 C 58 160, 36 146, 36 120 Z" fill="var(--pig)" />
-      <ellipse cx="40" cy="112" rx="22" ry="18" fill="var(--pig)" />
-      <ellipse cx="34" cy="112" rx="12" ry="10" fill="var(--pig-deep)" opacity="0.55" />
-      <circle cx="30" cy="108" r="2.2" fill="var(--pig-shadow)" />
-      <circle cx="30" cy="116" r="2.2" fill="var(--pig-shadow)" />
-      {mood === "happy" ? (
-        <path d="M 72 96 q 6 -6 12 0" stroke="var(--pig-shadow)" strokeWidth="3" fill="none" strokeLinecap="round" />
-      ) : mood === "sleep" ? (
-        <path d="M 70 96 h 16" stroke="var(--pig-shadow)" strokeWidth="3" fill="none" strokeLinecap="round" />
-      ) : (
-        <circle cx="78" cy="96" r="3" fill="var(--pig-shadow)" />
-      )}
-      <circle cx="66" cy="112" r="5" fill="var(--pig-deep)" opacity="0.35" />
-      <path d="M 98 56 L 118 52 L 108 78 Z" fill="var(--pig-deep)" />
-      <rect x="116" y="44" width="36" height="7" rx="3.5" fill="var(--pig-shadow)" />
-      <path d="M 214 110 q 14 -2 14 -14 q 0 -10 -10 -10" stroke="var(--pig-deep)" strokeWidth="5" fill="none" strokeLinecap="round" />
-      <clipPath id="pigWin"><rect x="78" y="98" width="80" height="50" rx="24" /></clipPath>
-      <rect x="78" y="98" width="80" height="50" rx="24" fill="var(--muted)" opacity="0.5" />
-      <g clipPath="url(#pigWin)">
-        <rect x="78" y={148 - 50 * fill} width="80" height={50 * fill} fill="var(--coin)" />
-      </g>
-      <rect x="78" y="98" width="80" height="50" rx="24" fill="none" stroke="var(--pig-shadow)" strokeWidth="1.5" opacity="0.3" />
-      {coin && (
-        <circle cx="134" cy="28" r="8" fill="var(--coin)" stroke="var(--foreground)" strokeWidth="1.5" />
-      )}
-    </svg>
-  );
-}
+// Re-export shared mascot as local alias to keep JSX unchanged below
+const Piggy = PiggyMascot;
 
 // ─── 01 Buttons ───────────────────────────────────────────────────────────────
 function SectionButtons() {
@@ -382,7 +345,7 @@ function SectionPiggy() {
         ].map((p, i) => (
           <div key={i} className="rounded-2xl border border-border bg-card p-5 text-center">
             <div className="mb-3 flex items-center justify-center rounded-xl bg-muted py-4">
-              <Piggy size={110} mood={p.m} fill={p.fill} coin={!!p.coin} />
+              <Piggy size={110} mood={p.m as "happy" | "neutral" | "sleep"} fill={p.fill} coin={!!p.coin} />
             </div>
             <p className="font-display text-base font-medium">{p.label}</p>
             <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{p.sub}</p>
@@ -482,7 +445,7 @@ function SectionNav() {
           <div className="relative flex w-full max-w-[300px] items-center justify-around rounded-full bg-foreground px-3.5 py-2.5 shadow-2xl">
             <div className="flex items-center justify-center rounded-full bg-background p-2"><Home className="h-[18px] w-[18px]" /></div>
             <div className="flex items-center justify-center p-2 opacity-55 text-background"><PiggyBank className="h-[18px] w-[18px]" /></div>
-            <div className="-mt-7 flex h-11 w-11 items-center justify-center rounded-full border-2 border-foreground shadow-[inset_0_-3px_0_var(--pig-shadow)]" style={{ background: "var(--pig)", color: "var(--foreground)" }}>
+            <div className="-mt-7 flex h-11 w-11 items-center justify-center rounded-full border-2 border-background shadow-[inset_0_-3px_0_var(--pig-shadow)]" style={{ background: "var(--pig)", color: "var(--foreground)" }}>
               <Plus className="h-5 w-5" strokeWidth={2.2} />
             </div>
             <div className="flex items-center justify-center p-2 opacity-55 text-background"><BarChart3 className="h-[18px] w-[18px]" /></div>
@@ -493,10 +456,10 @@ function SectionNav() {
         {/* Sidebar demo */}
         <div className="flex flex-col gap-1 rounded-2xl bg-muted p-4">
           <div className="mb-3.5 flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: "var(--pig)" }}>
-              <PiggyBank className="h-4 w-4" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-[10px]" style={{ background: "var(--pig)", boxShadow: "inset 0 -2px 0 var(--pig-shadow)" }}>
+              <PiggyMark size={20} />
             </div>
-            <span className="font-display text-lg font-semibold">Kash</span>
+            <span className="font-display text-[22px] font-semibold leading-none tracking-tight">Kash</span>
           </div>
           {[
             { icon: Home, l: "Dashboard", active: true },

@@ -104,39 +104,39 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
 
   return (
     <div className="bg-background">
-      {/* Gradient header */}
-      <CardHeader
-        className={cn(
-          "pb-6 pt-5 md:pb-4 md:pt-4 transition-colors duration-500",
-          isExpense
-            ? "bg-gradient-to-br from-primary/90 to-primary"
-            : "bg-gradient-to-br from-success/90 to-success"
-        )}
-      >
-        <CardTitle className="text-primary-foreground font-display text-xl mb-3 md:mb-2">
+      <CardHeader className="pb-4 pt-5">
+        <CardTitle className="font-display text-xl mb-3">
           Nouvelle transaction
         </CardTitle>
 
-        {/* Type toggle */}
-        <div className="flex gap-2 p-1.5 bg-white/20 backdrop-blur-sm rounded-2xl">
-          {(["expense", "income"] as TransactionType[]).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setValue("type", t)}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-all",
-                selectedType === t
-                  ? "bg-white shadow-lg " + (t === "expense" ? "text-primary" : "text-success")
-                  : "text-white/80 hover:text-white hover:bg-white/10"
-              )}
-            >
-              {t === "expense"
-                ? <ArrowDownRight className="w-5 h-5" />
-                : <ArrowUpRight className="w-5 h-5" />}
-              <span>{t === "expense" ? "Dépense" : "Revenu"}</span>
-            </button>
-          ))}
+        {/* Type toggle — pill on muted bg, warn orange for expense per design spec */}
+        <div className="grid grid-cols-2 gap-2 rounded-2xl bg-muted p-1">
+          {(["expense", "income"] as TransactionType[]).map((t) => {
+            const isActive = selectedType === t;
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setValue("type", t)}
+                className={cn(
+                  "flex items-center justify-center gap-2 rounded-xl py-3 text-[13px] font-semibold transition-all",
+                  isActive
+                    ? t === "expense"
+                      ? "text-white"
+                      : "text-white"
+                    : "text-foreground/50 hover:text-foreground/70"
+                )}
+                style={isActive ? {
+                  background: t === "expense" ? "var(--warning)" : "var(--accent)",
+                } : {}}
+              >
+                {t === "expense"
+                  ? <ArrowDownRight className="w-4 h-4" />
+                  : <ArrowUpRight className="w-4 h-4" />}
+                <span>{t === "expense" ? "Dépense" : "Revenu"}</span>
+              </button>
+            );
+          })}
         </div>
       </CardHeader>
 
@@ -272,9 +272,9 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
 
           <Button
             type="submit"
-            variant={isExpense ? "piggy" : "secondary"}
+            variant="default"
             disabled={isSubmitting}
-            className="w-full h-14 md:h-11 text-lg md:text-base"
+            className="w-full h-14 md:h-11 rounded-2xl text-lg md:text-base"
           >
             {isSubmitting ? (
               <div className="flex items-center gap-2">
