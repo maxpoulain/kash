@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, PiggyBank, Coins, BarChart3, Flame, Plus } from "lucide-react";
+import { LayoutDashboard, PiggyBank, Coins, BarChart3, Trophy, Zap, Plus, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { KashLogo } from "@/components/kash-logo";
+import { PiggyMark } from "@/components/kash-piggy";
 
 interface SidebarProps {
   onAdd?: () => void;
@@ -16,19 +16,27 @@ const mainNav = [
   { href: "/budget#stats", label: "Insights", icon: BarChart3 },
 ];
 
+const playNav = [
+  { href: "/dashboard", label: "Achievements", icon: Trophy },
+  { href: "/dashboard", label: "Challenges", icon: Zap, badge: 3 },
+];
+
 export function Sidebar({ onAdd }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const handleAdd = onAdd ?? (() => router.push("/dashboard?add=1"));
 
   return (
-    <aside className="hidden w-[220px] shrink-0 flex-col gap-1.5 border-r border-border bg-muted p-5 lg:flex">
+    <aside className="hidden w-[220px] shrink-0 flex-col gap-1 border-r border-border bg-muted p-5 lg:flex">
       {/* Logo */}
-      <div className="mb-6 flex items-center gap-2.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-primary shadow-[inset_0_-2px_0_rgba(0,0,0,0.15)]">
-          <KashLogo size="xs" />
+      <div className="mb-6 flex items-center gap-2">
+        <div
+          className="flex h-8 w-8 items-center justify-center rounded-[10px]"
+          style={{ background: "var(--pig)", boxShadow: "inset 0 -2px 0 var(--pig-shadow)" }}
+        >
+          <PiggyMark size={20} />
         </div>
-        <span className="font-display text-[22px] font-semibold tracking-tight">Kash</span>
+        <span className="font-display text-[22px] font-semibold leading-none tracking-tight">Kash</span>
       </div>
 
       {/* Main nav */}
@@ -54,20 +62,44 @@ export function Sidebar({ onAdd }: SidebarProps) {
         );
       })}
 
-      {/* Add transaction button */}
+      {/* Add transaction */}
       <button
         onClick={handleAdd}
-        className="mt-2 flex items-center gap-2.5 rounded-[10px] px-2.5 py-[9px] text-[13px] font-medium text-foreground/60 transition-colors hover:bg-foreground/5 hover:text-foreground"
+        className="mt-1 flex items-center gap-2.5 rounded-[10px] px-2.5 py-[9px] text-[13px] font-medium text-foreground/60 transition-colors hover:bg-foreground/5 hover:text-foreground"
       >
         <Plus className="h-4 w-4 shrink-0" />
         Add transaction
       </button>
 
+      {/* Play nav */}
+      <p className="mb-1 mt-4 px-2.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+        Play
+      </p>
+      {playNav.map(({ href, label, icon: Icon, badge }) => (
+        <Link
+          key={label}
+          href={href}
+          className="flex items-center gap-2.5 rounded-[10px] px-2.5 py-[9px] text-[13px] font-medium text-foreground/60 transition-colors hover:bg-foreground/5 hover:text-foreground"
+        >
+          <Icon className="h-4 w-4 shrink-0" />
+          {label}
+          {badge != null && (
+            <span className="ml-auto rounded-full bg-warning px-1.5 py-0.5 font-mono text-[10px] font-bold leading-none text-white">
+              {badge}
+            </span>
+          )}
+        </Link>
+      ))}
+
       {/* Streak card */}
-      <div className="relative mt-auto overflow-hidden rounded-2xl bg-primary p-3">
+      <div className="relative mt-auto overflow-hidden rounded-2xl p-3" style={{ background: "var(--pig)" }}>
         <p className="font-display text-sm font-semibold leading-tight">Streak on fire</p>
-        <p className="mt-0.5 text-[11px] text-primary-foreground/60">Keep saving every day.</p>
-        <Flame className="absolute -bottom-1 -right-1 h-10 w-10 opacity-30" strokeWidth={1.5} />
+        <p className="mt-0.5 text-[11px]" style={{ color: "var(--pig-shadow)" }}>28 days of saving. Keep it going.</p>
+        <Flame
+          className="absolute -bottom-1 -right-1 h-10 w-10 opacity-60"
+          strokeWidth={1.5}
+          style={{ color: "var(--pig-shadow)" }}
+        />
       </div>
     </aside>
   );
