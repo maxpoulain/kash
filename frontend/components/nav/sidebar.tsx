@@ -1,70 +1,132 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, PiggyBank, Plus } from "lucide-react";
+import { usePathname } from "next/navigation";
+import {
+  LayoutDashboard,
+  PiggyBank,
+  ArrowLeftRight,
+  TrendingUp,
+  BarChart3,
+  Trophy,
+  Zap,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PiggyMark } from "@/components/kash-piggy";
+
+const mainNav = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/jars", label: "Jars", icon: PiggyBank },
+  { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
+  { href: "/assets", label: "Assets", icon: TrendingUp },
+  { href: "/insights", label: "Insights", icon: BarChart3 },
+];
+
+const playNav = [
+  { href: "/achievements", label: "Achievements", icon: Trophy },
+  { href: "/challenges", label: "Challenges", icon: Zap, badge: 3 },
+];
 
 interface SidebarProps {
   onAdd?: () => void;
 }
 
-const mainNav = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/budget", label: "Budget", icon: PiggyBank },
-];
-
 export function Sidebar({ onAdd }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
-  const handleAdd = onAdd ?? (() => router.push("/dashboard?add=1"));
 
   return (
-    <aside className="hidden w-[220px] shrink-0 flex-col gap-1 border-r border-border bg-muted p-5 lg:flex">
+    <aside className="hidden w-[240px] shrink-0 flex-col border-r border-border bg-background lg:flex">
       {/* Logo */}
-      <div className="mb-6 flex items-center gap-2">
+      <div className="flex items-center gap-3 px-5 py-5">
         <div
-          className="flex h-8 w-8 items-center justify-center rounded-[10px]"
-          style={{ background: "var(--pig)", boxShadow: "inset 0 -2px 0 var(--pig-shadow)" }}
+          className="flex h-9 w-9 items-center justify-center rounded-xl"
+          style={{
+            background: "var(--pig)",
+            boxShadow: "inset 0 -2px 0 var(--pig-shadow)",
+          }}
         >
-          <PiggyMark size={20} />
+          <PiggyMark size={22} />
         </div>
-        <span className="font-display text-[22px] font-semibold leading-none tracking-tight">Kash</span>
+        <span className="font-display text-2xl font-semibold tracking-tight">
+          Kash
+        </span>
       </div>
 
-      {/* Main nav */}
-      <p className="mb-1 px-2.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-        Main
-      </p>
-      {mainNav.map(({ href, label, icon: Icon }) => {
-        const isActive = pathname === href || (pathname.startsWith(href.split("#")[0]) && !href.includes("#") && href !== "/");
-        return (
-          <Link
-            key={href}
-            href={href}
-            className={cn(
-              "flex items-center gap-2.5 rounded-[10px] px-2.5 py-[9px] text-[13px] font-medium transition-colors",
-              isActive
-                ? "bg-foreground text-background"
-                : "text-foreground/60 hover:bg-foreground/5 hover:text-foreground"
-            )}
+      {/* Navigation */}
+      <div className="flex flex-1 flex-col gap-6 px-3 py-2">
+        {/* Main section */}
+        <div className="flex flex-col gap-1">
+          <p className="mb-1 px-3 font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+            Main
+          </p>
+          {mainNav.map(({ href, label, icon: Icon }) => {
+            const isActive =
+              pathname === href ||
+              (pathname.startsWith(href) &&
+                href !== "/");
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-medium transition-colors",
+                  isActive
+                    ? "bg-foreground text-background"
+                    : "text-foreground/70 hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <Icon className="h-[18px] w-[18px] shrink-0" />
+                {label}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Play section */}
+        <div className="flex flex-col gap-1">
+          <p className="mb-1 px-3 font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+            Play
+          </p>
+          {playNav.map(({ href, label, icon: Icon, badge }) => {
+            const isActive = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-medium transition-colors",
+                  isActive
+                    ? "bg-foreground text-background"
+                    : "text-foreground/70 hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <Icon className="h-[18px] w-[18px] shrink-0" />
+                <span className="flex-1">{label}</span>
+                {badge && (
+                  <span
+                    className="rounded-full px-1.5 py-0.5 font-mono text-[10px] font-bold text-background"
+                    style={{ background: "var(--pig)" }}
+                  >
+                    {badge}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Add transaction button at bottom */}
+      {onAdd && (
+        <div className="p-4">
+          <button
+            onClick={onAdd}
+            className="w-full rounded-full bg-foreground py-3 text-sm font-semibold text-background shadow-sm transition-colors hover:bg-foreground/90"
           >
-            <Icon className="h-4 w-4 shrink-0" />
-            {label}
-          </Link>
-        );
-      })}
-
-      {/* Add transaction */}
-      <button
-        onClick={handleAdd}
-        className="mt-1 flex items-center gap-2.5 rounded-[10px] px-2.5 py-[9px] text-[13px] font-medium text-foreground/60 transition-colors hover:bg-foreground/5 hover:text-foreground"
-      >
-        <Plus className="h-4 w-4 shrink-0" />
-        Add transaction
-      </button>
-
+            + New transaction
+          </button>
+        </div>
+      )}
     </aside>
   );
 }
