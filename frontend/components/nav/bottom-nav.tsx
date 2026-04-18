@@ -18,12 +18,12 @@ export function BottomNav({ onAdd }: BottomNavProps) {
     { href: "/dashboard", label: "Home", icon: LayoutDashboard },
     { href: "/budget", label: "Budget", icon: PiggyBank },
     null, // FAB
-    { href: "/dashboard", label: "Profile", icon: User },
+    { href: "/profile", label: "Profile", icon: User },
   ];
 
   return (
     <nav className="fixed bottom-3 left-3 right-3 z-50 flex items-center justify-around rounded-full bg-foreground px-3 py-2.5 shadow-[0_12px_30px_-10px_rgba(0,0,0,0.3)] lg:hidden">
-      {navItems.map((item, i) => {
+      {navItems.map((item) => {
         if (!item) {
           return (
             <button
