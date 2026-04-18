@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, PiggyBank, Plus, Flame } from "lucide-react";
+import { LayoutDashboard, PiggyBank, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PiggyMark } from "@/components/kash-piggy";
 
@@ -65,16 +65,6 @@ export function Sidebar({ onAdd }: SidebarProps) {
         Add transaction
       </button>
 
-      {/* Streak card */}
-      <div className="relative mt-auto overflow-hidden rounded-2xl p-3" style={{ background: "var(--pig)" }}>
-        <p className="font-display text-sm font-semibold leading-tight">Streak on fire</p>
-        <p className="mt-0.5 text-[11px]" style={{ color: "var(--pig-shadow)" }}>28 days of saving. Keep it going.</p>
-        <Flame
-          className="absolute -bottom-1 -right-1 h-10 w-10 opacity-60"
-          strokeWidth={1.5}
-          style={{ color: "var(--pig-shadow)" }}
-        />
-      </div>
     </aside>
   );
 }
