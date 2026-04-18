@@ -56,6 +56,9 @@
   --color-accent-ink: var(--accent-ink);
   --color-warn-soft: var(--warn-soft);
   --color-gold-soft: var(--gold-soft);
+  --color-ink-2: var(--ink-2);
+  --color-coin: var(--coin);
+  --color-coin-foreground: var(--coin-foreground);
   --radius-sm: calc(var(--radius) * 0.5);
   --radius-md: calc(var(--radius) * 0.75);
   --radius-lg: var(--radius);
@@ -87,9 +90,9 @@
   --secondary: #CFE4DB;
   --secondary-foreground: #14423A;
 
-  /* Accent: Gold — coins, rewards, achievements */
-  --accent: #D4A246;
-  --accent-foreground: #1F1912;
+  /* Accent: Moss green — success, income, savings (matches design --accent) */
+  --accent: #2D7D6E;
+  --accent-foreground: #FFFFFF;
   --accent-soft: #CFE4DB;
   --accent-ink: #14423A;
 
@@ -112,6 +115,14 @@
   --coin: #D4A246;
   --coin-foreground: #1F1912;
   --gold-soft: #F3E3B8;
+
+  /* Ink scale — matches design --ink / --ink-2 / --ink-3 */
+  --ink-2: #514738;
+
+  /* Shadow tokens */
+  --shadow-sm: 0 1px 2px rgba(31,25,18,0.06), 0 1px 1px rgba(31,25,18,0.04);
+  --shadow-md: 0 4px 14px -2px rgba(31,25,18,0.10), 0 2px 6px -2px rgba(31,25,18,0.06);
+  --shadow-lg: 0 24px 48px -12px rgba(31,25,18,0.18), 0 8px 16px -8px rgba(31,25,18,0.10);
 
   /* UI Elements — ring is ink per design spec */
   --border: #E8DFD0;
@@ -155,10 +166,11 @@
   --secondary: #14423A;
   --secondary-foreground: #CFE4DB;
 
-  --accent: #D4A246;
-  --accent-foreground: #14100B;
+  --accent: #2D7D6E;
+  --accent-foreground: #FFFFFF;
   --accent-soft: #14423A;
   --accent-ink: #CFE4DB;
+  --ink-2: #BFB4A0;
 
   --muted: #0E0B07;
   --muted-foreground: #8A806E;

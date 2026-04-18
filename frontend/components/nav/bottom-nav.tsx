@@ -31,7 +31,7 @@ export function BottomNav({ onAdd }: BottomNavProps) {
               key="add"
               onClick={handleAdd}
               aria-label="Ajouter une transaction"
-              className="-mt-7 flex h-12 w-12 items-center justify-center rounded-full border-2 border-foreground bg-primary text-foreground shadow-[0_8px_20px_-6px_rgba(0,0,0,0.3),inset_0_-3px_0_rgba(0,0,0,0.2)] transition-transform hover:scale-105 active:scale-95"
+              className="-mt-7 flex h-12 w-12 items-center justify-center rounded-full border-2 border-background bg-primary text-foreground shadow-[inset_0_-3px_0_var(--pig-shadow),0_8px_20px_-6px_rgba(0,0,0,0.3)] transition-transform hover:scale-105 active:scale-95"
             >
               <Plus className="h-5 w-5" />
             </button>

@@ -102,7 +102,7 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-2xl border border-border bg-card p-4">
           <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Dépenses</p>
-          <p className="mt-1 font-display text-xl font-medium tracking-tight text-primary">
+          <p className="mt-1 font-display text-xl font-medium tracking-tight text-warning">
             -{totalExpense.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}
           </p>
         </div>
@@ -153,7 +153,7 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
               <span
                 className={cn(
                   "font-mono text-sm font-semibold",
-                  t.type === "expense" ? "text-primary" : "text-success"
+                  t.type === "expense" ? "text-foreground" : "text-success"
                 )}
               >
                 {t.type === "expense" ? "-" : "+"}

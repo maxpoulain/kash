@@ -248,7 +248,7 @@ export function BudgetClient() {
                 >
                   <div className="mb-2 flex items-center justify-between gap-2">
                     <div className="flex min-w-0 items-center gap-2">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
                         <Icon className="h-4 w-4" />
                       </div>
                       <span className="truncate text-sm font-medium">{cat.name}</span>
@@ -273,7 +273,7 @@ export function BudgetClient() {
                       <div
                         className={cn(
                           "h-full rounded-full transition-all duration-300",
-                          isOverSpent ? "bg-destructive" : isUnallocated ? "bg-warning" : "bg-primary"
+                          isOverSpent ? "bg-destructive" : isUnallocated ? "bg-warning" : "bg-accent"
                         )}
                         style={{ width: `${progress * 100}%` }}
                       />
