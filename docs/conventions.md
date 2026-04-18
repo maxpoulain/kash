@@ -242,15 +242,18 @@ For every UI feature:
 2. **Implement the feature**
 3. **Test with agent-browser:**
    ```bash
-   just e2e-open              # Opens browser to app
-   # Or run specific commands:
+   # ONLY use agent-browser - never playwright or other tools
    npx agent-browser open http://localhost:3000/path
    npx agent-browser type "#input" "value"
    npx agent-browser click "button"
-   npx agent-browser screenshot /tmp/test.png
+   npx agent-browser screenshot ./kash-feature-name.png
    ```
-4. **Attach screenshot proof** to the PR showing the feature working
-5. **Include in PR description:** "Tested with agent-browser - [see screenshot]"
+4. **Attach screenshot to backlog item** for user validation BEFORE PR:
+   - Save screenshot to project root (e.g., `kash-feature-name.png`)
+   - Show screenshot to user for validation
+   - Link screenshot in `docs/backlog/in-progress/XXXXX-name.md`
+5. **Commit screenshot reference** to feature branch
+6. **Include in PR description:** "Tested with agent-browser - [see screenshot]"
 
 ### PR Checklist for UI Features
 
