@@ -46,6 +46,21 @@ Refactor the transactions page (transaction-list.tsx and related components) to 
 6. **Month navigation**: Use icon buttons (square variant) from design system
 7. **Amount display**: Use mono font with proper currency formatting
 
+## Screenshots
+
+E2E testing screenshots captured with agent-browser (viewport: 390x844 mobile):
+
+- `kash-dashboard-transactions.png` - Dashboard with month navigation and metric cards
+- `kash-empty-state.png` - Empty state with Piggy companion mascot (sleep mood)
+- `kash-final-dashboard.png` - Final dashboard view showing all design system changes
+
+Screenshots saved in project root and demonstrate:
+- Month navigation with icon buttons (square outline variant, rounded-[10px])
+- "Avril 2026" heading using font-display
+- Metric cards with rounded-2xl borders
+- Empty state with Piggy mascot in muted background
+- Typography using font-mono for labels with uppercase tracking
+
 ## Critères de validation
 - [x] Transactions page visually matches the design system mockups
 - [x] All components use design system tokens (CSS variables)
