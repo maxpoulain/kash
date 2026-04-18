@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Piggy } from "@/components/kash-piggy";
 import { getTransactions, getCategories } from "@/lib/api";
 import { CATEGORY_ICONS } from "@/lib/category-icons";
 import type { Category, Transaction } from "@/types/api";
@@ -76,92 +78,122 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Month navigation */}
+      {/* Month navigation - Design System: icon buttons (square variant) */}
       <div className="flex items-center justify-between">
         <Button
-          variant="ghost"
+          variant="outline"
           size="icon"
           onClick={() => setMonth(prevMonth)}
           aria-label="Mois précédent"
+          className="rounded-[10px] border-border bg-card"
         >
           <ChevronLeftIcon className="h-5 w-5" />
         </Button>
-        <span className="font-medium capitalize">{formatMonth(month)}</span>
+        <span className="font-display text-lg font-medium capitalize">{formatMonth(month)}</span>
         <Button
-          variant="ghost"
+          variant="outline"
           size="icon"
           onClick={() => setMonth(nextMonth)}
           disabled={isCurrentMonth}
           aria-label="Mois suivant"
+          className="rounded-[10px] border-border bg-card"
         >
           <ChevronRightIcon className="h-5 w-5" />
         </Button>
       </div>
 
-      {/* Monthly summary */}
+      {/* Monthly summary - Design System: metric cards */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-2xl border border-border bg-card p-4">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Dépenses</p>
-          <p className="mt-1 font-display text-xl font-medium tracking-tight text-warning">
-            -{totalExpense.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-border bg-card p-4">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Revenus</p>
-          <p className="mt-1 font-display text-xl font-medium tracking-tight text-success">
-            +{totalIncome.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}
-          </p>
-        </div>
+        <Card className="rounded-2xl border-border">
+          <CardContent className="p-4">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              Dépenses
+            </p>
+            <p className="mt-1 font-display text-xl font-medium tracking-tight text-warning">
+              -{totalExpense.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="rounded-2xl border-border">
+          <CardContent className="p-4">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              Revenus
+            </p>
+            <p className="mt-1 font-display text-xl font-medium tracking-tight text-success">
+              +{totalIncome.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Transaction list */}
+      {/* Transaction list - Design System: list cards */}
       {loading ? (
         <p className="py-8 text-center text-sm text-muted-foreground">Chargement…</p>
       ) : transactions.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">
-          Aucune transaction ce mois-ci
-        </p>
+        /* Empty state - Design System: piggy companion */
+        <Card className="rounded-2xl border-dashed border-border bg-card">
+          <CardContent className="flex flex-col items-center py-10 text-center">
+            <div className="mb-4 rounded-2xl bg-muted p-4">
+              <Piggy size={110} mood="sleep" fill={0} />
+            </div>
+            <p className="font-display text-lg font-medium">Votre tirelire dort…</p>
+            <p className="mt-1 max-w-[260px] text-sm text-muted-foreground">
+              Aucune transaction ce mois-ci. Ajoutez-en une pour commencer à suivre vos dépenses.
+            </p>
+          </CardContent>
+        </Card>
       ) : (
-        <ul className="flex flex-col gap-2">
-          {transactions.map((t) => (
-            <li
-              key={t.id}
-              className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3"
-            >
-              <div className="flex items-center gap-3">
-                {(() => {
-                  const { name, Icon } = getCategoryInfo(t.category_id);
-                  return (
-                    <>
-                      <div className={cn(
-                        "h-9 w-9 shrink-0 rounded-[10px] flex items-center justify-center",
-                        t.type === "expense" ? "bg-primary/15 text-primary" : "bg-success/15 text-success"
-                      )}>
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-sm font-medium">{name}</span>
-                        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                          {new Date(t.date).toLocaleDateString("fr-FR")}
-                          {t.note ? ` · ${t.note}` : ""}
-                        </span>
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-              <span
-                className={cn(
-                  "font-mono text-sm font-semibold",
-                  t.type === "expense" ? "text-foreground" : "text-success"
-                )}
-              >
-                {t.type === "expense" ? "-" : "+"}
-                {t.amount.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <Card className="rounded-2xl border-border">
+          <CardContent className="p-0">
+            <ul className="flex flex-col">
+              {transactions.map((t, index) => (
+                <li
+                  key={t.id}
+                  className={cn(
+                    "flex items-center justify-between px-4 py-3",
+                    index !== transactions.length - 1 && "border-b border-border"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    {(() => {
+                      const { name, Icon } = getCategoryInfo(t.category_id);
+                      return (
+                        <>
+                          <div
+                            className={cn(
+                              "flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px]",
+                              t.type === "expense"
+                                ? "bg-primary/15 text-primary"
+                                : "bg-success/10 text-success"
+                            )}
+                          >
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-sm font-medium">{name}</span>
+                            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                              {new Date(t.date).toLocaleDateString("fr-FR")}
+                              {t.note ? ` · ${t.note}` : ""}
+                            </span>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                  <span
+                    className={cn(
+                      "font-mono text-sm font-semibold tabular-nums",
+                      t.type === "expense" ? "text-foreground" : "text-success"
+                    )}
+                  >
+                    {t.type === "expense" ? "-" : "+"}
+                    {t.amount.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
