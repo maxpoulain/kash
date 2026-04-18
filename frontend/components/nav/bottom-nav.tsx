@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, PiggyBank, Plus, BarChart3, User } from "lucide-react";
+import { LayoutDashboard, PiggyBank, Plus, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BottomNavProps {
@@ -17,9 +17,8 @@ export function BottomNav({ onAdd }: BottomNavProps) {
   const navItems = [
     { href: "/dashboard", label: "Home", icon: LayoutDashboard },
     { href: "/budget", label: "Budget", icon: PiggyBank },
-    null, // add button placeholder
-    { href: "/budget#stats", label: "Stats", icon: BarChart3 },
-    { href: "/dashboard#profile", label: "Profile", icon: User },
+    null, // FAB
+    { href: "/dashboard", label: "Profile", icon: User },
   ];
 
   return (
