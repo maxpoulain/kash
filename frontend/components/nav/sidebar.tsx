@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, PiggyBank, Coins, BarChart3, Trophy, Zap, Plus, Flame } from "lucide-react";
+import { LayoutDashboard, PiggyBank, Plus, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PiggyMark } from "@/components/kash-piggy";
 
@@ -13,12 +13,6 @@ interface SidebarProps {
 const mainNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/budget", label: "Budget", icon: PiggyBank },
-  { href: "/budget#stats", label: "Insights", icon: BarChart3 },
-];
-
-const playNav = [
-  { href: "/dashboard", label: "Achievements", icon: Trophy },
-  { href: "/dashboard", label: "Challenges", icon: Zap, badge: 3 },
 ];
 
 export function Sidebar({ onAdd }: SidebarProps) {
@@ -70,26 +64,6 @@ export function Sidebar({ onAdd }: SidebarProps) {
         <Plus className="h-4 w-4 shrink-0" />
         Add transaction
       </button>
-
-      {/* Play nav */}
-      <p className="mb-1 mt-4 px-2.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-        Play
-      </p>
-      {playNav.map(({ href, label, icon: Icon, badge }) => (
-        <Link
-          key={label}
-          href={href}
-          className="flex items-center gap-2.5 rounded-[10px] px-2.5 py-[9px] text-[13px] font-medium text-foreground/60 transition-colors hover:bg-foreground/5 hover:text-foreground"
-        >
-          <Icon className="h-4 w-4 shrink-0" />
-          {label}
-          {badge != null && (
-            <span className="ml-auto rounded-full bg-warning px-1.5 py-0.5 font-mono text-[10px] font-bold leading-none text-white">
-              {badge}
-            </span>
-          )}
-        </Link>
-      ))}
 
       {/* Streak card */}
       <div className="relative mt-auto overflow-hidden rounded-2xl p-3" style={{ background: "var(--pig)" }}>
