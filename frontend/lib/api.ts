@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import type { BudgetOut, BudgetSummary, BudgetUpsert, Category, CreateTransactionPayload, Transaction } from "@/types/api";
+import type { BudgetOut, BudgetSummary, BudgetUpsert, Category, CreateTransactionPayload, SpendingGoalsResponse, Transaction } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -65,6 +65,12 @@ export async function copyBudgetFrom(targetMonth: string, sourceMonth: string): 
     { method: "POST" }
   );
   if (!res.ok) throw new Error("Failed to copy budget");
+  return res.json();
+}
+
+export async function getSpendingGoals(month: string): Promise<SpendingGoalsResponse> {
+  const res = await apiFetch(`/api/spending-goals?month=${month}`);
+  if (!res.ok) throw new Error("Failed to fetch spending goals");
   return res.json();
 }
 

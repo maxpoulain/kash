@@ -67,3 +67,24 @@ export interface BudgetUpsert {
   income: number;
   allocations: Array<{ category_id: string; amount: number }>;
 }
+
+// Spending Goals
+export interface SpendingGoal {
+  category_id: string;
+  category_name: string;
+  category_icon: string | null;
+  category_color: string | null;
+  goal_amount: number;
+  spent_amount: number;
+  progress_percent: number;
+  remaining: number;
+  status: "on_track" | "under_pace" | "over_budget";
+}
+
+export interface SpendingGoalsResponse {
+  month: string;
+  total_goal: number;
+  total_spent: number;
+  total_remaining: number;
+  goals: SpendingGoal[];
+}

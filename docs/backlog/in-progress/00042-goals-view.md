@@ -48,6 +48,87 @@ Permettre de visualiser les objectifs de dépenses mensuels avec leur progressio
 - Mobile : cartes empilées verticalement (comme maquette)
 - Desktop : grille 2 colonnes ou liste selon préférence
 
+## Implementation Plan
+
+### Phase 1: Database Migration
+**Files to create:**
+- `supabase/migrations/20260419130000_create_spending_goals.sql` — Create table with RLS
+
+**Test checklist:**
+- [ ] Migration applies cleanly
+- [ ] RLS policies work (users can only see their household's goals)
+- [ ] Unique constraint prevents duplicate goals per (household, category, month)
+
+### Phase 2: Backend API
+**Files to create:**
+- `backend/app/schemas/spending_goals.py` — Pydantic schemas
+- `backend/app/routers/spending_goals.py` — GET /api/spending-goals endpoint
+
+**Files to modify:**
+- `backend/app/main.py` — Register new router
+
+**Endpoint spec:**
+```
+GET /api/spending-goals?month=2025-04
+Response: {
+  "month": "2025-04",
+  "total_goal": 1250.00,
+  "total_spent": 946.00,
+  "goals": [
+    {
+      "category_id": "uuid",
+      "category_name": "Groceries",
+      "category_icon": "🛒",
+      "category_color": "#E8F5E9",
+      "goal_amount": 500.00,
+      "spent_amount": 312.00,
+      "progress_percent": 62.0,
+      "remaining": 188.00,
+      "status": "on_track" | "under_pace" | "over_budget"
+    }
+  ]
+}
+```
+
+**Test checklist:**
+- [ ] Returns correct spent amounts from transactions
+- [ ] Calculates progress_percent and remaining correctly
+- [ ] Returns empty array when no goals exist
+- [ ] 422 error for invalid month format
+- [ ] RLS enforced (can't see other households' goals)
+
+### Phase 3: Frontend Page
+**Files to create:**
+- `frontend/app/goals/page.tsx` — Server component (auth check)
+- `frontend/app/goals/goals-client.tsx` — Client component with state
+- `frontend/app/goals/goal-card.tsx` — Individual goal card
+- `frontend/app/goals/empty-state.tsx` — Empty state with piggy
+- `frontend/app/goals/month-selector.tsx` — Month navigation
+
+**Components needed from existing UI:**
+- Progress bar (check `frontend/components/ui/`)
+- Card, Button components
+
+**Test checklist (manual via browser):**
+- [ ] Month navigation works (prev/next)
+- [ ] Goals display with correct progress bars
+- [ ] Empty state shows when no goals
+- [ ] Mobile layout (stacked cards)
+- [ ] Desktop layout (2-column grid)
+
+### Phase 4: Tests & Verification
+**Files to create:**
+- `backend/tests/test_spending_goals.py` — API tests
+
+**Verification:**
+- Use agent-browser to manually verify UI (per project convention)
+- Attach screenshots to backlog item
+
+**Test checklist:**
+- [ ] Backend unit tests pass
+- [ ] `just check` passes completely
+- [ ] Agent-browser verification complete with screenshots
+
 ## Critères de validation
 - [ ] Migration DB appliquée avec RLS
 - [ ] GET retourne les bonnes valeurs spent calculées depuis les transactions
