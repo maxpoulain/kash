@@ -136,3 +136,8 @@ Response: {
 - [x] Gestion du cas "aucun objectif" (état vide)
 - [x] Responsive desktop + mobile
 - [x] Tests écrits et passants (`just check` passe)
+- [x] Agent-browser verification complete
+
+## Screenshots
+- `e2e/screenshots/04-goals-page.png` - Empty state with piggy illustration
+- `e2e/screenshots/05-goals-previous-month.png` - Month navigation
