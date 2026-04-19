@@ -32,7 +32,10 @@ Permettre de visualiser les objectifs de dépenses mensuels avec leur progressio
 
 ### UI
 
-**Maquette :** Design system "Jars" adapté pour les objectifs de dépenses — cartes avec icône de catégorie, barre de progression, et montants. Voir capture d'écran dans la conversation.
+**Maquettes :** Voir fichiers dans `docs/mockups/`
+- `expenses_goals_mobile.png`
+- `expenses_goals_mobile_2.png`
+- `expenses_goals_desktop.png`
 
 **Page `/goals`** :
 - En-tête avec titre "Objectifs" et montant total des objectifs du mois
