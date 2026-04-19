@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ChevronLeftIcon, ChevronRightIcon, Download, Filter, Package } from "lucide-react";
+import { Check, ChevronLeftIcon, ChevronRightIcon, Filter, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getTransactions, getCategories } from "@/lib/api";
 import { CATEGORY_ICONS } from "@/lib/category-icons";
 import type { Category, Transaction } from "@/types/api";
@@ -56,7 +57,7 @@ function groupByDate(txns: Transaction[]): { date: string; label: string; items:
 
 type FilterType = "all" | "expense" | "income";
 
-const FILTERS: { key: FilterType; label: string }[] = [
+const TYPE_FILTERS: { key: FilterType; label: string }[] = [
   { key: "all", label: "Tout" },
   { key: "expense", label: "Dépenses" },
   { key: "income", label: "Revenus" },
@@ -71,7 +72,8 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<FilterType>("all");
+  const [typeFilter, setTypeFilter] = useState<FilterType>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -98,7 +100,12 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
   }
 
   const isCurrentMonth = month === currentMonth();
-  const filtered = filter === "all" ? transactions : transactions.filter((t) => t.type === filter);
+
+  const uncategorizedCount = transactions.filter((t) => !t.category_id).length;
+
+  const filtered = transactions
+    .filter((t) => typeFilter === "all" || t.type === typeFilter)
+    .filter((t) => !categoryFilter || t.category_id === categoryFilter);
 
   const totalExpense = transactions.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
   const totalIncome = transactions.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
@@ -110,8 +117,23 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
     return sign + t.amount.toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
   }
 
+  const activeCategoryName = categoryFilter
+    ? categories.find((c) => c.id === categoryFilter)?.name ?? null
+    : null;
+
   return (
     <div className="flex flex-col gap-4">
+      {/* ── Page header (title + counts) ──────────────────── */}
+      <div>
+        <h1 className="font-display text-2xl font-medium tracking-tight">Transactions</h1>
+        {!loading && (
+          <p className="mt-0.5 font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+            {transactions.length} ce mois
+            {uncategorizedCount > 0 && ` · ${uncategorizedCount} non catégorisées`}
+          </p>
+        )}
+      </div>
+
       {/* ── Mobile: month nav ──────────────────────────────── */}
       <div className="flex items-center justify-between lg:hidden">
         <Button variant="ghost" size="icon" onClick={() => setMonth(prevMonth)} aria-label="Mois précédent">
@@ -145,15 +167,15 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
         </div>
       </div>
 
-      {/* ── Filter row (both) ──────────────────────────────── */}
+      {/* ── Filter row ─────────────────────────────────────── */}
       <div className="flex items-center gap-2 flex-wrap">
-        {FILTERS.map(({ key, label }) => (
+        {TYPE_FILTERS.map(({ key, label }) => (
           <button
             key={key}
-            onClick={() => setFilter(key)}
+            onClick={() => setTypeFilter(key)}
             className={cn(
               "rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors",
-              filter === key
+              typeFilter === key
                 ? "bg-foreground text-background"
                 : "border border-border bg-card text-muted-foreground hover:text-foreground"
             )}
@@ -162,18 +184,55 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
           </button>
         ))}
         <div className="flex-1" />
-        <button
-          disabled
-          className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs text-muted-foreground opacity-50 cursor-not-allowed"
-        >
-          <Filter className="h-3 w-3" /> Filtres
-        </button>
-        <button
-          disabled
-          className="hidden lg:flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs text-muted-foreground opacity-50 cursor-not-allowed"
-        >
-          <Download className="h-3 w-3" /> Export
-        </button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className={cn(
+                "flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
+                categoryFilter
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-card text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Filter className="h-3 w-3" />
+              {activeCategoryName ?? "Filtres"}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-56 p-1.5">
+            <button
+              onClick={() => setCategoryFilter(null)}
+              className={cn(
+                "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted",
+                !categoryFilter && "font-medium"
+              )}
+            >
+              {!categoryFilter && <Check className="h-3.5 w-3.5 shrink-0" />}
+              {categoryFilter && <span className="h-3.5 w-3.5 shrink-0" />}
+              Toutes les catégories
+            </button>
+            {categories.map((cat) => {
+              const isActive = categoryFilter === cat.id;
+              const Icon = CATEGORY_ICONS[cat.name] ?? Package;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setCategoryFilter(isActive ? null : cat.id)}
+                  className={cn(
+                    "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted",
+                    isActive && "font-medium"
+                  )}
+                >
+                  {isActive ? (
+                    <Check className="h-3.5 w-3.5 shrink-0" />
+                  ) : (
+                    <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  )}
+                  {cat.name}
+                </button>
+              );
+            })}
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* ── Loading / empty ────────────────────────────────── */}
@@ -185,14 +244,16 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
         <>
           {/* ── Desktop: table ─────────────────────────────── */}
           <div className="hidden lg:block">
-            <div className="grid gap-3.5 px-3.5 pb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
-              style={{ gridTemplateColumns: "130px 1fr 160px 110px" }}>
+            <div
+              className="grid gap-3.5 px-3.5 pb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
+              style={{ gridTemplateColumns: "130px 1fr 160px 110px" }}
+            >
               <span>Date</span>
               <span>Description</span>
               <span>Catégorie</span>
               <span className="text-right">Montant</span>
             </div>
-            <div className="rounded-2xl border border-border bg-card overflow-hidden">
+            <div className="overflow-hidden rounded-2xl border border-border bg-card">
               {filtered.map((t, i) => {
                 const { name, Icon } = getCategoryInfo(t.category_id);
                 return (
@@ -204,9 +265,7 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
                     )}
                     style={{ gridTemplateColumns: "130px 1fr 160px 110px" }}
                   >
-                    <div>
-                      <p className="text-[13px] font-medium">{formatDateShort(t.date)}</p>
-                    </div>
+                    <p className="text-[13px] font-medium">{formatDateShort(t.date)}</p>
                     <div className="flex items-center gap-3 min-w-0">
                       <div className={cn(
                         "h-8 w-8 shrink-0 rounded-[8px] flex items-center justify-center",
@@ -214,9 +273,7 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
                       )}>
                         <Icon className="h-3.5 w-3.5" />
                       </div>
-                      <span className="truncate text-[13px] font-medium">
-                        {t.note ?? name}
-                      </span>
+                      <span className="truncate text-[13px] font-medium">{t.note ?? name}</span>
                     </div>
                     <div className="text-[12px] text-muted-foreground">{name}</div>
                     <div className={cn(
@@ -235,7 +292,7 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
           <div className="flex flex-col gap-4 lg:hidden">
             {groups.map(({ date, label, items }) => (
               <div key={date}>
-                <p className="mb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground px-1">
+                <p className="mb-2 px-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                   {label}
                 </p>
                 <ul className="flex flex-col gap-1.5">

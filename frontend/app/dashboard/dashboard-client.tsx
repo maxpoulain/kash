@@ -23,11 +23,6 @@ export function DashboardClient() {
   return (
     <AppLayout onAdd={() => setSheetOpen(true)}>
       <div className="flex flex-col gap-6 px-4 pb-28 pt-6 lg:px-8 lg:pb-10 lg:pt-8">
-        {/* Page header */}
-        <div>
-          <h1 className="font-display text-2xl font-medium tracking-tight">Transactions</h1>
-        </div>
-
         <TransactionList refreshKey={refreshKey} />
       </div>
 
