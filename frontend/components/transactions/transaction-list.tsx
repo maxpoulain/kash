@@ -118,6 +118,13 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
     ? categories.find((c) => c.id === categoryFilter)?.name ?? null
     : null;
 
+  const visibleCategoryIds = new Set(
+    (typeFilter === "all" ? transactions : transactions.filter((t) => t.type === typeFilter))
+      .map((t) => t.category_id)
+      .filter(Boolean) as string[]
+  );
+  const visibleCategories = categories.filter((c) => visibleCategoryIds.has(c.id));
+
   return (
     <div className="flex flex-col gap-4">
       {/* ── Page header: title + month nav ────────────────── */}
@@ -154,7 +161,7 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
           {TYPE_FILTERS.map(({ key, label }) => (
             <button
               key={key}
-              onClick={() => setTypeFilter(key)}
+              onClick={() => { setTypeFilter(key); setCategoryFilter(null); }}
               className={cn(
                 "rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors",
                 typeFilter === key
@@ -192,7 +199,7 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
               {categoryFilter && <span className="h-3.5 w-3.5 shrink-0" />}
               Toutes les catégories
             </button>
-            {categories.map((cat) => {
+            {visibleCategories.map((cat) => {
               const isActive = categoryFilter === cat.id;
               const Icon = CATEGORY_ICONS[cat.name] ?? Package;
               return (
