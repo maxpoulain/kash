@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, PiggyBank, Plus } from "lucide-react";
+import { CircleDollarSign, PiggyBank, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PiggyMark } from "@/components/kash-piggy";
 
@@ -11,7 +11,7 @@ interface SidebarProps {
 }
 
 const mainNav = [
-  { href: "/dashboard", label: "Transactions", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Transactions", icon: CircleDollarSign },
   { href: "/budget", label: "Budget", icon: PiggyBank },
 ];
 
