@@ -227,10 +227,9 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
           <div className="hidden lg:block">
             <div
               className="grid gap-3.5 px-3.5 pb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
-              style={{ gridTemplateColumns: "130px 1fr 160px 110px" }}
+              style={{ gridTemplateColumns: "130px 1fr 110px" }}
             >
               <span>Date</span>
-              <span>Description</span>
               <span>Catégorie</span>
               <span className="text-right">Montant</span>
             </div>
@@ -244,7 +243,7 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
                       "grid items-center gap-3.5 px-3.5 py-3.5",
                       i < filtered.length - 1 && "border-b border-border"
                     )}
-                    style={{ gridTemplateColumns: "130px 1fr 160px 110px" }}
+                    style={{ gridTemplateColumns: "130px 1fr 110px" }}
                   >
                     <p className="text-[13px] font-medium">{formatDateShort(t.date)}</p>
                     <div className="flex items-center gap-3 min-w-0">
@@ -254,9 +253,8 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
                       )}>
                         <Icon className="h-3.5 w-3.5" />
                       </div>
-                      <span className="truncate text-[13px] font-medium">{t.note ?? name}</span>
+                      <span className="truncate text-[13px] font-medium">{name}</span>
                     </div>
-                    <div className="text-[12px] text-muted-foreground">{name}</div>
                     <div className={cn(
                       "text-right font-mono text-[13px] font-semibold",
                       t.type === "expense" ? "text-foreground" : "text-success"
