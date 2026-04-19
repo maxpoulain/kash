@@ -107,9 +107,6 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
     .filter((t) => typeFilter === "all" || t.type === typeFilter)
     .filter((t) => !categoryFilter || t.category_id === categoryFilter);
 
-  const totalExpense = transactions.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
-  const totalIncome = transactions.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
-
   const groups = groupByDate(filtered);
 
   function formatAmount(t: Transaction) {
@@ -123,47 +120,31 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* ── Page header (title + counts) ──────────────────── */}
-      <div>
-        <h1 className="font-display text-2xl font-medium tracking-tight">Transactions</h1>
-        {!loading && (
-          <p className="mt-0.5 font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-            {transactions.length} ce mois
-            {uncategorizedCount > 0 && ` · ${uncategorizedCount} non catégorisées`}
-          </p>
-        )}
-      </div>
-
-      {/* ── Mobile: month nav ──────────────────────────────── */}
-      <div className="flex items-center justify-between lg:hidden">
-        <Button variant="ghost" size="icon" onClick={() => setMonth(prevMonth)} aria-label="Mois précédent">
-          <ChevronLeftIcon className="h-5 w-5" />
-        </Button>
-        <span className="font-medium capitalize">{formatMonth(month)}</span>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setMonth(nextMonth)}
-          disabled={isCurrentMonth}
-          aria-label="Mois suivant"
-        >
-          <ChevronRightIcon className="h-5 w-5" />
-        </Button>
-      </div>
-
-      {/* ── Mobile: summary cards ──────────────────────────── */}
-      <div className="grid grid-cols-2 gap-3 lg:hidden">
-        <div className="rounded-2xl border border-border bg-card p-4">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Dépenses</p>
-          <p className="mt-1 font-display text-xl font-medium tracking-tight text-warning">
-            −{totalExpense.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}
-          </p>
+      {/* ── Page header: title + month nav ────────────────── */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-medium tracking-tight">Transactions</h1>
+          {!loading && (
+            <p className="mt-0.5 font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+              {transactions.length} ce mois
+              {uncategorizedCount > 0 && ` · ${uncategorizedCount} non catégorisées`}
+            </p>
+          )}
         </div>
-        <div className="rounded-2xl border border-border bg-card p-4">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Revenus</p>
-          <p className="mt-1 font-display text-xl font-medium tracking-tight text-success">
-            +{totalIncome.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}
-          </p>
+        <div className="flex items-center gap-1 shrink-0 pt-0.5">
+          <Button variant="ghost" size="icon" onClick={() => setMonth(prevMonth)} aria-label="Mois précédent">
+            <ChevronLeftIcon className="h-4 w-4" />
+          </Button>
+          <span className="min-w-[110px] text-center text-sm font-medium capitalize">{formatMonth(month)}</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMonth(nextMonth)}
+            disabled={isCurrentMonth}
+            aria-label="Mois suivant"
+          >
+            <ChevronRightIcon className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
