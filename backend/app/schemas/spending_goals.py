@@ -11,7 +11,6 @@ class GoalOut(BaseModel):
     category_id: UUID
     category_name: str
     category_icon: str | None
-    category_color: str | None
     goal_amount: float
     spent_amount: float
     progress_percent: float

@@ -45,13 +45,8 @@ export function GoalCard({ goal }: GoalCardProps) {
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           {/* Category icon */}
-          <div
-            className="h-10 w-10 shrink-0 rounded-xl flex items-center justify-center"
-            style={{
-              backgroundColor: goal.category_color ?? "#f3f4f6",
-            }}
-          >
-            <Icon className="h-5 w-5" style={{ color: "#374151" }} />
+          <div className="h-10 w-10 shrink-0 rounded-xl flex items-center justify-center bg-muted">
+            <Icon className="h-5 w-5 text-foreground" />
           </div>
 
           {/* Category name */}

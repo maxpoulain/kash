@@ -73,7 +73,6 @@ export interface SpendingGoal {
   category_id: string;
   category_name: string;
   category_icon: string | null;
-  category_color: string | null;
   goal_amount: number;
   spent_amount: number;
   progress_percent: number;
