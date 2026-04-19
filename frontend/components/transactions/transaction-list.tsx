@@ -121,50 +121,51 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
   return (
     <div className="flex flex-col gap-4">
       {/* ── Page header: title + month nav ────────────────── */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-medium tracking-tight">Transactions</h1>
+      <div className="flex flex-col gap-2">
+        <h1 className="font-display text-2xl font-medium tracking-tight">Transactions</h1>
+        <div className="flex items-center justify-between gap-2">
           {!loading && (
-            <p className="mt-0.5 font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+            <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
               {transactions.length} ce mois
               {uncategorizedCount > 0 && ` · ${uncategorizedCount} non catégorisées`}
             </p>
           )}
-        </div>
-        <div className="flex items-center gap-1 shrink-0 pt-0.5">
-          <Button variant="ghost" size="icon" onClick={() => setMonth(prevMonth)} aria-label="Mois précédent">
-            <ChevronLeftIcon className="h-4 w-4" />
-          </Button>
-          <span className="min-w-[110px] text-center text-sm font-medium capitalize">{formatMonth(month)}</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setMonth(nextMonth)}
-            disabled={isCurrentMonth}
-            aria-label="Mois suivant"
-          >
-            <ChevronRightIcon className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1 ml-auto shrink-0">
+            <Button variant="ghost" size="icon" onClick={() => setMonth(prevMonth)} aria-label="Mois précédent">
+              <ChevronLeftIcon className="h-4 w-4" />
+            </Button>
+            <span className="min-w-[100px] text-center text-sm font-medium capitalize">{formatMonth(month)}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMonth(nextMonth)}
+              disabled={isCurrentMonth}
+              aria-label="Mois suivant"
+            >
+              <ChevronRightIcon className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* ── Filter row ─────────────────────────────────────── */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {TYPE_FILTERS.map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => setTypeFilter(key)}
-            className={cn(
-              "rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors",
-              typeFilter === key
-                ? "bg-foreground text-background"
-                : "border border-border bg-card text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {label}
-          </button>
-        ))}
-        <div className="flex-1" />
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          {TYPE_FILTERS.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setTypeFilter(key)}
+              className={cn(
+                "rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors",
+                typeFilter === key
+                  ? "bg-foreground text-background"
+                  : "border border-border bg-card text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <Popover>
           <PopoverTrigger asChild>
             <button
@@ -282,7 +283,7 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
                         key={t.id}
                         className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3"
                       >
-                        <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex flex-1 items-center gap-3 min-w-0">
                           <div className={cn(
                             "h-9 w-9 shrink-0 rounded-[10px] flex items-center justify-center",
                             t.type === "expense" ? "bg-primary/15 text-primary" : "bg-success/15 text-success"
@@ -290,10 +291,7 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
                             <Icon className="h-4 w-4" />
                           </div>
                           <div className="flex flex-col gap-0.5 min-w-0">
-                            <span className="truncate text-sm font-medium">{t.note ?? name}</span>
-                            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                              {name}
-                            </span>
+                            <span className="truncate text-sm font-medium">{name}</span>
                           </div>
                         </div>
                         <span className={cn(
