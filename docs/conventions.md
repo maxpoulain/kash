@@ -284,6 +284,28 @@ Each increment must be:
 
 Use next available 5-digit ID: `XXXXX-name.md`
 
+## API Endpoint Naming
+
+### Convention (Effective Now)
+
+Use **kebab-case** for all new API endpoints:
+
+```
+/api/spending-goals
+/api/monthly-reports
+/api/net-worth
+```
+
+### Legacy
+
+Existing endpoints use lowercase without separators (`/budgets`, `/transactions`). Keep them as-is for backwards compatibility. New endpoints follow kebab-case.
+
+### Rationale
+
+- More readable: `spending-goals` vs `spendinggoals`
+- Consistent with URL best practices
+- Aligns with REST API standards
+
 ## Operational CLI Defaults
 
 - Assume `gh` and `aws` CLIs are available by default
