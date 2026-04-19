@@ -42,17 +42,6 @@ Permettre de visualiser les objectifs de dépenses mensuels avec leur progressio
 - Sélecteur de mois (navigation mois précédent/suivant)
 - Bouton "+" pour ajouter un objectif (ouvre modal — voir 00043)
 
-**Carte d'objectif** (par catégorie) :
-- **Gauche :** Avatar/icône de la catégorie avec pourcentage de progression en overlay
-- **Centre :**
-  - Nom de la catégorie
-  - Barre de progression horizontale (remplissage = % dépensé)
-  - Couleur : neutre si < 80%, orange si 80-100%, rouge si > 100%
-- **Droite :**
-  - Montant dépensé (ex: "450€")
-  - Objectif (ex: "/ 500€") en plus petit
-  - En dessous : montant restant ou "Dépassé de X€" si over budget
-
 **État vide :** Message "Aucun objectif défini pour ce mois" avec CTA pour créer
 
 **Responsive :** 

@@ -11,11 +11,11 @@ Permettre à l'utilisateur de créer un objectif de dépense pour une catégorie
 ## Périmètre
 
 ### API
-- `PUT /api/goals/{year-month}` — crée ou met à jour un objectif :
-  - Body: `category_id`, `amount`
-  - Upsert sur `(household_id, category_id, year_month)`
-  - Validation: amount > 0
-  - Retourne l'objectif créé/mis à jour avec la progression calculée
+- `POST /api/spending-goals` — crée un objectif :
+  - Body: `month` (format `YYYY-MM`), `category_id`, `amount`
+  - Validation: amount > 0, unique constraint sur `(household_id, category_id, month)`
+  - Retourne l'objectif créé avec la progression calculée
+- `PUT /api/spending-goals/{id}` — modifie le montant d'un objectif existant
 
 ### UI
 - Bouton "Ajouter un objectif" sur la page `/goals`
