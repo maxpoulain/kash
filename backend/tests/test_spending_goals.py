@@ -29,7 +29,6 @@ FAKE_CATEGORY = {
     "id": CATEGORY_ID,
     "name": "Groceries",
     "icon": "🛒",
-    "color": "#E8F5E9",
 }
 
 
@@ -265,7 +264,7 @@ async def test_get_spending_goals_multiple_categories():
         "id": "00000000-0000-0000-0000-000000000006",
         "category_id": cat2_id,
         "amount": 220.0,
-        "categories": {"id": cat2_id, "name": cat2_name, "icon": "🍽️", "color": None},
+        "categories": {"id": cat2_id, "name": cat2_name, "icon": "🍽️"},
     }
 
     tx1 = {"category_id": CATEGORY_ID, "amount": 300.0, "type": "expense"}

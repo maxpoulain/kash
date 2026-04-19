@@ -76,7 +76,7 @@ async def get_spending_goals(
     month_start = _get_first_day_of_month(month)
     goals_result = (
         supabase.table("spending_goals")
-        .select("*, categories(id, name, icon, color)")
+        .select("*, categories(id, name, icon)")
         .eq("household_id", household_id)
         .eq("month", month_start)
         .execute()
@@ -126,7 +126,6 @@ async def get_spending_goals(
                 category_id=goal["category_id"],
                 category_name=cat_data.get("name", "Unknown"),
                 category_icon=cat_data.get("icon"),
-                category_color=cat_data.get("color"),
                 goal_amount=goal_amount,
                 spent_amount=spent_amount,
                 progress_percent=round(progress_percent, 1),
