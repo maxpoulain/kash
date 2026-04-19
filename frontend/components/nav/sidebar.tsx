@@ -11,7 +11,7 @@ interface SidebarProps {
 }
 
 const mainNav = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Transactions", icon: LayoutDashboard },
   { href: "/budget", label: "Budget", icon: PiggyBank },
 ];
 

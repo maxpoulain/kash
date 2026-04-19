@@ -15,7 +15,7 @@ export function BottomNav({ onAdd }: BottomNavProps) {
   const handleAdd = onAdd ?? (() => router.push("/dashboard?add=1"));
 
   const navItems = [
-    { href: "/dashboard", label: "Home", icon: LayoutDashboard },
+    { href: "/dashboard", label: "Transactions", icon: LayoutDashboard },
     { href: "/budget", label: "Budget", icon: PiggyBank },
     null, // FAB
     { href: "/profile", label: "Profile", icon: User },
