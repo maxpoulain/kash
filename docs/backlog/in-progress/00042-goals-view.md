@@ -130,9 +130,9 @@ Response: {
 - [ ] Agent-browser verification complete with screenshots
 
 ## Critères de validation
-- [ ] Migration DB appliquée avec RLS
-- [ ] GET retourne les bonnes valeurs spent calculées depuis les transactions
-- [ ] Page affiche correctement les progressions
-- [ ] Gestion du cas "aucun objectif" (état vide)
-- [ ] Responsive desktop + mobile
-- [ ] Tests écrits et passants (`just check` passe)
+- [x] Migration DB appliquée avec RLS
+- [x] GET retourne les bonnes valeurs spent calculées depuis les transactions
+- [x] Page affiche correctement les progressions
+- [x] Gestion du cas "aucun objectif" (état vide)
+- [x] Responsive desktop + mobile
+- [x] Tests écrits et passants (`just check` passe)
