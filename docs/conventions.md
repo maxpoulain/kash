@@ -1,5 +1,17 @@
 # Conventions
 
+High-level workflow and project conventions. See specialized files for detailed guidelines.
+
+## Specialized Conventions
+
+| Topic | File |
+|-------|------|
+| API endpoints, REST patterns | [conventions/api.md](conventions/api.md) |
+| Database, migrations | [conventions/database.md](conventions/database.md) |
+| Frontend, TypeScript | [conventions/frontend.md](conventions/frontend.md) |
+| Testing, E2E | [conventions/testing.md](conventions/testing.md) |
+| Commit messages | [conventions/commits.md](conventions/commits.md) |
+
 ## Development Workflow
 
 ### Principles
@@ -98,65 +110,6 @@ The increment file in `docs/backlog/in-progress/` is the planning document. Befo
 
 Never jump into implementation without a plan in the increment file.
 
-## TypeScript & Strong Typing
-
-### Principles
-
-- **TypeScript exclusively** - No JavaScript except for config files
-- **Strict mode always** - `strict: true` in `tsconfig.json`
-- **No `any`** - Use `unknown` for truly unknown values, narrow with type guards
-- **Explicit return types** on public APIs and complex functions
-- **No implicit inference** - When types aren't obvious, annotate them
-
-### Rules
-
-```typescript
-// ❌ Avoid
-const data: any = fetchData();
-function process(item) { ... }
-
-// ✅ Prefer
-const data: ElectionResult = fetchData();
-function process(item: Candidate): ProcessedCandidate { ... }
-```
-
-### Configuration
-
-```json
-{
-  "compilerOptions": {
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "noImplicitReturns": true
-  }
-}
-```
-
-## Commit Messages
-
-Conventional commits with emoji at the end:
-
-```
-<type>: <description> <emoji>
-```
-
-Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`
-
-Emojis:
-- feat: ✨
-- fix: 🐛
-- docs: 📝
-- style: 💄
-- refactor: ♻️
-- perf: ⚡
-- test: ✅
-- build: 📦
-- ci: 🔧
-- chore: 🧹
-
-**Rule:** Never add `Co-Authored-By:` to commit messages.
-
 ## Just Targets
 
 ```bash
@@ -169,109 +122,7 @@ just dev        # Start dev environment
 
 Run `just -l` to see all available commands.
 
-## Database Migrations
-
-We use Supabase CLI for migrations. No Alembic.
-
-### Creating Migrations
-
-```bash
-# Create a new migration file
-just db-migration-new add_user_preferences
-
-# Edit: supabase/migrations/<timestamp>_add_user_preferences.sql
-```
-
-### Local Development
-
-```bash
-# Reset local database (applies all migrations from scratch)
-just db-reset
-
-# Generate migration from Studio changes
-just db-diff schema_changes
-```
-
-### Production Deployment
-
-```bash
-# Push pending migrations to production
-just db-push
-```
-
-### Migration Guidelines
-
-1. **One change per migration** - Keep migrations focused and small
-2. **Never modify existing migrations** - Create new ones to fix issues
-3. **Test locally first** - Always run `just db-reset` before pushing
-4. **Include rollback logic** - Use `IF EXISTS`/`IF NOT EXISTS` for safety
-5. **RLS policies in same migration** - Create tables and their RLS policies together
-
 Keep `justfile` targets thin (one-liners). Complex logic goes in scripts.
-
-## Fail Fast Principle
-
-**CI must use just targets** - never duplicate check logic in `.github/workflows/`.
-
-The order matters for fast feedback:
-1. **Syntax** (fastest)
-2. **Static analysis**
-3. **Unit tests**
-4. **Integration tests**
-
-Always run `just check` before committing.
-
-
-## E2E Testing with Agent Browser
-
-All features involving UI changes MUST be tested end-to-end using agent-browser before the PR is ready for review.
-
-### Test User
-
-A test user is available for E2E testing:
-- **Email:** `test@example.com`
-- **Password:** `TestPassword123!`
-
-Set up with: `just e2e-seed` (creates the user if not exists)
-
-### Required Testing Steps
-
-For every UI feature:
-
-1. **Start the dev environment:** `just dev-local`
-2. **Implement the feature**
-3. **Test with agent-browser:**
-   ```bash
-   just e2e-open              # Opens browser to app
-   # Or run specific commands:
-   npx agent-browser open http://localhost:3000/path
-   npx agent-browser type "#input" "value"
-   npx agent-browser click "button"
-   npx agent-browser screenshot /tmp/test.png
-   ```
-4. **Attach screenshot proof** to the PR showing the feature working
-5. **Include in PR description:** "Tested with agent-browser - [see screenshot]"
-
-### PR Checklist for UI Features
-
-Every PR with UI changes must include:
-- [ ] Screenshot(s) from agent-browser showing the feature works
-- [ ] Navigation flow tested (if applicable)
-- [ ] Error states tested (if applicable)
-- [ ] Mobile viewport tested for responsive changes
-
-### Example Test Session
-
-```bash
-# Sign in as test user
-npx agent-browser open http://localhost:3000/login
-npx agent-browser fill "#email" "test@example.com"
-npx agent-browser fill "#password" "TestPassword123!"
-npx agent-browser click "button[type=submit]"
-npx agent-browser wait 1000
-npx agent-browser screenshot /tmp/test-login.png
-```
-
 
 ## Adding Backlog Items
 
@@ -283,28 +134,6 @@ Each increment must be:
 - **Validating** - has explicit assumptions to confirm
 
 Use next available 5-digit ID: `XXXXX-name.md`
-
-## API Endpoint Naming
-
-### Convention (Effective Now)
-
-Use **kebab-case** for all new API endpoints:
-
-```
-/api/spending-goals
-/api/monthly-reports
-/api/net-worth
-```
-
-### Legacy
-
-Existing endpoints use lowercase without separators (`/budgets`, `/transactions`). Keep them as-is for backwards compatibility. New endpoints follow kebab-case.
-
-### Rationale
-
-- More readable: `spending-goals` vs `spendinggoals`
-- Consistent with URL best practices
-- Aligns with REST API standards
 
 ## Operational CLI Defaults
 
