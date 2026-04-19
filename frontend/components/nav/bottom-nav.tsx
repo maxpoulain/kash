@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { CircleDollarSign, PiggyBank, Plus, User } from "lucide-react";
+import { CircleDollarSign, PiggyBank, Plus, Target, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BottomNavProps {
@@ -17,6 +17,7 @@ export function BottomNav({ onAdd }: BottomNavProps) {
   const navItems = [
     { href: "/dashboard", label: "Transactions", icon: CircleDollarSign },
     { href: "/budget", label: "Budget", icon: PiggyBank },
+    { href: "/goals", label: "Objectifs", icon: Target },
     null, // FAB
     { href: "/profile", label: "Profile", icon: User },
   ];
