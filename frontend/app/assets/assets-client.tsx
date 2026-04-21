@@ -6,7 +6,18 @@ import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type AccountType = "Livret A" | "LEP" | "CEL" | "PEL" | "Fonds euros" | "Autre";
+type AccountType =
+  | "Livret A"
+  | "LEP"
+  | "LDDS"
+  | "Livret Jeune"
+  | "PEL"
+  | "CEL"
+  | "PER"
+  | "Assurance vie"
+  | "PEA"
+  | "Compte titres"
+  | "Autre";
 
 interface SavingsAccount {
   id: string;
@@ -21,7 +32,7 @@ interface SavingsAccount {
 const MOCK_ACCOUNTS: SavingsAccount[] = [
   { id: "1", name: "Livret A", type: "Livret A", balance: 22950, institution: "Caisse d'Épargne" },
   { id: "2", name: "LEP", type: "LEP", balance: 10000, institution: "La Banque Postale" },
-  { id: "3", name: "Assurance vie", type: "Fonds euros", balance: 15230, institution: "Boursorama" },
+  { id: "3", name: "Assurance vie", type: "Assurance vie", balance: 15230, institution: "Boursorama" },
   { id: "4", name: "PEL", type: "PEL", balance: 8200, institution: "BNP Paribas" },
 ];
 
@@ -32,37 +43,57 @@ const MOCK_DELTA_PCT = 6.3;
 
 const TYPE_ICON: Record<AccountType, React.ElementType> = {
   "Livret A": PiggyBank,
-  "LEP": Landmark,
-  "CEL": Home,
+  "LEP": PiggyBank,
+  "LDDS": PiggyBank,
+  "Livret Jeune": PiggyBank,
   "PEL": Home,
-  "Fonds euros": TrendingUp,
+  "CEL": Home,
+  "PER": Landmark,
+  "Assurance vie": TrendingUp,
+  "PEA": TrendingUp,
+  "Compte titres": TrendingUp,
   "Autre": Package,
 };
 
 const TYPE_CARD_BG: Record<AccountType, string> = {
   "Livret A": "bg-pig/15",
-  "LEP": "bg-accent-soft",
-  "CEL": "bg-muted",
+  "LEP": "bg-pig/15",
+  "LDDS": "bg-pig/15",
+  "Livret Jeune": "bg-pig/15",
   "PEL": "bg-muted",
-  "Fonds euros": "bg-gold-soft",
+  "CEL": "bg-muted",
+  "PER": "bg-accent-soft",
+  "Assurance vie": "bg-gold-soft",
+  "PEA": "bg-accent-soft",
+  "Compte titres": "bg-muted",
   "Autre": "bg-muted",
 };
 
 const TYPE_ICON_BG: Record<AccountType, string> = {
   "Livret A": "var(--pig)",
-  "LEP": "var(--accent)",
-  "CEL": "var(--muted-foreground)",
+  "LEP": "var(--pig)",
+  "LDDS": "var(--pig)",
+  "Livret Jeune": "var(--pig)",
   "PEL": "var(--muted-foreground)",
-  "Fonds euros": "var(--coin)",
+  "CEL": "var(--muted-foreground)",
+  "PER": "var(--accent)",
+  "Assurance vie": "var(--coin)",
+  "PEA": "var(--accent)",
+  "Compte titres": "var(--muted-foreground)",
   "Autre": "var(--muted-foreground)",
 };
 
 const TYPE_BAR: Record<AccountType, string> = {
   "Livret A": "var(--pig)",
-  "LEP": "var(--accent)",
-  "CEL": "var(--muted-foreground)",
+  "LEP": "var(--pig)",
+  "LDDS": "var(--pig)",
+  "Livret Jeune": "var(--pig)",
   "PEL": "var(--muted-foreground)",
-  "Fonds euros": "var(--coin)",
+  "CEL": "var(--muted-foreground)",
+  "PER": "var(--accent)",
+  "Assurance vie": "var(--coin)",
+  "PEA": "var(--accent)",
+  "Compte titres": "var(--muted-foreground)",
   "Autre": "var(--muted-foreground)",
 };
 
