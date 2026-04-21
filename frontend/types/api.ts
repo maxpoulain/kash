@@ -68,6 +68,30 @@ export interface BudgetUpsert {
   allocations: Array<{ category_id: string; amount: number }>;
 }
 
+// Savings Accounts
+
+export interface SavingsAccountAPI {
+  id: string;
+  name: string;
+  type: string;
+  balance: number;
+  institution: string | null;
+}
+
+export interface SavingsAccountCreate {
+  name: string;
+  type: string;
+  balance: number;
+  institution?: string;
+}
+
+export interface SavingsAccountUpdate {
+  name?: string;
+  type?: string;
+  balance?: number;
+  institution?: string | null;
+}
+
 // Spending Goals
 export interface SpendingGoal {
   category_id: string;
