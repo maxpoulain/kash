@@ -37,7 +37,7 @@ type FormValues = {
   name: string;
   type: AccountType;
   institution: string;
-  balance: number;
+  balance: number | undefined;
 };
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -89,7 +89,7 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
       name: account?.name ?? "",
       type: account?.type ?? "Livret A",
       institution: account?.institution ?? "",
-      balance: account?.balance ?? 0,
+      balance: account?.balance ?? undefined,
     },
   });
 
@@ -102,7 +102,7 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
       setValue("name", account.name);
       setValue("type", account.type);
       setValue("institution", account.institution ?? "");
-      setValue("balance", account.balance);
+      setValue("balance", account.balance ?? undefined);
     }
   }, [account, setValue]);
 
