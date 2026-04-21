@@ -1,21 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Landmark, PiggyBank, TrendingUp, Home, Package, Zap, Sprout, Plus, Pencil } from "lucide-react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AccountSheet } from "@/components/assets/account-sheet";
+import { getSavingsAccounts, createSavingsAccount, updateSavingsAccount, deleteSavingsAccount } from "@/lib/api";
 import type { SavingsAccount, AccountType } from "@/components/assets/account-form";
-
-// ─── Mock data ────────────────────────────────────────────────────────────────
-
-const INITIAL_ACCOUNTS: SavingsAccount[] = [
-  { id: "1", name: "Livret A", type: "Livret A", balance: 22950, institution: "Caisse d'Épargne" },
-  { id: "2", name: "LEP", type: "LEP", balance: 10000, institution: "La Banque Postale" },
-  { id: "3", name: "Assurance vie", type: "Assurance vie", balance: 15230, institution: "Boursorama" },
-  { id: "4", name: "PEL", type: "PEL", balance: 8200, institution: "BNP Paribas" },
-];
 
 const MOCK_DELTA = 3420;
 const MOCK_DELTA_PCT = 6.3;
@@ -108,10 +100,6 @@ function computeAllocation(accounts: SavingsAccount[]) {
     type: type as AccountType,
     pct: Math.round((amount / total) * 100),
   }));
-}
-
-function generateId() {
-  return Math.random().toString(36).slice(2);
 }
 
 // ─── Sparkline ────────────────────────────────────────────────────────────────
@@ -211,9 +199,15 @@ function AccountRowDesktop({ account, last, onEdit }: { account: SavingsAccount;
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function AssetsClient() {
-  const [accounts, setAccounts] = useState<SavingsAccount[]>(INITIAL_ACCOUNTS);
+  const [accounts, setAccounts] = useState<SavingsAccount[]>([]);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<SavingsAccount | undefined>(undefined);
+
+  useEffect(() => {
+    getSavingsAccounts().then((rows) =>
+      setAccounts(rows.map((r) => ({ ...r, institution: r.institution ?? undefined, type: r.type as AccountType })))
+    ).catch(() => {});
+  }, []);
 
   const total = accounts.reduce((s, a) => s + a.balance, 0);
   const allocation = computeAllocation(accounts);
@@ -228,16 +222,19 @@ export function AssetsClient() {
     setSheetOpen(true);
   }
 
-  function handleSave(data: Omit<SavingsAccount, "id">) {
+  async function handleSave(data: Omit<SavingsAccount, "id">) {
     if (editing) {
-      setAccounts((prev) => prev.map((a) => a.id === editing.id ? { ...a, ...data } : a));
+      const updated = await updateSavingsAccount(editing.id, data);
+      setAccounts((prev) => prev.map((a) => a.id === editing.id ? { ...updated, institution: updated.institution ?? undefined, type: updated.type as AccountType } : a));
     } else {
-      setAccounts((prev) => [...prev, { id: generateId(), ...data }]);
+      const created = await createSavingsAccount(data);
+      setAccounts((prev) => [...prev, { ...created, institution: created.institution ?? undefined, type: created.type as AccountType }]);
     }
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (editing) {
+      await deleteSavingsAccount(editing.id);
       setAccounts((prev) => prev.filter((a) => a.id !== editing.id));
     }
   }

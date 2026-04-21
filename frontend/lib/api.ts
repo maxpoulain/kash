@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import type { BudgetOut, BudgetSummary, BudgetUpsert, Category, CreateTransactionPayload, SpendingGoalsResponse, Transaction } from "@/types/api";
+import type { BudgetOut, BudgetSummary, BudgetUpsert, Category, CreateTransactionPayload, SavingsAccountAPI, SavingsAccountCreate, SavingsAccountUpdate, SpendingGoalsResponse, Transaction } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -72,6 +72,35 @@ export async function getSpendingGoals(month: string): Promise<SpendingGoalsResp
   const res = await apiFetch(`/api/spending-goals?month=${month}`);
   if (!res.ok) throw new Error("Failed to fetch spending goals");
   return res.json();
+}
+
+export async function getSavingsAccounts(): Promise<SavingsAccountAPI[]> {
+  const res = await apiFetch("/api/savings-accounts");
+  if (!res.ok) throw new Error("Failed to fetch savings accounts");
+  return res.json();
+}
+
+export async function createSavingsAccount(payload: SavingsAccountCreate): Promise<SavingsAccountAPI> {
+  const res = await apiFetch("/api/savings-accounts", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to create savings account");
+  return res.json();
+}
+
+export async function updateSavingsAccount(id: string, payload: SavingsAccountUpdate): Promise<SavingsAccountAPI> {
+  const res = await apiFetch(`/api/savings-accounts/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to update savings account");
+  return res.json();
+}
+
+export async function deleteSavingsAccount(id: string): Promise<void> {
+  const res = await apiFetch(`/api/savings-accounts/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Failed to delete savings account");
 }
 
 export async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
