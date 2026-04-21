@@ -9,9 +9,6 @@ import { AccountSheet } from "@/components/assets/account-sheet";
 import { getSavingsAccounts, createSavingsAccount, updateSavingsAccount, deleteSavingsAccount } from "@/lib/api";
 import type { SavingsAccount, AccountType } from "@/components/assets/account-form";
 
-const MOCK_DELTA = 3420;
-const MOCK_DELTA_PCT = 6.3;
-
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const TYPE_ICON: Record<AccountType, React.ElementType> = {
@@ -100,34 +97,6 @@ function computeAllocation(accounts: SavingsAccount[]) {
     type: type as AccountType,
     pct: Math.round((amount / total) * 100),
   }));
-}
-
-// ─── Sparkline ────────────────────────────────────────────────────────────────
-
-function Sparkline({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 300 80" className={className} preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="spark-fill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.2" />
-          <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path
-        d="M0,62 C25,58 45,44 75,46 C105,48 125,32 155,26 C185,20 215,34 245,22 C265,14 285,18 300,10 L300,80 L0,80 Z"
-        fill="url(#spark-fill)"
-      />
-      <path
-        d="M0,62 C25,58 45,44 75,46 C105,48 125,32 155,26 C185,20 215,34 245,22 C265,14 285,18 300,10"
-        fill="none"
-        stroke="var(--accent)"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <circle cx="300" cy="10" r="3.5" fill="var(--accent)" />
-      <circle cx="300" cy="10" r="7" fill="var(--accent)" opacity="0.2" />
-    </svg>
-  );
 }
 
 // ─── Mobile account card ──────────────────────────────────────────────────────
@@ -251,12 +220,6 @@ export function AssetsClient() {
               <div className="font-display text-4xl font-medium tracking-tight leading-tight mt-1">
                 {fmt(total)}
               </div>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="rounded-full bg-accent-soft px-2.5 py-0.5 font-mono text-[11px] font-semibold text-accent-ink">
-                  +{fmt(MOCK_DELTA)}
-                </span>
-                <span className="font-mono text-[11px] text-muted-foreground">30j · +{MOCK_DELTA_PCT}%</span>
-              </div>
             </div>
             <Button size="icon" className="h-10 w-10 shrink-0 rounded-xl" onClick={openAdd} aria-label="Ajouter un compte">
               <Plus className="h-4 w-4" />
@@ -278,11 +241,6 @@ export function AssetsClient() {
           </Button>
         </div>
 
-        {/* ── Mobile sparkline ── */}
-        <div className="rounded-2xl border border-border bg-card p-4 lg:hidden">
-          <Sparkline className="h-20 w-full" />
-        </div>
-
         {/* ── Desktop hero + allocation ── */}
         <div className="hidden lg:grid lg:grid-cols-[1.4fr_1fr] lg:gap-5">
           <div
@@ -291,15 +249,6 @@ export function AssetsClient() {
           >
             <p className="font-mono text-[10px] uppercase tracking-widest text-accent-ink/70">Net worth · EUR</p>
             <div className="mt-2 font-display text-5xl font-medium leading-none tracking-tight">{fmt(total)}</div>
-            <div className="mt-3 flex gap-2">
-              <span className="rounded-full bg-foreground px-2.5 py-1 font-mono text-[11px] font-semibold text-background">
-                ↑ {fmt(MOCK_DELTA)} / 30j
-              </span>
-              <span className="rounded-full bg-card px-2.5 py-1 font-mono text-[11px] font-semibold">
-                +{MOCK_DELTA_PCT}%
-              </span>
-            </div>
-            <Sparkline className="absolute bottom-4 right-4 h-14 w-64 opacity-60" />
           </div>
 
           {allocation.length > 0 && (
