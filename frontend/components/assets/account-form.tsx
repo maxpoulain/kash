@@ -199,7 +199,7 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
 
             {/* Name */}
             <div>
-              <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Nom</div>
+              <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Intitulé</div>
               <input
                 {...register("name")}
                 type="text"
@@ -323,7 +323,7 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
               <TypeIcon className="h-[13px] w-[13px]" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground">Nom</div>
+              <div className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground">Intitulé</div>
               <input
                 {...register("name")}
                 type="text"
