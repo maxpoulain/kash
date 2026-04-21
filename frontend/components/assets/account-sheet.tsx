@@ -58,7 +58,7 @@ export function AccountSheet({ open, onOpenChange, account, onSave, onDelete }: 
         <Dialog.Root open={open} onOpenChange={onOpenChange}>
           <Dialog.Portal>
             <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 duration-200" />
-            <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[20px] bg-card shadow-2xl data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 duration-200">
+            <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[20px] bg-card shadow-2xl data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 duration-200">
               <Dialog.Title className="sr-only">{account ? "Modifier le compte" : "Ajouter un compte"}</Dialog.Title>
               <AccountForm {...formProps} variant="desktop" />
             </Dialog.Popup>
