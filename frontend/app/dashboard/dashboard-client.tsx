@@ -23,7 +23,7 @@ export function DashboardClient() {
   return (
     <AppLayout onAdd={() => setSheetOpen(true)}>
       <div className="flex flex-col gap-6 px-4 pb-28 pt-6 lg:px-8 lg:pb-10 lg:pt-8">
-        <TransactionList refreshKey={refreshKey} />
+        <TransactionList refreshKey={refreshKey} onAdd={() => setSheetOpen(true)} />
       </div>
 
       <TransactionSheet
