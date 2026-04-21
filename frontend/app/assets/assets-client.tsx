@@ -1,6 +1,6 @@
 "use client";
 
-import { Landmark, PiggyBank, TrendingUp, Home, Package } from "lucide-react";
+import { Landmark, PiggyBank, TrendingUp, Home, Package, Zap, Sprout } from "lucide-react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +17,8 @@ type AccountType =
   | "Assurance vie"
   | "PEA"
   | "Compte titres"
+  | "Crypto"
+  | "Diversification"
   | "Autre";
 
 interface SavingsAccount {
@@ -52,6 +54,8 @@ const TYPE_ICON: Record<AccountType, React.ElementType> = {
   "Assurance vie": TrendingUp,
   "PEA": TrendingUp,
   "Compte titres": TrendingUp,
+  "Crypto": Zap,
+  "Diversification": Sprout,
   "Autre": Package,
 };
 
@@ -66,6 +70,8 @@ const TYPE_CARD_BG: Record<AccountType, string> = {
   "Assurance vie": "bg-gold-soft",
   "PEA": "bg-accent-soft",
   "Compte titres": "bg-muted",
+  "Crypto": "bg-warn-soft",
+  "Diversification": "bg-accent-soft",
   "Autre": "bg-muted",
 };
 
@@ -80,6 +86,8 @@ const TYPE_ICON_BG: Record<AccountType, string> = {
   "Assurance vie": "var(--coin)",
   "PEA": "var(--accent)",
   "Compte titres": "var(--muted-foreground)",
+  "Crypto": "var(--warning)",
+  "Diversification": "var(--accent)",
   "Autre": "var(--muted-foreground)",
 };
 
@@ -94,6 +102,8 @@ const TYPE_BAR: Record<AccountType, string> = {
   "Assurance vie": "var(--coin)",
   "PEA": "var(--accent)",
   "Compte titres": "var(--muted-foreground)",
+  "Crypto": "var(--warning)",
+  "Diversification": "var(--accent)",
   "Autre": "var(--muted-foreground)",
 };
 
