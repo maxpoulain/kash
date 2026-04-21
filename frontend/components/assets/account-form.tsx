@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { ChevronRight, Landmark, PiggyBank, TrendingUp, Home, Package, Zap, Sprout, Trash2, X, Building2 } from "lucide-react";
+import { Landmark, PiggyBank, TrendingUp, Home, Package, Zap, Sprout, Trash2, X, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
