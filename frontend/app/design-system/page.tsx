@@ -632,10 +632,10 @@ function SectionMonthSwitcher() {
     <Section
       num="11"
       title="Month switcher"
-      desc="Monthly navigation shared by goals and transactions. Future months are disabled. Compact variant fits inline headers; default variant carries a day counter and optional action slot."
+      desc="Monthly navigation shared by goals and transactions. Future months are disabled. Default variant carries a day counter and optional action slot; compact variant fits inline headers."
     >
       <div className="flex flex-col gap-3">
-        <Card label="Default · enriched (goals)">
+        <Card label="Default · enriched (goals, transactions)">
           <div className="w-full">
             <MonthSwitcher
               value={enrichedMonth}
@@ -652,7 +652,7 @@ function SectionMonthSwitcher() {
           </div>
         </Card>
 
-        <Card label="Compact · inline (transactions)">
+        <Card label="Compact · inline">
           <MonthSwitcher value={compactMonth} onChange={setCompactMonth} size="compact" />
         </Card>
       </div>

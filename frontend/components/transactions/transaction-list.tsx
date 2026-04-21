@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Check, Filter, Package } from "lucide-react";
+import { Check, Filter, Package, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { MonthSwitcher } from "@/components/ui/month-switcher";
 import { getTransactions, getCategories } from "@/lib/api";
@@ -44,9 +45,10 @@ const TYPE_FILTERS: { key: FilterType; label: string }[] = [
 
 interface TransactionListProps {
   refreshKey?: number;
+  onAdd?: () => void;
 }
 
-export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
+export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps) {
   const [month, setMonth] = useState(currentMonth);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -105,17 +107,39 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
   return (
     <div className="flex flex-col gap-4">
       {/* ── Page header: title + month nav ────────────────── */}
-      <div className="flex flex-col gap-2">
-        <h1 className="font-display text-2xl font-medium tracking-tight">Transactions</h1>
-        <div className="flex items-center justify-between gap-2">
-          {!loading && (
-            <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-              {transactions.length} ce mois
-              {uncategorizedCount > 0 && ` · ${uncategorizedCount} non catégorisées`}
-            </p>
-          )}
-          <MonthSwitcher value={month} onChange={setMonth} size="compact" className="ml-auto" />
+      <div className="flex flex-col gap-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="font-display text-2xl font-medium tracking-tight">Transactions</h1>
+            {!loading && (
+              <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+                {transactions.length} ce mois
+                {uncategorizedCount > 0 && ` · ${uncategorizedCount} non catégorisées`}
+              </p>
+            )}
+          </div>
+          {/* Add button (mobile only; desktop add sits in the month switcher endSlot) */}
+          <Button
+            size="icon"
+            onClick={onAdd}
+            className="h-10 w-10 shrink-0 rounded-xl lg:hidden"
+            aria-label="Ajouter une transaction"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
+        <MonthSwitcher
+          value={month}
+          onChange={setMonth}
+          showDayCounter
+          showTodayButton
+          endSlot={
+            <Button size="sm" onClick={onAdd} className="gap-1.5 rounded-full">
+              <Plus className="h-4 w-4" />
+              Ajouter
+            </Button>
+          }
+        />
       </div>
 
       {/* ── Filter row ─────────────────────────────────────── */}
