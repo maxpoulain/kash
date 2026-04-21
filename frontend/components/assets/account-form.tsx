@@ -42,6 +42,17 @@ type FormValues = {
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
+const SHORT_LABEL: Partial<Record<AccountType, string>> = {
+  "Livret Jeune": "Lvrt Jeune",
+  "Assurance vie": "Assur. vie",
+  "Compte titres": "Titres",
+  "Diversification": "Diversif.",
+};
+
+function shortLabel(t: AccountType) {
+  return SHORT_LABEL[t] ?? t;
+}
+
 const TYPE_ICON: Record<AccountType, React.ElementType> = {
   "Livret A": PiggyBank,
   "LEP": PiggyBank,
@@ -126,7 +137,7 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
             style={active ? { background: "var(--ink)" } : { background: "var(--bg-elev)" }}
           >
             <Icon className="h-4 w-4" />
-            <span>{t}</span>
+            <span>{shortLabel(t)}</span>
           </button>
         );
       })}
