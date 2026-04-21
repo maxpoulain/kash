@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import type { BudgetOut, BudgetSummary, BudgetUpsert, Category, CreateTransactionPayload, SavingsAccountAPI, SavingsAccountCreate, SavingsAccountUpdate, SpendingGoalsResponse, Transaction } from "@/types/api";
+import type { Category, CreateTransactionPayload, SavingsAccountAPI, SavingsAccountCreate, SavingsAccountUpdate, SpendingGoalsResponse, Transaction } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -44,29 +44,6 @@ export async function createTransaction(payload: CreateTransactionPayload): Prom
   return res.json();
 }
 
-export async function getBudgetSummary(month: string): Promise<BudgetSummary> {
-  const res = await apiFetch(`/api/budgets/${month}/summary`);
-  if (!res.ok) throw new Error("Failed to fetch budget summary");
-  return res.json();
-}
-
-export async function saveBudget(month: string, payload: BudgetUpsert): Promise<BudgetOut> {
-  const res = await apiFetch(`/api/budgets/${month}`, {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error("Failed to save budget");
-  return res.json();
-}
-
-export async function copyBudgetFrom(targetMonth: string, sourceMonth: string): Promise<BudgetOut> {
-  const res = await apiFetch(
-    `/api/budgets/${targetMonth}/copy-from/${sourceMonth}`,
-    { method: "POST" }
-  );
-  if (!res.ok) throw new Error("Failed to copy budget");
-  return res.json();
-}
 
 export async function getSpendingGoals(month: string): Promise<SpendingGoalsResponse> {
   const res = await apiFetch(`/api/spending-goals?month=${month}`);
