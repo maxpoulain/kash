@@ -10,6 +10,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Piggy as PiggyMascot, PiggyMark } from "@/components/kash-piggy";
+import { Button as DsButton } from "@/components/ui/button";
+import { MonthSwitcher } from "@/components/ui/month-switcher";
+import { currentMonth, prevMonth } from "@/lib/month";
 
 // ─── Layout helpers ───────────────────────────────────────────────────────────
 function Section({ num, title, desc, children }: {
@@ -621,6 +624,42 @@ function SectionChips() {
   );
 }
 
+// ─── 11 Month switcher ────────────────────────────────────────────────────────
+function SectionMonthSwitcher() {
+  const [enrichedMonth, setEnrichedMonth] = useState(currentMonth);
+  const [compactMonth, setCompactMonth] = useState(() => prevMonth(currentMonth()));
+  return (
+    <Section
+      num="11"
+      title="Month switcher"
+      desc="Monthly navigation shared by goals and transactions. Future months are disabled. Compact variant fits inline headers; default variant carries a day counter and optional action slot."
+    >
+      <div className="flex flex-col gap-3">
+        <Card label="Default · enriched (goals)">
+          <div className="w-full">
+            <MonthSwitcher
+              value={enrichedMonth}
+              onChange={setEnrichedMonth}
+              showDayCounter
+              showTodayButton
+              endSlot={
+                <DsButton size="sm" className="gap-1.5 rounded-full">
+                  <Plus className="h-4 w-4" />
+                  Ajouter
+                </DsButton>
+              }
+            />
+          </div>
+        </Card>
+
+        <Card label="Compact · inline (transactions)">
+          <MonthSwitcher value={compactMonth} onChange={setCompactMonth} size="compact" />
+        </Card>
+      </div>
+    </Section>
+  );
+}
+
 // ─── Color palette ─────────────────────────────────────────────────────────────
 function SectionColors() {
   const swatches = [
@@ -709,6 +748,7 @@ export default function DesignSystemPage() {
         <SectionFeedback />
         <SectionModals />
         <SectionChips />
+        <SectionMonthSwitcher />
       </main>
 
       <footer className="border-t border-border px-8 py-8 mt-8">

@@ -1,35 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Check, ChevronLeftIcon, ChevronRightIcon, Filter, Package } from "lucide-react";
+import { Check, Filter, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { MonthSwitcher } from "@/components/ui/month-switcher";
 import { getTransactions, getCategories } from "@/lib/api";
 import { CATEGORY_ICONS } from "@/lib/category-icons";
+import { currentMonth } from "@/lib/month";
 import type { Category, Transaction } from "@/types/api";
-
-function formatMonth(month: string): string {
-  const [year, m] = month.split("-");
-  const date = new Date(Number(year), Number(m) - 1, 1);
-  return date.toLocaleString("fr-FR", { month: "long", year: "numeric" });
-}
-
-function currentMonth(): string {
-  return new Date().toISOString().slice(0, 7);
-}
-
-function prevMonth(month: string): string {
-  const [year, m] = month.split("-").map(Number);
-  const d = new Date(year, m - 2, 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function nextMonth(month: string): string {
-  const [year, m] = month.split("-").map(Number);
-  const d = new Date(year, m, 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
 
 function formatDateLabel(dateStr: string): string {
   const today = new Date().toISOString().slice(0, 10);
@@ -99,8 +78,6 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
     return { name: cat.name, Icon: CATEGORY_ICONS[cat.name] ?? Package };
   }
 
-  const isCurrentMonth = month === currentMonth();
-
   const uncategorizedCount = transactions.filter((t) => !t.category_id).length;
 
   const filtered = transactions
@@ -137,21 +114,7 @@ export function TransactionList({ refreshKey = 0 }: TransactionListProps) {
               {uncategorizedCount > 0 && ` · ${uncategorizedCount} non catégorisées`}
             </p>
           )}
-          <div className="flex items-center gap-1 ml-auto shrink-0">
-            <Button variant="ghost" size="icon" onClick={() => setMonth(prevMonth)} aria-label="Mois précédent">
-              <ChevronLeftIcon className="h-4 w-4" />
-            </Button>
-            <span className="min-w-[100px] text-center text-sm font-medium capitalize">{formatMonth(month)}</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setMonth(nextMonth)}
-              disabled={isCurrentMonth}
-              aria-label="Mois suivant"
-            >
-              <ChevronRightIcon className="h-4 w-4" />
-            </Button>
-          </div>
+          <MonthSwitcher value={month} onChange={setMonth} size="compact" className="ml-auto" />
         </div>
       </div>
 
