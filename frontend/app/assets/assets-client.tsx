@@ -13,16 +13,16 @@ interface SavingsAccount {
   name: string;
   type: AccountType;
   balance: number;
-  rate?: number;
+  institution?: string;
 }
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
 const MOCK_ACCOUNTS: SavingsAccount[] = [
-  { id: "1", name: "Livret A", type: "Livret A", balance: 22950, rate: 3.0 },
-  { id: "2", name: "LEP", type: "LEP", balance: 10000, rate: 5.0 },
-  { id: "3", name: "Assurance vie", type: "Fonds euros", balance: 15230, rate: 2.5 },
-  { id: "4", name: "PEL", type: "PEL", balance: 8200, rate: 2.25 },
+  { id: "1", name: "Livret A", type: "Livret A", balance: 22950, institution: "Caisse d'Épargne" },
+  { id: "2", name: "LEP", type: "LEP", balance: 10000, institution: "La Banque Postale" },
+  { id: "3", name: "Assurance vie", type: "Fonds euros", balance: 15230, institution: "Boursorama" },
+  { id: "4", name: "PEL", type: "PEL", balance: 8200, institution: "BNP Paribas" },
 ];
 
 const MOCK_DELTA = 3420;
@@ -143,7 +143,7 @@ function AccountCardMobile({ account }: { account: SavingsAccount }) {
         </div>
         <div className="text-xs font-semibold">{account.name}</div>
         <div className="font-mono text-[10px] text-muted-foreground">
-          {account.type}{account.rate != null ? ` · ${account.rate}%` : ""}
+          {account.institution ? `${account.type} · ${account.institution}` : account.type}
         </div>
       </div>
     </div>
@@ -171,7 +171,7 @@ function AccountRowDesktop({ account, last }: { account: SavingsAccount; last: b
       <div>
         <div className="text-sm font-medium">{account.name}</div>
         <div className="font-mono text-[11px] text-muted-foreground">
-          {account.type}{account.rate != null ? ` · ${account.rate} %` : ""}
+          {account.institution ? `${account.type} · ${account.institution}` : account.type}
         </div>
       </div>
       <div
@@ -217,7 +217,7 @@ export function AssetsClient() {
         <div className="hidden lg:block">
           <h1 className="font-display text-2xl font-medium tracking-tight">Patrimoine</h1>
           <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-            {accounts.length} compte{accounts.length > 1 ? "s" : ""} · saisie manuelle
+            {accounts.length} compte{accounts.length > 1 ? "s" : ""}
           </p>
         </div>
 
