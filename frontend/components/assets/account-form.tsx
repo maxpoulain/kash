@@ -107,8 +107,8 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
     });
   }
 
-  const typePicker = (
-    <div className="flex flex-wrap gap-1.5">
+  const typePickerDesktop = (
+    <div className="grid grid-cols-4 gap-1.5">
       {ACCOUNT_TYPES.map((t) => {
         const Icon = TYPE_ICON[t];
         const active = selectedType === t;
@@ -118,15 +118,15 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
             type="button"
             onClick={() => setValue("type", t)}
             className={cn(
-              "flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-medium border transition-all",
+              "flex flex-col items-center gap-1 px-1.5 py-2.5 rounded-[10px] text-[10px] border transition-all cursor-pointer leading-tight text-center",
               active
-                ? "border-foreground text-background"
-                : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground"
+                ? "text-background border-foreground"
+                : "text-muted-foreground border-border hover:border-foreground/40"
             )}
             style={active ? { background: "var(--ink)" } : { background: "var(--bg-elev)" }}
           >
-            <Icon className="h-3 w-3" />
-            {t}
+            <Icon className="h-4 w-4" />
+            <span>{t}</span>
           </button>
         );
       })}
@@ -216,7 +216,7 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
           {/* Right */}
           <div className="px-[22px] py-[18px]" style={{ background: "var(--bg-sunk)" }}>
             <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Type</div>
-            {typePicker}
+            {typePickerDesktop}
           </div>
         </div>
 
