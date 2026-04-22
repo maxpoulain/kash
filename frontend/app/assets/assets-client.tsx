@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Landmark, PiggyBank, TrendingUp, Home, Package, Zap, Sprout, Plus, Pencil } from "lucide-react";
 import { AppLayout } from "@/components/layout/app-layout";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AccountSheet } from "@/components/assets/account-sheet";
@@ -104,8 +105,8 @@ function computeAllocation(accounts: SavingsAccount[]) {
 function AccountCardMobile({ account, onEdit }: { account: SavingsAccount; onEdit: () => void }) {
   const Icon = TYPE_ICON[account.type];
   return (
-    <div
-      className={cn("flex flex-col gap-3 rounded-2xl border border-border p-3 cursor-pointer", TYPE_CARD_BG[account.type])}
+    <Card
+      className={cn("gap-3 p-3 cursor-pointer", TYPE_CARD_BG[account.type])}
       onClick={onEdit}
     >
       <div className="flex items-start justify-between">
@@ -126,7 +127,7 @@ function AccountCardMobile({ account, onEdit }: { account: SavingsAccount; onEdi
           {account.institution ? `${account.type} · ${account.institution}` : account.type}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -243,16 +244,16 @@ export function AssetsClient() {
 
         {/* ── Desktop hero + allocation ── */}
         <div className="hidden lg:grid lg:grid-cols-[1.4fr_1fr] lg:gap-5">
-          <div
-            className="relative overflow-hidden rounded-2xl border border-border p-5"
+          <Card
+            className="relative p-5"
             style={{ background: "linear-gradient(135deg, var(--accent-soft) 0%, var(--pig) 200%)", minHeight: 200 }}
           >
             <p className="font-mono text-[10px] uppercase tracking-widest text-accent-ink/70">Net worth · EUR</p>
             <div className="mt-2 font-display text-5xl font-medium leading-none tracking-tight">{fmt(total)}</div>
-          </div>
+          </Card>
 
           {allocation.length > 0 && (
-            <div className="rounded-2xl border border-border bg-card p-5">
+            <Card className="p-5">
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Répartition</p>
               <div className="mt-4 flex flex-col gap-3">
                 {allocation.map(({ type, pct }) => (
@@ -267,7 +268,7 @@ export function AssetsClient() {
                   </div>
                 ))}
               </div>
-            </div>
+            </Card>
           )}
         </div>
 
@@ -291,11 +292,11 @@ export function AssetsClient() {
           {accounts.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">Aucun compte. Cliquez sur &ldquo;Ajouter un compte&rdquo;.</p>
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-border bg-card">
+            <Card className="gap-0 py-0">
               {accounts.map((a, i) => (
                 <AccountRowDesktop key={a.id} account={a} last={i === accounts.length - 1} onEdit={() => openEdit(a)} />
               ))}
-            </div>
+            </Card>
           )}
         </div>
 

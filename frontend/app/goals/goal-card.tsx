@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 import type { SpendingGoal } from "@/types/api";
 import { CATEGORY_ICONS } from "@/lib/category-icons";
 import { Package } from "lucide-react";
@@ -40,7 +41,7 @@ export function GoalCard({ goal }: GoalCardProps) {
       : "bg-success/10";
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4">
+    <Card className="gap-3 p-4">
       {/* Header row */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
@@ -106,6 +107,6 @@ export function GoalCard({ goal }: GoalCardProps) {
           </span>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

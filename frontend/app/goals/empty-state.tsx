@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Plus, Target } from "lucide-react";
 
 interface EmptyStateProps {
@@ -17,7 +18,7 @@ export function EmptyState({ month }: EmptyStateProps) {
   const monthName = formatMonthName(month);
 
   return (
-    <div className="flex flex-col items-center justify-center gap-6 rounded-2xl border border-dashed border-border bg-card/50 p-8 py-12">
+    <Card variant="dashed" className="items-center justify-center gap-6 bg-card/50 p-8 py-12">
       {/* Target icon */}
       <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-muted">
         <Target className="h-10 w-10 text-muted-foreground" />
@@ -37,6 +38,6 @@ export function EmptyState({ month }: EmptyStateProps) {
         <Plus className="h-4 w-4" />
         Créer un objectif
       </Button>
-    </div>
+    </Card>
   );
 }
