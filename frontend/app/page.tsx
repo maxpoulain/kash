@@ -110,7 +110,7 @@ export default function Home() {
 
         {/* Trust Section */}
         <section className="mx-auto max-w-6xl px-4 py-16">
-          <div className="flex flex-col items-center gap-8 rounded-2xl bg-card p-8 ring-1 ring-border md:flex-row md:p-12">
+          <Card className="flex-row items-center gap-8 p-8 md:p-12 border-border">
             <div className="flex-1">
               <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <Shield className="size-6" />
@@ -132,7 +132,7 @@ export default function Home() {
                 <p className="text-sm text-muted-foreground">Private</p>
               </div>
             </div>
-          </div>
+          </Card>
         </section>
 
         {/* CTA Section */}

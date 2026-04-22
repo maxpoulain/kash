@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Check, Filter, Package, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { MonthSwitcher } from "@/components/ui/month-switcher";
@@ -228,7 +229,7 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
               <span>Catégorie</span>
               <span className="text-right">Montant</span>
             </div>
-            <div className="overflow-hidden rounded-2xl border border-border bg-card">
+            <Card className="gap-0 py-0">
               {filtered.map((t, i) => {
                 const { name, Icon } = getCategoryInfo(t.category_id);
                 return (
@@ -259,7 +260,7 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
                   </div>
                 );
               })}
-            </div>
+            </Card>
           </div>
 
           {/* ── Mobile: grouped list ───────────────────────── */}

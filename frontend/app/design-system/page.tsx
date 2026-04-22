@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Piggy as PiggyMascot, PiggyMark } from "@/components/kash-piggy";
+import { Card } from "@/components/ui/card";
 import { Button as DsButton } from "@/components/ui/button";
 import { MonthSwitcher } from "@/components/ui/month-switcher";
 import { currentMonth, prevMonth } from "@/lib/month";
@@ -32,15 +33,15 @@ function Section({ num, title, desc, children }: {
   );
 }
 
-function Card({ label, dark, children }: { label: string; dark?: boolean; children: React.ReactNode }) {
+function Showcase({ label, dark, children }: { label: string; dark?: boolean; children: React.ReactNode }) {
   return (
-    <div className={cn(
-      "flex flex-col gap-4 rounded-2xl border border-border p-6",
-      dark ? "bg-foreground text-background border-foreground/20" : "bg-card"
+    <Card className={cn(
+      "p-6",
+      dark && "bg-foreground text-background border-foreground/20"
     )}>
       <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
       <div className="flex flex-wrap items-center gap-3 min-h-10">{children}</div>
-    </div>
+    </Card>
   );
 }
 
@@ -61,45 +62,45 @@ function SectionButtons() {
   return (
     <Section num="01" title="Buttons" desc="Four variants × three sizes. Primary is ink. Piggy for money-moving actions. Outline for secondary paths. Ghost for cancel/low-priority.">
       <div className="grid grid-cols-2 gap-3">
-        <Card label="Primary · ink">
+        <Showcase label="Primary · ink">
           <button className={`${base} rounded-full bg-foreground text-background px-6 py-3.5 text-[15px]`}>Add savings <ArrowUpRight className="h-4 w-4" /></button>
           <button className={`${base} rounded-full bg-foreground text-background px-5 py-2.5 text-sm`}>Save</button>
           <button className={`${base} rounded-full bg-foreground text-background px-3.5 py-1.5 text-xs`}>Confirm</button>
-        </Card>
+        </Showcase>
 
-        <Card label="Piggy · money actions">
+        <Showcase label="Piggy · money actions">
           <button className={`${base} rounded-full px-6 py-3.5 text-[15px] shadow-[inset_0_-3px_0_var(--pig-shadow)]`} style={{ background: "var(--pig)", color: "var(--foreground)" }}>
             <Coins className="h-4 w-4" /> Feed piggy
           </button>
           <button className={`${base} rounded-full px-5 py-2.5 text-sm shadow-[inset_0_-2px_0_var(--pig-shadow)]`} style={{ background: "var(--pig)", color: "var(--foreground)" }}>Top up</button>
           <button className={`${base} rounded-full px-3.5 py-1.5 text-xs`} style={{ background: "var(--pig)", color: "var(--foreground)" }}>+$5</button>
-        </Card>
+        </Showcase>
 
-        <Card label="Outline · secondary">
+        <Showcase label="Outline · secondary">
           <button className={`${base} rounded-full border-[1.5px] border-foreground bg-transparent text-foreground px-6 py-3.5 text-[15px]`}>View report</button>
           <button className={`${base} rounded-full border-[1.5px] border-foreground bg-transparent text-foreground px-5 py-2.5 text-sm`}>Export</button>
           <button className={`${base} rounded-full border border-foreground bg-transparent text-foreground px-3.5 py-1.5 text-xs`}>Edit</button>
-        </Card>
+        </Showcase>
 
-        <Card label="Ghost · tertiary">
+        <Showcase label="Ghost · tertiary">
           <button className={`${base} rounded-full bg-muted text-foreground px-5 py-2.5 text-sm`}>Cancel</button>
           <button className={`${base} rounded-full bg-transparent text-muted-foreground px-5 py-2.5 text-sm`}>Learn more</button>
           <button className={`${base} rounded-full bg-transparent px-5 py-2.5 text-sm`} style={{ color: "var(--warning)" }}>Delete jar</button>
-        </Card>
+        </Showcase>
 
-        <Card label="Icon · square radius">
+        <Showcase label="Icon · square radius">
           <button className="flex h-10 w-10 items-center justify-center rounded-[10px] border border-border bg-card text-foreground cursor-pointer"><Plus className="h-4 w-4" /></button>
           <button className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-foreground text-background cursor-pointer"><Search className="h-4 w-4" /></button>
           <button className="flex h-10 w-10 items-center justify-center rounded-[10px] cursor-pointer" style={{ background: "var(--pig)", color: "var(--foreground)" }}><Bell className="h-4 w-4" /></button>
           <button className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-success text-success-foreground cursor-pointer"><Check className="h-4 w-4" /></button>
-        </Card>
+        </Showcase>
 
-        <Card label="States">
+        <Showcase label="States">
           <button className={`${base} rounded-full bg-foreground text-background px-5 py-2.5 text-sm`}>Default</button>
           <button className={`${base} rounded-full bg-foreground/90 text-background px-5 py-2.5 text-sm translate-y-px`}>Pressed</button>
           <button className={`${base} rounded-full bg-muted text-muted-foreground px-5 py-2.5 text-sm cursor-not-allowed`}>Disabled</button>
           <button className={`${base} rounded-full bg-foreground text-background px-5 py-2.5 text-sm`}><Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving…</button>
-        </Card>
+        </Showcase>
       </div>
       <div className="mt-3"><Spec>radius 999 · inset-shadow 2–3px · font-weight 600</Spec></div>
     </Section>
@@ -112,7 +113,7 @@ function SectionInputs() {
   return (
     <Section num="02" title="Form inputs" desc="Text, number, date, and the money field. The money field always uses mono + a prefixed currency glyph. Focus ring is ink, not blue.">
       <div className="grid grid-cols-2 gap-3">
-        <Card label="Text · default / focus / error">
+        <Showcase label="Text · default / focus / error">
           <div className="w-full space-y-3">
             <div>
               <p className="mb-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Jar name</p>
@@ -128,9 +129,9 @@ function SectionInputs() {
               <p className="mt-1 text-[11px] text-warning">Give your jar a name.</p>
             </div>
           </div>
-        </Card>
+        </Showcase>
 
-        <Card label="Money field · mono">
+        <Showcase label="Money field · mono">
           <div className="w-full space-y-3">
             <div>
               <p className="mb-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Amount</p>
@@ -146,9 +147,9 @@ function SectionInputs() {
               ))}
             </div>
           </div>
-        </Card>
+        </Showcase>
 
-        <Card label="Select · dropdown">
+        <Showcase label="Select · dropdown">
           <div className="w-full space-y-2">
             <div className="flex items-center justify-between rounded-[10px] border border-border bg-background px-3.5 py-3">
               <div className="flex items-center gap-2 text-sm">
@@ -167,9 +168,9 @@ function SectionInputs() {
               ))}
             </div>
           </div>
-        </Card>
+        </Showcase>
 
-        <Card label="Toggle · checkbox · radio">
+        <Showcase label="Toggle · checkbox · radio">
           <div className="w-full space-y-3.5">
             <div className="flex items-center justify-between">
               <span className="text-sm">Auto-save on payday</span>
@@ -192,7 +193,7 @@ function SectionInputs() {
               Push reminders
             </div>
           </div>
-        </Card>
+        </Showcase>
       </div>
     </Section>
   );
@@ -201,10 +202,10 @@ function SectionInputs() {
 // ─── 03 Cards ─────────────────────────────────────────────────────────────────
 function SectionCards() {
   return (
-    <Section num="03" title="Cards" desc="Four templates: balance hero, metric, list, and transaction row. All share 16–24px radius, single border, subtle elevation.">
+    <Section num="03" title="Cards" desc="Built on the Card primitive from ui/card.tsx. Two variants: default (solid border) and dashed (empty states). Use <Card variant='dashed'> for placeholder containers.">
       <div className="grid grid-cols-[1.3fr_1fr] gap-3.5">
-        {/* Balance hero */}
-        <div className="relative overflow-hidden rounded-2xl p-6" style={{ background: "linear-gradient(135deg, var(--pig) 0%, var(--coin) 160%)", minHeight: 180 }}>
+        {/* Balance hero — gradient override */}
+        <Card className="relative p-6" style={{ background: "linear-gradient(135deg, var(--pig) 0%, var(--coin) 160%)", minHeight: 180 }}>
           <p className="font-mono text-[10px] uppercase tracking-widest" style={{ color: "var(--pig-shadow)" }}>Total savings</p>
           <p className="mt-1.5 font-display text-5xl font-medium tracking-tight leading-none">
             $12,847<span className="text-2xl" style={{ color: "var(--pig-shadow)" }}>.30</span>
@@ -213,10 +214,10 @@ function SectionCards() {
           <div className="absolute right-2 bottom-0">
             <Piggy size={110} mood="happy" fill={0.7} />
           </div>
-        </div>
+        </Card>
 
         {/* Metric */}
-        <div className="rounded-2xl border border-border bg-card p-6">
+        <Card className="p-6">
           <div className="flex items-center justify-between">
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Saved this month</p>
             <Coins className="h-4 w-4 text-muted-foreground" />
@@ -226,10 +227,10 @@ function SectionCards() {
           <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-muted">
             <div className="h-full w-[62%] rounded-full bg-success" />
           </div>
-        </div>
+        </Card>
 
         {/* List card */}
-        <div className="col-span-2 rounded-2xl border border-border bg-card p-5">
+        <Card className="col-span-2 p-5">
           <div className="mb-3 flex items-baseline justify-between">
             <h3 className="font-display text-lg font-medium">Recent activity</h3>
             <span className="text-xs text-muted-foreground">Apr 15 – 18</span>
@@ -252,7 +253,16 @@ function SectionCards() {
               </span>
             </div>
           ))}
-        </div>
+        </Card>
+
+        {/* Dashed variant — empty states */}
+        <Card variant="dashed" className="col-span-2 items-center p-8 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
+            <Plus className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <p className="font-display text-lg font-medium">No items yet</p>
+          <p className="text-sm text-muted-foreground">Use variant="dashed" for empty/placeholder states.</p>
+        </Card>
       </div>
     </Section>
   );
@@ -269,7 +279,7 @@ function SectionJars() {
   return (
     <Section num="04" title="Jars" desc="The savings container. Three sizes — micro row, standard grid card, and hero detail. Fill level is always literal, never abstract.">
       {/* Hero jar */}
-      <div className="mb-4 grid grid-cols-[160px_1fr] gap-7 rounded-2xl border border-border bg-card p-6">
+      <Card className="mb-4 grid grid-cols-[160px_1fr] gap-7 p-6">
         <div className="relative mx-auto h-[170px] w-[140px] overflow-hidden rounded-[12px_12px_22px_22px] border-[3px] border-foreground bg-muted">
           <div className="absolute -top-2 -left-2 -right-2 h-3.5 rounded bg-foreground" />
           <div className="absolute bottom-0 left-0 right-0 h-[62%]" style={{ background: "linear-gradient(180deg, var(--pig-deep), var(--pig))" }} />
@@ -295,12 +305,12 @@ function SectionJars() {
             <div className="h-full w-[62%] rounded-full" style={{ background: "linear-gradient(90deg, var(--coin), var(--pig-deep))" }} />
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Grid */}
       <div className="mb-4 grid grid-cols-4 gap-3">
         {jars.map((j, i) => (
-          <div key={i} className="relative overflow-hidden rounded-2xl border border-border bg-card p-3.5">
+          <Card key={i} className="relative p-3.5">
             <div className="mb-9 flex items-center justify-between">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: j.c }}>
                 <j.icon className="h-3.5 w-3.5" />
@@ -312,12 +322,12 @@ function SectionJars() {
               <Flame className="h-2.5 w-2.5" /> {j.streak}d
             </span>
             <div className="absolute bottom-0 left-0 right-0 border-t border-pig-deep/40 opacity-35" style={{ height: `${j.pct * 50}%`, background: j.c }} />
-          </div>
+          </Card>
         ))}
       </div>
 
       {/* Row */}
-      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <Card className="gap-0 py-0">
         {jars.slice(0, 3).map((j, i) => (
           <div key={i} className={cn("flex items-center gap-3.5 p-3.5", i > 0 && "border-t border-border")}>
             <div className="relative h-9 w-7 overflow-hidden rounded-[3px_3px_6px_6px] border-[1.5px] border-foreground bg-muted">
@@ -331,7 +341,7 @@ function SectionJars() {
             <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground" />
           </div>
         ))}
-      </div>
+      </Card>
     </Section>
   );
 }
@@ -346,13 +356,13 @@ function SectionPiggy() {
           { m: "neutral", fill: 0.5, label: "Watching", sub: "goal 40–79%" },
           { m: "sleep", fill: 0.2, label: "Idle", sub: "7+ days quiet" },
         ].map((p, i) => (
-          <div key={i} className="rounded-2xl border border-border bg-card p-5 text-center">
+          <Card key={i} className="p-5 text-center">
             <div className="mb-3 flex items-center justify-center rounded-xl bg-muted py-4">
               <Piggy size={110} mood={p.m as "happy" | "neutral" | "sleep"} fill={p.fill} coin={!!p.coin} />
             </div>
             <p className="font-display text-base font-medium">{p.label}</p>
             <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{p.sub}</p>
-          </div>
+          </Card>
         ))}
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -380,7 +390,7 @@ function SectionGamification() {
   return (
     <Section num="06" title="Gamification" desc="XP bars, level badges, streak counters, achievement tiles. Always secondary to financial data — XP never replaces a dollar amount.">
       <div className="grid grid-cols-2 gap-3 mb-3">
-        <Card label="Level · XP bar">
+        <Showcase label="Level · XP bar">
           <div className="flex w-full items-center gap-3.5">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[14px] font-display text-3xl font-semibold shadow-[inset_0_-3px_0_var(--gold-soft)]" style={{ background: "var(--coin)", color: "var(--foreground)" }}>7</div>
             <div className="flex-1">
@@ -393,9 +403,9 @@ function SectionGamification() {
               </div>
             </div>
           </div>
-        </Card>
+        </Showcase>
 
-        <Card label="Streak counter">
+        <Showcase label="Streak counter">
           <div className="flex w-full items-center gap-2.5">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full" style={{ background: "var(--warn-soft)", color: "var(--warning)" }}>
               <Flame className="h-7 w-7" strokeWidth={2} />
@@ -410,10 +420,10 @@ function SectionGamification() {
               <div key={i} className="h-4.5 flex-1 rounded-[2px]" style={{ background: i < 27 ? "var(--warning)" : "var(--pig)", opacity: i < 20 ? 0.35 + i * 0.03 : 1 }} />
             ))}
           </div>
-        </Card>
+        </Showcase>
       </div>
 
-      <div className="rounded-2xl border border-border bg-card p-5">
+      <Card className="p-5">
         <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Achievements · 12 of 28</p>
         <div className="grid grid-cols-7 gap-2.5">
           {[
@@ -433,7 +443,7 @@ function SectionGamification() {
             </div>
           ))}
         </div>
-      </div>
+      </Card>
     </Section>
   );
 }
@@ -514,14 +524,14 @@ function SectionFeedback() {
       </div>
 
       {/* Empty state */}
-      <div className="flex flex-col items-center rounded-2xl border border-dashed border-border bg-card py-10 px-5 text-center">
+      <Card variant="dashed" className="items-center py-10 px-5 text-center">
         <Piggy size={110} mood="sleep" fill={0} />
         <h3 className="mt-2 font-display text-xl font-medium tracking-tight">Your piggy is hungry.</h3>
         <p className="mt-1.5 max-w-xs text-[13px] text-muted-foreground">{"Create your first jar and drop a coin in. Small amounts count — that's the whole point."}</p>
         <button className="mt-5 rounded-full px-5 py-3 font-semibold text-sm cursor-pointer shadow-[inset_0_-3px_0_var(--pig-shadow)]" style={{ background: "var(--pig)", color: "var(--foreground)" }}>
           Create your first jar
         </button>
-      </div>
+      </Card>
     </Section>
   );
 }
@@ -579,21 +589,21 @@ function SectionChips() {
   return (
     <Section num="10" title="Chips & badges" desc="Tonal chips for metadata, pill badges for deltas, glyph badges for XP and streaks. Always paired with a number.">
       <div className="grid grid-cols-2 gap-3">
-        <Card label="Delta pills">
+        <Showcase label="Delta pills">
           <span className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: "var(--accent-soft)", color: "var(--accent-ink)" }}>↑ +4.2%</span>
           <span className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: "var(--warn-soft)", color: "var(--warning)" }}>↓ -$86</span>
           <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-foreground/60">= flat</span>
           <span className="inline-flex items-center rounded-full bg-success px-2.5 py-1 text-xs font-semibold text-success-foreground">+$1,240</span>
-        </Card>
+        </Showcase>
 
-        <Card label="Game badges">
+        <Showcase label="Game badges">
           <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: "var(--gold-soft)", color: "#6B4A0D" }}><Sparkles className="h-3 w-3" /> +120 XP</span>
           <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: "var(--pig)", color: "var(--foreground)" }}><Flame className="h-3 w-3" /> 28d</span>
           <span className="inline-flex items-center gap-1 rounded-full bg-foreground px-2.5 py-1 text-xs font-semibold text-background"><Trophy className="h-3 w-3" /> LVL 7</span>
           <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: "var(--accent-soft)", color: "var(--accent-ink)" }}><Check className="h-3 w-3" /> Goal hit</span>
-        </Card>
+        </Showcase>
 
-        <Card label="Category tags">
+        <Showcase label="Category tags">
           {[
             { label: "Groceries", dot: "var(--pig-deep)" },
             { label: "Rent", dot: "var(--success)" },
@@ -605,9 +615,9 @@ function SectionChips() {
               {t.label}
             </span>
           ))}
-        </Card>
+        </Showcase>
 
-        <Card label="Notification dots & counts">
+        <Showcase label="Notification dots & counts">
           <div className="relative flex h-10 w-10 items-center justify-center rounded-[10px] bg-muted">
             <Bell className="h-4.5 w-4.5" />
             <span className="absolute -right-1 -top-1 rounded-full px-1.5 font-mono text-[10px] font-bold text-background" style={{ background: "var(--warning)" }}>3</span>
@@ -618,7 +628,7 @@ function SectionChips() {
           </div>
           <span className="rounded-full bg-foreground px-2.5 py-1 font-mono text-[11px] font-bold text-background">NEW</span>
           <span className="rounded-full px-2.5 py-1 font-mono text-[11px] font-bold" style={{ background: "var(--pig)", color: "var(--foreground)" }}>BETA</span>
-        </Card>
+        </Showcase>
       </div>
     </Section>
   );
@@ -635,7 +645,7 @@ function SectionMonthSwitcher() {
       desc="Monthly navigation shared by goals and transactions. Future months are disabled. Default variant carries a day counter and optional action slot; compact variant fits inline headers."
     >
       <div className="flex flex-col gap-3">
-        <Card label="Default · enriched (goals, transactions)">
+        <Showcase label="Default · enriched (goals, transactions)">
           <div className="w-full">
             <MonthSwitcher
               value={enrichedMonth}
@@ -650,11 +660,11 @@ function SectionMonthSwitcher() {
               }
             />
           </div>
-        </Card>
+        </Showcase>
 
-        <Card label="Compact · inline">
+        <Showcase label="Compact · inline">
           <MonthSwitcher value={compactMonth} onChange={setCompactMonth} size="compact" />
-        </Card>
+        </Showcase>
       </div>
     </Section>
   );
