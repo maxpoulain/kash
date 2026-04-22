@@ -1,3 +1,5 @@
+import datetime
+
 from pydantic import BaseModel
 
 
@@ -21,3 +23,8 @@ class SavingsAccountOut(BaseModel):
     type: str
     balance: float
     institution: str | None
+
+
+class NetWorthHistoryPoint(BaseModel):
+    date: datetime.date
+    total: float
