@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MonthSwitcher } from "@/components/ui/month-switcher";
@@ -10,6 +10,7 @@ import { currentMonth } from "@/lib/month";
 import type { SpendingGoalsResponse } from "@/types/api";
 import { GoalCard } from "./goal-card";
 import { EmptyState } from "./empty-state";
+import { CreateGoalModal } from "./create-goal-modal";
 
 function formatCurrency(amount: number): string {
   return amount.toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
@@ -19,6 +20,7 @@ export function GoalsClient() {
   const [month, setMonth] = useState(currentMonth);
   const [data, setData] = useState<SpendingGoalsResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -36,6 +38,11 @@ export function GoalsClient() {
     load();
   }, [load]);
 
+  const usedCategoryIds = useMemo(() => {
+    if (!data) return new Set<string>();
+    return new Set(data.goals.map((g) => g.category_id));
+  }, [data]);
+
   const hasGoals = data && data.goals.length > 0;
 
   return (
@@ -52,7 +59,7 @@ export function GoalsClient() {
             )}
           </div>
           {/* Add button (mobile only; desktop add sits in the month switcher endSlot) */}
-          <Button size="icon" className="h-10 w-10 shrink-0 rounded-xl lg:hidden" aria-label="Ajouter un objectif">
+          <Button size="icon" className="h-10 w-10 shrink-0 rounded-xl lg:hidden" aria-label="Ajouter un objectif" onClick={() => setModalOpen(true)}>
             <Plus className="h-4 w-4" />
           </Button>
         </div>
@@ -63,7 +70,7 @@ export function GoalsClient() {
           showDayCounter
           showTodayButton
           endSlot={
-            <Button size="sm" className="gap-1.5 rounded-full">
+            <Button size="sm" className="gap-1.5 rounded-full" onClick={() => setModalOpen(true)}>
               <Plus className="h-4 w-4" />
               Ajouter
             </Button>
@@ -74,15 +81,23 @@ export function GoalsClient() {
         {loading ? (
           <p className="py-8 text-center text-sm text-muted-foreground">Chargement…</p>
         ) : !hasGoals ? (
-          <EmptyState month={month} />
+          <EmptyState month={month} onAddGoal={() => setModalOpen(true)} />
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
             {data!.goals.map((goal) => (
-              <GoalCard key={goal.category_id} goal={goal} />
+              <GoalCard key={goal.id} goal={goal} />
             ))}
           </div>
         )}
       </div>
+
+      <CreateGoalModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        month={month}
+        usedCategoryIds={usedCategoryIds}
+        onGoalCreated={load}
+      />
     </AppLayout>
   );
 }

@@ -4,10 +4,11 @@ import re
 from typing import cast
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from postgrest.exceptions import APIError
 
 from app.core.auth import get_current_user
 from app.core.supabase import get_supabase
-from app.schemas.spending_goals import GoalOut, SpendingGoalsResponse
+from app.schemas.spending_goals import GoalCreate, GoalOut, GoalUpdate, SpendingGoalsResponse
 
 router = APIRouter(prefix="/api/spending-goals")
 
@@ -57,6 +58,49 @@ def _calculate_status(progress_percent: float) -> str:
         return "under_pace"
     else:
         return "on_track"
+
+
+def _build_goal_out(goal_row: dict, spent_amount: float) -> GoalOut:
+    """Build a GoalOut from a DB row and pre-computed spent amount."""
+    cat_data = goal_row.get("categories", {}) or {}
+    goal_amount = float(goal_row["amount"])
+    remaining = goal_amount - spent_amount
+
+    if goal_amount > 0:
+        progress_percent = (spent_amount / goal_amount) * 100
+    else:
+        progress_percent = 0.0
+
+    return GoalOut(
+        id=goal_row["id"],
+        category_id=goal_row["category_id"],
+        category_name=cat_data.get("name", "Unknown"),
+        category_icon=cat_data.get("icon"),
+        goal_amount=goal_amount,
+        spent_amount=spent_amount,
+        progress_percent=round(progress_percent, 1),
+        remaining=round(remaining, 2),
+        status=_calculate_status(progress_percent),
+    )
+
+
+def _fetch_spent_amount(household_id: str, category_id: str, month: str) -> float:
+    """Fetch total spent for a category in a month."""
+    supabase = get_supabase()
+    month_start = _get_first_day_of_month(month)
+    next_month_start = _get_next_month_start(month)
+    tx_result = (
+        supabase.table("transactions")
+        .select("amount")
+        .eq("household_id", household_id)
+        .eq("type", "expense")
+        .eq("category_id", category_id)
+        .gte("date", month_start)
+        .lt("date", next_month_start)
+        .execute()
+    )
+    transactions = cast(list[dict], tx_result.data or [])
+    return sum(float(tx["amount"]) for tx in transactions)
 
 
 @router.get("", response_model=SpendingGoalsResponse)
@@ -109,32 +153,9 @@ async def get_spending_goals(
     total_spent = 0.0
 
     for goal in goals_data:
-        cat_data = goal.get("categories", {}) or {}
-        cat_id = str(goal["category_id"])
-        goal_amount = float(goal["amount"])
-        spent_amount = spent_map.get(cat_id, 0.0)
-        remaining = goal_amount - spent_amount
-
-        # Calculate progress percentage
-        if goal_amount > 0:
-            progress_percent = (spent_amount / goal_amount) * 100
-        else:
-            progress_percent = 0.0
-
-        goals.append(
-            GoalOut(
-                category_id=goal["category_id"],
-                category_name=cat_data.get("name", "Unknown"),
-                category_icon=cat_data.get("icon"),
-                goal_amount=goal_amount,
-                spent_amount=spent_amount,
-                progress_percent=round(progress_percent, 1),
-                remaining=round(remaining, 2),
-                status=_calculate_status(progress_percent),
-            )
-        )
-
-        total_goal += goal_amount
+        spent_amount = spent_map.get(str(goal["category_id"]), 0.0)
+        goals.append(_build_goal_out(goal, spent_amount))
+        total_goal += float(goal["amount"])
         total_spent += spent_amount
 
     return SpendingGoalsResponse(
@@ -144,3 +165,99 @@ async def get_spending_goals(
         total_remaining=round(total_goal - total_spent, 2),
         goals=goals,
     )
+
+
+@router.post("", response_model=GoalOut, status_code=status.HTTP_201_CREATED)
+async def create_spending_goal(
+    payload: GoalCreate,
+    claims: dict = Depends(get_current_user),
+) -> GoalOut:
+    """Create a new spending goal for a category in a given month."""
+    _validate_month(payload.month)
+    household_id = _get_household_id(claims["sub"])
+    supabase = get_supabase()
+
+    month_start = _get_first_day_of_month(payload.month)
+
+    try:
+        result = (
+            supabase.table("spending_goals")
+            .insert(
+                {
+                    "household_id": household_id,
+                    "created_by": claims["sub"],
+                    "category_id": str(payload.category_id),
+                    "month": month_start,
+                    "amount": payload.amount,
+                }
+            )
+            .execute()
+        )
+    except APIError as e:
+        if "duplicate key" in str(e).lower() or "unique" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="A goal already exists for this category and month",
+            )
+        raise
+
+    rows = cast(list[dict], result.data or [])
+    if not rows:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Insert failed",
+        )
+
+    # Re-fetch with category join for goal output
+    goal_row = (
+        supabase.table("spending_goals")
+        .select("*, categories(id, name, icon)")
+        .eq("id", rows[0]["id"])
+        .single()
+        .execute()
+    )
+    goal_data = cast(dict, goal_row.data if isinstance(goal_row.data, dict) else {})
+
+    return _build_goal_out(goal_data, spent_amount=0.0)
+
+
+@router.put("/{goal_id}", response_model=GoalOut)
+async def update_spending_goal(
+    goal_id: str,
+    payload: GoalUpdate,
+    claims: dict = Depends(get_current_user),
+) -> GoalOut:
+    """Update the amount of an existing spending goal."""
+    household_id = _get_household_id(claims["sub"])
+    supabase = get_supabase()
+
+    result = (
+        supabase.table("spending_goals")
+        .update({"amount": payload.amount})
+        .eq("id", goal_id)
+        .eq("household_id", household_id)
+        .execute()
+    )
+    rows = cast(list[dict], result.data or [])
+    if not rows:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Goal not found",
+        )
+
+    # Re-fetch with category join for goal output
+    goal_row = (
+        supabase.table("spending_goals")
+        .select("*, categories(id, name, icon)")
+        .eq("id", rows[0]["id"])
+        .single()
+        .execute()
+    )
+    goal_data = cast(dict, goal_row.data if isinstance(goal_row.data, dict) else {})
+
+    # Extract month from the goal row to fetch spent amount
+    month_date = str(goal_data.get("month", ""))
+    month = month_date[:7] if len(month_date) >= 7 else ""
+    spent_amount = _fetch_spent_amount(household_id, str(goal_data["category_id"]), month)
+
+    return _build_goal_out(goal_data, spent_amount)

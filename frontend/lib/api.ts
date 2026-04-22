@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import type { Category, CreateTransactionPayload, SavingsAccountAPI, SavingsAccountCreate, SavingsAccountUpdate, SpendingGoalsResponse, Transaction } from "@/types/api";
+import type { Category, CreateGoalPayload, CreateTransactionPayload, SavingsAccountAPI, SavingsAccountCreate, SavingsAccountUpdate, SpendingGoal, SpendingGoalsResponse, Transaction } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -48,6 +48,15 @@ export async function createTransaction(payload: CreateTransactionPayload): Prom
 export async function getSpendingGoals(month: string): Promise<SpendingGoalsResponse> {
   const res = await apiFetch(`/api/spending-goals?month=${month}`);
   if (!res.ok) throw new Error("Failed to fetch spending goals");
+  return res.json();
+}
+
+export async function createGoal(payload: CreateGoalPayload): Promise<SpendingGoal> {
+  const res = await apiFetch("/api/spending-goals", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to create spending goal");
   return res.json();
 }
 

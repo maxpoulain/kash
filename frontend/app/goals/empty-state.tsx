@@ -6,6 +6,7 @@ import { Plus, Target } from "lucide-react";
 
 interface EmptyStateProps {
   month: string;
+  onAddGoal?: () => void;
 }
 
 function formatMonthName(month: string): string {
@@ -14,7 +15,7 @@ function formatMonthName(month: string): string {
   return date.toLocaleString("fr-FR", { month: "long" });
 }
 
-export function EmptyState({ month }: EmptyStateProps) {
+export function EmptyState({ month, onAddGoal }: EmptyStateProps) {
   const monthName = formatMonthName(month);
 
   return (
@@ -34,7 +35,7 @@ export function EmptyState({ month }: EmptyStateProps) {
         </p>
       </div>
 
-      <Button className="gap-2">
+      <Button className="gap-2" onClick={onAddGoal}>
         <Plus className="h-4 w-4" />
         Créer un objectif
       </Button>

@@ -404,3 +404,271 @@ async def test_get_spending_goals_only_expense_transactions_count():
     assert response.status_code == 200
     goal = response.json()["goals"][0]
     assert goal["spent_amount"] == 100.0  # Only expense transactions counted
+
+
+# --- GET returns id ---
+
+
+@pytest.mark.asyncio
+async def test_get_spending_goals_returns_id_in_each_goal():
+    """GET response includes the goal id field."""
+    goal_with_category = {
+        **FAKE_GOAL,
+        "categories": FAKE_CATEGORY,
+    }
+
+    with (
+        patch("app.core.auth.get_jwks_client") as mock_jwks,
+        patch("app.core.auth.jwt.decode", return_value=FAKE_CLAIMS),
+        patch("app.routers.spending_goals._get_household_id", return_value=HOUSEHOLD_ID),
+        patch("app.routers.spending_goals.get_supabase") as mock_supabase,
+    ):
+        _mock_auth(mock_jwks)
+        supabase = MagicMock()
+        mock_supabase.return_value = supabase
+        _mock_goals_query(supabase, [goal_with_category])
+        _mock_transactions_query(supabase, [])
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get(
+                "/api/spending-goals?month=2026-04",
+                headers={"Authorization": "Bearer faketoken"},
+            )
+
+    assert response.status_code == 200
+    goal = response.json()["goals"][0]
+    assert goal["id"] == GOAL_ID
+
+
+# --- POST /api/spending-goals ---
+
+
+@pytest.mark.asyncio
+async def test_post_spending_goal_without_token_returns_401():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.post(
+            "/api/spending-goals",
+            json={"month": "2026-04", "category_id": CATEGORY_ID, "amount": 500.0},
+        )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_post_spending_goal_with_amount_zero_returns_422():
+    with (
+        patch("app.core.auth.get_jwks_client") as mock_jwks,
+        patch("app.core.auth.jwt.decode", return_value=FAKE_CLAIMS),
+        patch("app.routers.spending_goals._get_household_id", return_value=HOUSEHOLD_ID),
+    ):
+        _mock_auth(mock_jwks)
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post(
+                "/api/spending-goals",
+                json={"month": "2026-04", "category_id": CATEGORY_ID, "amount": 0},
+                headers={"Authorization": "Bearer faketoken"},
+            )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_post_spending_goal_with_negative_amount_returns_422():
+    with (
+        patch("app.core.auth.get_jwks_client") as mock_jwks,
+        patch("app.core.auth.jwt.decode", return_value=FAKE_CLAIMS),
+        patch("app.routers.spending_goals._get_household_id", return_value=HOUSEHOLD_ID),
+    ):
+        _mock_auth(mock_jwks)
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post(
+                "/api/spending-goals",
+                json={"month": "2026-04", "category_id": CATEGORY_ID, "amount": -10},
+                headers={"Authorization": "Bearer faketoken"},
+            )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_post_spending_goal_with_invalid_month_returns_422():
+    with (
+        patch("app.core.auth.get_jwks_client") as mock_jwks,
+        patch("app.core.auth.jwt.decode", return_value=FAKE_CLAIMS),
+        patch("app.routers.spending_goals._get_household_id", return_value=HOUSEHOLD_ID),
+    ):
+        _mock_auth(mock_jwks)
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post(
+                "/api/spending-goals",
+                json={"month": "bad-month", "category_id": CATEGORY_ID, "amount": 500.0},
+                headers={"Authorization": "Bearer faketoken"},
+            )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_post_spending_goal_valid_returns_201():
+    """Valid POST → 201 with GoalOut including id, spent_amount=0, progress_percent=0."""
+    insert_result = MagicMock()
+    insert_result.data = [{"id": GOAL_ID}]
+
+    refetch_result = MagicMock()
+    refetch_result.data = {**FAKE_GOAL, "categories": FAKE_CATEGORY}
+
+    with (
+        patch("app.core.auth.get_jwks_client") as mock_jwks,
+        patch("app.core.auth.jwt.decode", return_value=FAKE_CLAIMS),
+        patch("app.routers.spending_goals._get_household_id", return_value=HOUSEHOLD_ID),
+        patch("app.routers.spending_goals.get_supabase") as mock_supabase,
+    ):
+        _mock_auth(mock_jwks)
+        supabase = MagicMock()
+        mock_supabase.return_value = supabase
+        supabase.table.return_value.insert.return_value.execute.return_value = insert_result
+        supabase.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = refetch_result
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post(
+                "/api/spending-goals",
+                json={"month": "2026-04", "category_id": CATEGORY_ID, "amount": 500.0},
+                headers={"Authorization": "Bearer faketoken"},
+            )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["id"] == GOAL_ID
+    assert data["category_id"] == CATEGORY_ID
+    assert data["category_name"] == "Groceries"
+    assert data["goal_amount"] == 500.0
+    assert data["spent_amount"] == 0.0
+    assert data["progress_percent"] == 0.0
+    assert data["remaining"] == 500.0
+    assert data["status"] == "under_pace"
+
+
+@pytest.mark.asyncio
+async def test_post_spending_goal_duplicate_returns_409():
+    """Duplicate (same household + category + month) → 409."""
+    from postgrest.exceptions import APIError
+
+    with (
+        patch("app.core.auth.get_jwks_client") as mock_jwks,
+        patch("app.core.auth.jwt.decode", return_value=FAKE_CLAIMS),
+        patch("app.routers.spending_goals._get_household_id", return_value=HOUSEHOLD_ID),
+        patch("app.routers.spending_goals.get_supabase") as mock_supabase,
+    ):
+        _mock_auth(mock_jwks)
+        supabase = MagicMock()
+        mock_supabase.return_value = supabase
+        supabase.table.return_value.insert.return_value.execute.side_effect = APIError(
+            {"message": "duplicate key value violates unique constraint", "code": "23505"}
+        )
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post(
+                "/api/spending-goals",
+                json={"month": "2026-04", "category_id": CATEGORY_ID, "amount": 500.0},
+                headers={"Authorization": "Bearer faketoken"},
+            )
+
+    assert response.status_code == 409
+
+
+# --- PUT /api/spending-goals/{goal_id} ---
+
+
+@pytest.mark.asyncio
+async def test_put_spending_goal_without_token_returns_401():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.put(
+            f"/api/spending-goals/{GOAL_ID}",
+            json={"amount": 600.0},
+        )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_put_spending_goal_not_found_returns_404():
+    """PUT on non-existent goal → 404."""
+    update_result = MagicMock()
+    update_result.data = []
+
+    with (
+        patch("app.core.auth.get_jwks_client") as mock_jwks,
+        patch("app.core.auth.jwt.decode", return_value=FAKE_CLAIMS),
+        patch("app.routers.spending_goals._get_household_id", return_value=HOUSEHOLD_ID),
+        patch("app.routers.spending_goals.get_supabase") as mock_supabase,
+    ):
+        _mock_auth(mock_jwks)
+        supabase = MagicMock()
+        mock_supabase.return_value = supabase
+        supabase.table.return_value.update.return_value.eq.return_value.eq.return_value.execute.return_value = update_result
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.put(
+                f"/api/spending-goals/{GOAL_ID}",
+                json={"amount": 600.0},
+                headers={"Authorization": "Bearer faketoken"},
+            )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_put_spending_goal_with_amount_zero_returns_422():
+    with (
+        patch("app.core.auth.get_jwks_client") as mock_jwks,
+        patch("app.core.auth.jwt.decode", return_value=FAKE_CLAIMS),
+        patch("app.routers.spending_goals._get_household_id", return_value=HOUSEHOLD_ID),
+    ):
+        _mock_auth(mock_jwks)
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.put(
+                f"/api/spending-goals/{GOAL_ID}",
+                json={"amount": 0},
+                headers={"Authorization": "Bearer faketoken"},
+            )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_put_spending_goal_valid_returns_200():
+    """Valid PUT → 200 with GoalOut recalculated with spent amount."""
+    updated_goal = {**FAKE_GOAL, "amount": 600.0}
+
+    update_result = MagicMock()
+    update_result.data = [updated_goal]
+
+    refetch_result = MagicMock()
+    refetch_result.data = {**updated_goal, "categories": FAKE_CATEGORY}
+
+    with (
+        patch("app.core.auth.get_jwks_client") as mock_jwks,
+        patch("app.core.auth.jwt.decode", return_value=FAKE_CLAIMS),
+        patch("app.routers.spending_goals._get_household_id", return_value=HOUSEHOLD_ID),
+        patch("app.routers.spending_goals.get_supabase") as mock_supabase,
+        patch("app.routers.spending_goals._fetch_spent_amount", return_value=312.0),
+    ):
+        _mock_auth(mock_jwks)
+        supabase = MagicMock()
+        mock_supabase.return_value = supabase
+
+        # update chain: .table().update().eq().eq().execute()
+        supabase.table.return_value.update.return_value.eq.return_value.eq.return_value.execute.return_value = update_result
+        # re-fetch chain: .table().select().eq().single().execute()
+        supabase.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = refetch_result
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.put(
+                f"/api/spending-goals/{GOAL_ID}",
+                json={"amount": 600.0},
+                headers={"Authorization": "Bearer faketoken"},
+            )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == GOAL_ID
+    assert data["category_id"] == CATEGORY_ID
+    assert data["goal_amount"] == 600.0
+    assert data["spent_amount"] == 312.0
+    assert data["remaining"] == 288.0
+    assert data["progress_percent"] == 52.0
+    assert data["status"] == "on_track"

@@ -55,7 +55,9 @@ export interface SavingsAccountUpdate {
 }
 
 // Spending Goals
+
 export interface SpendingGoal {
+  id: string;
   category_id: string;
   category_name: string;
   category_icon: string | null;
@@ -64,6 +66,12 @@ export interface SpendingGoal {
   progress_percent: number;
   remaining: number;
   status: "on_track" | "under_pace" | "over_budget";
+}
+
+export interface CreateGoalPayload {
+  month: string;
+  category_id: string;
+  amount: number;
 }
 
 export interface SpendingGoalsResponse {
