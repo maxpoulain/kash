@@ -8,8 +8,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AccountSheet } from "@/components/assets/account-sheet";
-import { getSavingsAccounts, createSavingsAccount, updateSavingsAccount, deleteSavingsAccount } from "@/lib/api";
+import { getSavingsAccounts, createSavingsAccount, updateSavingsAccount, deleteSavingsAccount, getNetWorthHistory } from "@/lib/api";
 import type { SavingsAccount, AccountType } from "@/components/assets/account-form";
+import type { NetWorthHistoryPoint } from "@/types/api";
+import { NetWorthSparkline } from "@/components/assets/net-worth-sparkline";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -175,6 +177,7 @@ export function AssetsClient() {
   const t = useTranslations("assets.list");
   const locale = useLocale();
   const [accounts, setAccounts] = useState<SavingsAccount[]>([]);
+  const [history, setHistory] = useState<NetWorthHistoryPoint[]>([]);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<SavingsAccount | undefined>(undefined);
 
@@ -182,6 +185,7 @@ export function AssetsClient() {
     getSavingsAccounts().then((rows) =>
       setAccounts(rows.map((r) => ({ ...r, institution: r.institution ?? undefined, type: r.type as AccountType })))
     ).catch(() => {});
+    getNetWorthHistory().then(setHistory).catch(() => {});
   }, []);
 
   const total = accounts.reduce((s, a) => s + a.balance, 0);
@@ -250,11 +254,16 @@ export function AssetsClient() {
         {/* ── Desktop hero + allocation ── */}
         <div className="hidden lg:grid lg:grid-cols-[1.4fr_1fr] lg:gap-5">
           <Card
-            className="relative p-5"
+            className="relative overflow-hidden p-5"
             style={{ background: "linear-gradient(135deg, var(--accent-soft) 0%, var(--pig) 200%)", minHeight: 200 }}
           >
             <p className="font-mono text-[10px] uppercase tracking-widest text-accent-ink/70">{t("netWorthLabel")}</p>
             <div className="mt-2 font-display text-5xl font-medium leading-none tracking-tight">{fmt(total, locale)}</div>
+            {history.length >= 2 && (
+              <div className="absolute bottom-0 right-0">
+                <NetWorthSparkline points={history} width={320} height={60} />
+              </div>
+            )}
           </Card>
 
           {allocation.length > 0 && (

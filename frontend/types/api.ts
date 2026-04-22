@@ -54,6 +54,12 @@ export interface SavingsAccountUpdate {
   institution?: string | null;
 }
 
+// Net worth history
+export interface NetWorthHistoryPoint {
+  date: string; // YYYY-MM-DD
+  total: number;
+}
+
 // Spending Goals
 
 export interface SpendingGoal {

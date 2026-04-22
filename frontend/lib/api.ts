@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import type { Category, CreateGoalPayload, CreateTransactionPayload, SavingsAccountAPI, SavingsAccountCreate, SavingsAccountUpdate, SpendingGoal, SpendingGoalsResponse, Transaction } from "@/types/api";
+import type { Category, CreateGoalPayload, CreateTransactionPayload, NetWorthHistoryPoint, SavingsAccountAPI, SavingsAccountCreate, SavingsAccountUpdate, SpendingGoal, SpendingGoalsResponse, Transaction } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -87,6 +87,12 @@ export async function updateSavingsAccount(id: string, payload: SavingsAccountUp
 export async function deleteSavingsAccount(id: string): Promise<void> {
   const res = await apiFetch(`/api/savings-accounts/${id}`, { method: "DELETE" });
   if (!res.ok) throw new Error("Failed to delete savings account");
+}
+
+export async function getNetWorthHistory(): Promise<NetWorthHistoryPoint[]> {
+  const res = await apiFetch("/api/savings-accounts/history");
+  if (!res.ok) throw new Error("Failed to fetch net worth history");
+  return res.json();
 }
 
 export async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
