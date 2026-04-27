@@ -261,7 +261,7 @@ function SectionCards() {
             <Plus className="h-6 w-6 text-muted-foreground" />
           </div>
           <p className="font-display text-lg font-medium">No items yet</p>
-          <p className="text-sm text-muted-foreground">Use variant="dashed" for empty/placeholder states.</p>
+          <p className="text-sm text-muted-foreground">Use variant=&quot;dashed&quot; for empty/placeholder states.</p>
         </Card>
       </div>
     </Section>
