@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Landmark, PiggyBank, TrendingUp, Home, Package, Zap, Sprout, Plus, Pencil } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -78,12 +79,12 @@ const TYPE_BAR: Record<AccountType, string> = {
 
 // ─── Utils ────────────────────────────────────────────────────────────────────
 
-function fmt(amount: number): string {
-  return amount.toLocaleString("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+function fmt(amount: number, locale: string): string {
+  return amount.toLocaleString(locale, { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 }
 
-function fmtFull(amount: number): string {
-  return amount.toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
+function fmtFull(amount: number, locale: string): string {
+  return amount.toLocaleString(locale, { style: "currency", currency: "EUR" });
 }
 
 function computeAllocation(accounts: SavingsAccount[]) {
@@ -103,6 +104,7 @@ function computeAllocation(accounts: SavingsAccount[]) {
 // ─── Mobile account card ──────────────────────────────────────────────────────
 
 function AccountCardMobile({ account, onEdit }: { account: SavingsAccount; onEdit: () => void }) {
+  const locale = useLocale();
   const Icon = TYPE_ICON[account.type];
   return (
     <Card
@@ -120,7 +122,7 @@ function AccountCardMobile({ account, onEdit }: { account: SavingsAccount; onEdi
       </div>
       <div>
         <div className={cn("font-display text-lg font-medium leading-tight tracking-tight", account.balance < 0 ? "text-destructive" : "")}>
-          {fmt(account.balance)}
+          {fmt(account.balance, locale)}
         </div>
         <div className="text-xs font-semibold">{account.name}</div>
         <div className="font-mono text-[10px] text-muted-foreground">
@@ -134,6 +136,7 @@ function AccountCardMobile({ account, onEdit }: { account: SavingsAccount; onEdi
 // ─── Desktop accounts table row ───────────────────────────────────────────────
 
 function AccountRowDesktop({ account, last, onEdit }: { account: SavingsAccount; last: boolean; onEdit: () => void }) {
+  const locale = useLocale();
   const Icon = TYPE_ICON[account.type];
   return (
     <div
@@ -157,7 +160,7 @@ function AccountRowDesktop({ account, last, onEdit }: { account: SavingsAccount;
         </div>
       </div>
       <div className={cn("text-right font-mono text-sm font-semibold", account.balance < 0 ? "text-destructive" : "")}>
-        {fmtFull(account.balance)}
+        {fmtFull(account.balance, locale)}
       </div>
       <div className="flex justify-end">
         <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
@@ -169,6 +172,8 @@ function AccountRowDesktop({ account, last, onEdit }: { account: SavingsAccount;
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function AssetsClient() {
+  const t = useTranslations("assets.list");
+  const locale = useLocale();
   const [accounts, setAccounts] = useState<SavingsAccount[]>([]);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<SavingsAccount | undefined>(undefined);
@@ -217,12 +222,12 @@ export function AssetsClient() {
         <div className="lg:hidden">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="font-display text-2xl font-medium tracking-tight">Net worth</h1>
+              <h1 className="font-display text-2xl font-medium tracking-tight">{t("mobileTitle")}</h1>
               <div className="font-display text-4xl font-medium tracking-tight leading-tight mt-1">
-                {fmt(total)}
+                {fmt(total, locale)}
               </div>
             </div>
-            <Button size="icon" className="h-10 w-10 shrink-0 rounded-xl" onClick={openAdd} aria-label="Ajouter un compte">
+            <Button size="icon" className="h-10 w-10 shrink-0 rounded-xl" onClick={openAdd} aria-label={t("addAria")}>
               <Plus className="h-4 w-4" />
             </Button>
           </div>
@@ -231,14 +236,14 @@ export function AssetsClient() {
         {/* ── Desktop header ── */}
         <div className="hidden lg:flex lg:items-center lg:justify-between">
           <div>
-            <h1 className="font-display text-2xl font-medium tracking-tight">Patrimoine</h1>
+            <h1 className="font-display text-2xl font-medium tracking-tight">{t("desktopTitle")}</h1>
             <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-              {accounts.length} compte{accounts.length > 1 ? "s" : ""}
+              {t("accountCount", { count: accounts.length })}
             </p>
           </div>
           <Button size="sm" className="gap-1.5 rounded-full" onClick={openAdd}>
             <Plus className="h-4 w-4" />
-            Ajouter un compte
+            {t("add")}
           </Button>
         </div>
 
@@ -248,13 +253,13 @@ export function AssetsClient() {
             className="relative p-5"
             style={{ background: "linear-gradient(135deg, var(--accent-soft) 0%, var(--pig) 200%)", minHeight: 200 }}
           >
-            <p className="font-mono text-[10px] uppercase tracking-widest text-accent-ink/70">Net worth · EUR</p>
-            <div className="mt-2 font-display text-5xl font-medium leading-none tracking-tight">{fmt(total)}</div>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-accent-ink/70">{t("netWorthLabel")}</p>
+            <div className="mt-2 font-display text-5xl font-medium leading-none tracking-tight">{fmt(total, locale)}</div>
           </Card>
 
           {allocation.length > 0 && (
             <Card className="p-5">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Répartition</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{t("allocation")}</p>
               <div className="mt-4 flex flex-col gap-3">
                 {allocation.map(({ type, pct }) => (
                   <div key={type}>
@@ -274,7 +279,7 @@ export function AssetsClient() {
 
         {/* ── Mobile account grid ── */}
         {accounts.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground lg:hidden">Aucun compte. Ajoutez-en un !</p>
+          <p className="py-8 text-center text-sm text-muted-foreground lg:hidden">{t("emptyMobile")}</p>
         ) : (
           <div className="grid grid-cols-2 gap-3 lg:hidden">
             {accounts.map((a) => (
@@ -286,11 +291,11 @@ export function AssetsClient() {
         {/* ── Desktop accounts table ── */}
         <div className="hidden lg:block">
           <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="font-display text-lg font-medium tracking-tight">Comptes</h2>
-            <span className="text-xs text-muted-foreground">{accounts.length} poste{accounts.length > 1 ? "s" : ""}</span>
+            <h2 className="font-display text-lg font-medium tracking-tight">{t("accountsTitle")}</h2>
+            <span className="text-xs text-muted-foreground">{t("itemsCount", { count: accounts.length })}</span>
           </div>
           {accounts.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Aucun compte. Cliquez sur &ldquo;Ajouter un compte&rdquo;.</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">{t("emptyDesktop")}</p>
           ) : (
             <Card className="gap-0 py-0">
               {accounts.map((a, i) => (

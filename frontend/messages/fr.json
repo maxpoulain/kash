@@ -1,0 +1,210 @@
+{
+  "nav": {
+    "main": "Menu",
+    "dashboard": "Transactions",
+    "goals": "Objectifs",
+    "assets": "Patrimoine",
+    "addTransaction": "Ajouter une transaction"
+  },
+  "landing": {
+    "signIn": "Se connecter",
+    "getStarted": "Commencer",
+    "heroTitle": "Épargnez mieux,",
+    "heroHighlight": " vivez mieux",
+    "heroDescription": "Suivez vos dépenses, fixez des objectifs d'épargne et développez de bonnes habitudes financières avec Kash. Votre compagnon de finances personnelles qui rend l'épargne ludique.",
+    "ctaPrimary": "Commencer gratuitement",
+    "ctaSecondary": "En savoir plus",
+    "featuresTitle": "Tout ce qu'il vous faut pour épargner",
+    "featuresSubtitle": "Des outils simples pour prendre le contrôle de vos finances",
+    "featureTrack": {
+      "title": "Suivre les dépenses",
+      "description": "Voyez où va votre argent avec une catégorisation automatique et des analyses",
+      "detail": "Connectez vos comptes ou ajoutez des transactions manuellement. Obtenez une vision claire de vos habitudes de dépenses."
+    },
+    "featureGoals": {
+      "title": "Fixer des objectifs",
+      "description": "Épargnez pour ce qui compte avec des objectifs personnalisés et un suivi des progrès",
+      "detail": "Que ce soit pour des vacances, un fonds d'urgence ou un nouveau gadget, atteignez vos objectifs plus vite."
+    },
+    "featureHabits": {
+      "title": "Créer des habitudes",
+      "description": "Transformez l'épargne en habitude avec des séries, des accomplissements et des récompenses",
+      "detail": "Restez motivé avec des défis ludiques qui rendent la gestion des finances agréable."
+    },
+    "trust": {
+      "title": "Vos données sont en sécurité",
+      "description": "Une sécurité bancaire avec un chiffrement 256 bits. Nous ne vendons jamais vos données et vous pouvez les exporter ou les supprimer à tout moment.",
+      "encryption": "Chiffrement",
+      "privacy": "Privé"
+    },
+    "finalCta": {
+      "title": "Prêt à commencer à épargner ?",
+      "description": "Rejoignez des milliers de personnes qui prennent le contrôle de leurs finances avec Kash.",
+      "createAccount": "Créer un compte gratuit",
+      "contactSales": "Contacter les ventes"
+    },
+    "footer": {
+      "copyright": "© 2025 Kash. Tous droits réservés."
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Bon retour",
+      "subtitle": "Connectez-vous à votre compte Kash",
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "submitLoading": "Connexion…",
+      "submit": "Se connecter",
+      "noAccount": "Pas de compte ?",
+      "createOne": "Créer un compte"
+    },
+    "signup": {
+      "title": "Créer votre compte",
+      "subtitle": "Commencez à épargner intelligemment avec Kash",
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "passwordLength": "Le mot de passe doit contenir au moins 8 caractères",
+      "submitLoading": "Création du compte…",
+      "submit": "Créer un compte",
+      "hasAccount": "Déjà un compte ?",
+      "signIn": "Se connecter"
+    }
+  },
+  "dashboard": {
+    "title": "Transactions",
+    "thisMonth": "{count} ce mois",
+    "uncategorized": "{count} non catégorisées",
+    "add": "Ajouter",
+    "addAria": "Ajouter une transaction"
+  },
+  "transactions": {
+    "list": {
+      "all": "Tout",
+      "expenses": "Dépenses",
+      "income": "Revenus",
+      "filters": "Filtres",
+      "allCategories": "Toutes les catégories",
+      "loading": "Chargement…",
+      "empty": "Aucune transaction ce mois-ci",
+      "date": "Date",
+      "category": "Catégorie",
+      "amount": "Montant",
+      "uncategorized": "Sans catégorie",
+      "today": "Aujourd'hui",
+      "yesterday": "Hier"
+    },
+    "sheet": {
+      "title": "Nouvelle transaction",
+      "success": "Transaction enregistrée !"
+    },
+    "form": {
+      "piggyGains": "Piggy gagne",
+      "piggySpends": "Piggy dépense",
+      "expense": "Dépense",
+      "income": "Revenu",
+      "mobileTitle": "Ajouter une transaction",
+      "desktopTitle": "Nouvelle transaction",
+      "amount": "Montant",
+      "date": "Date",
+      "today": "Aujourd'hui",
+      "note": "Note",
+      "notePlaceholder": "Ajouter une description…",
+      "mobileNotePlaceholder": "Ajouter une note…",
+      "category": "Catégorie",
+      "cancel": "Annuler",
+      "addIncome": "Ajouter revenu",
+      "addExpense": "Ajouter dépense",
+      "amountError": "Le montant doit être positif",
+      "categoryError": "Sélectionne une catégorie",
+      "dateError": "Date invalide",
+      "submitError": "Une erreur est survenue. Réessaie."
+    }
+  },
+  "goals": {
+    "list": {
+      "title": "Objectifs",
+      "budgetSummary": "{spent} sur {goal} budgeté",
+      "add": "Ajouter",
+      "addAria": "Ajouter un objectif",
+      "loading": "Chargement…"
+    },
+    "card": {
+      "overBy": "Dépassé de {amount}",
+      "underPace": "En retard",
+      "onTrack": "Dans les clous",
+      "overByShort": "dépassé de {amount}",
+      "left": "{amount} restant"
+    },
+    "empty": {
+      "title": "Aucun objectif pour {month}",
+      "description": "Définissez un plafond mensuel par catégorie pour rester dans les clous. Vous pourrez toujours le modifier plus tard.",
+      "cta": "Créer un objectif"
+    },
+    "form": {
+      "title": "Nouvel objectif",
+      "amount": "Montant",
+      "category": "Catégorie",
+      "allCategoriesUsed": "Toutes les catégories ont déjà un objectif ce mois-ci.",
+      "cancel": "Annuler",
+      "create": "Créer",
+      "categoryError": "Sélectionne une catégorie",
+      "amountError": "Le montant doit être supérieur à 0",
+      "submitError": "Une erreur est survenue. Réessaie.",
+      "success": "Objectif créé !"
+    }
+  },
+  "assets": {
+    "list": {
+      "mobileTitle": "Patrimoine",
+      "desktopTitle": "Patrimoine",
+      "accountCount": "{count, plural, one {# compte} other {# comptes}}",
+      "add": "Ajouter un compte",
+      "addAria": "Ajouter un compte",
+      "netWorthLabel": "Patrimoine · EUR",
+      "allocation": "Répartition",
+      "emptyMobile": "Aucun compte. Ajoutez-en un !",
+      "accountsTitle": "Comptes",
+      "itemsCount": "{count, plural, one {# poste} other {# postes}}",
+      "emptyDesktop": "Aucun compte. Cliquez sur \"Ajouter un compte\"."
+    },
+    "form": {
+      "editTitle": "Modifier le compte",
+      "newTitle": "Nouveau compte",
+      "balance": "Solde actuel",
+      "name": "Intitulé",
+      "namePlaceholder": "ex. Livret A principal",
+      "institution": "Établissement",
+      "optional": "optionnel",
+      "institutionPlaceholder": "ex. Boursorama, BNP Paribas…",
+      "type": "Type",
+      "delete": "Supprimer",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "add": "Ajouter",
+      "mobileBalanceLabel": "Solde · EUR",
+      "mobileNameLabel": "Intitulé",
+      "mobileInstitutionLabel": "Établissement (optionnel)",
+      "mobileInstitutionPlaceholder": "ex. Boursorama…"
+    },
+    "sheet": {
+      "editTitle": "Modifier le compte",
+      "newTitle": "Ajouter un compte"
+    }
+  },
+  "monthSwitcher": {
+    "prevMonthAria": "Mois précédent",
+    "nextMonthAria": "Mois suivant",
+    "dayCounter": "Jour {currentDay} · {daysLeft} restants",
+    "thisMonth": "Ce mois"
+  },
+  "common": {
+    "loading": "Chargement…",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "add": "Ajouter",
+    "create": "Créer"
+  }
+}

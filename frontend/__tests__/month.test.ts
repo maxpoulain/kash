@@ -34,7 +34,7 @@ describe("nextMonth", () => {
 
 describe("formatMonth", () => {
   it("formats in French by default", () => {
-    expect(formatMonth("2026-04")).toBe("avril 2026");
+    expect(formatMonth("2026-04", "fr-FR")).toBe("avril 2026");
   });
 
   it("respects locale override", () => {

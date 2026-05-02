@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +35,8 @@ export function MonthSwitcher({
   size = "default",
   className,
 }: MonthSwitcherProps) {
+  const t = useTranslations("monthSwitcher");
+  const locale = useLocale();
   const atCurrent = isCurrentMonth(value);
   const nextDisabled = disableFutureMonths && atCurrent;
 
@@ -44,18 +47,18 @@ export function MonthSwitcher({
   if (size === "compact") {
     return (
       <div className={cn("flex items-center gap-1", className)}>
-        <Button variant="ghost" size="icon" onClick={goPrev} aria-label="Mois précédent">
+        <Button variant="ghost" size="icon" onClick={goPrev} aria-label={t("prevMonthAria")}>
           <ChevronLeftIcon className="h-4 w-4" />
         </Button>
         <span className="min-w-[100px] text-center text-sm font-medium capitalize">
-          {formatMonth(value)}
+          {formatMonth(value, locale)}
         </span>
         <Button
           variant="ghost"
           size="icon"
           onClick={goNext}
           disabled={nextDisabled}
-          aria-label="Mois suivant"
+          aria-label={t("nextMonthAria")}
         >
           <ChevronRightIcon className="h-4 w-4" />
         </Button>
@@ -79,7 +82,7 @@ export function MonthSwitcher({
           variant="outline"
           size="icon"
           onClick={goPrev}
-          aria-label="Mois précédent"
+          aria-label={t("prevMonthAria")}
           className="h-9 w-9 rounded-full border-border bg-background"
         >
           <ChevronLeftIcon className="h-4 w-4" />
@@ -89,16 +92,16 @@ export function MonthSwitcher({
           size="icon"
           onClick={goNext}
           disabled={nextDisabled}
-          aria-label="Mois suivant"
+          aria-label={t("nextMonthAria")}
           className="h-9 w-9 rounded-full border-border bg-background"
         >
           <ChevronRightIcon className="h-4 w-4" />
         </Button>
         <div className="ml-2 flex flex-col">
-          <span className="text-sm font-medium capitalize">{formatMonth(value)}</span>
+          <span className="text-sm font-medium capitalize">{formatMonth(value, locale)}</span>
           {showDayCounter && (
             <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-              Jour {currentDay} · {daysLeft} restants
+              {t("dayCounter", { currentDay, daysLeft })}
             </span>
           )}
         </div>
@@ -109,7 +112,7 @@ export function MonthSwitcher({
         variant="outline"
         size="icon"
         onClick={goPrev}
-        aria-label="Mois précédent"
+        aria-label={t("prevMonthAria")}
         className="h-9 w-9 shrink-0 rounded-full border-border bg-background lg:hidden"
       >
         <ChevronLeftIcon className="h-4 w-4" />
@@ -117,10 +120,10 @@ export function MonthSwitcher({
 
       {/* Mobile: centered label (+ day counter) */}
       <div className="flex flex-1 flex-col items-center text-center lg:hidden">
-        <span className="text-sm font-medium capitalize">{formatMonth(value)}</span>
+        <span className="text-sm font-medium capitalize">{formatMonth(value, locale)}</span>
         {showDayCounter && (
           <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-            Jour {currentDay} · {daysLeft} restants
+            {t("dayCounter", { currentDay, daysLeft })}
           </span>
         )}
       </div>
@@ -131,7 +134,7 @@ export function MonthSwitcher({
         size="icon"
         onClick={goNext}
         disabled={nextDisabled}
-        aria-label="Mois suivant"
+        aria-label={t("nextMonthAria")}
         className="h-9 w-9 shrink-0 rounded-full border-border bg-background lg:hidden"
       >
         <ChevronRightIcon className="h-4 w-4" />
@@ -148,7 +151,7 @@ export function MonthSwitcher({
               disabled={atCurrent}
               className="rounded-full border-border bg-background"
             >
-              Ce mois
+              {t("thisMonth")}
             </Button>
           )}
           {endSlot}

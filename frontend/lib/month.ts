@@ -16,7 +16,7 @@ export function nextMonth(month: Month): Month {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-export function formatMonth(month: Month, locale: string = "fr-FR"): string {
+export function formatMonth(month: Month, locale: string): string {
   const [year, m] = month.split("-");
   const date = new Date(Number(year), Number(m) - 1, 1);
   return date.toLocaleString(locale, { month: "long", year: "numeric" });

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations, useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import type { SpendingGoal } from "@/types/api";
@@ -10,11 +11,9 @@ interface GoalCardProps {
   goal: SpendingGoal;
 }
 
-function formatCurrency(amount: number): string {
-  return amount.toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
-}
-
 export function GoalCard({ goal }: GoalCardProps) {
+  const t = useTranslations("goals.card");
+  const locale = useLocale();
   const Icon = CATEGORY_ICONS[goal.category_name] ?? Package;
   const isOverBudget = goal.status === "over_budget";
   const isUnderPace = goal.status === "under_pace";
@@ -39,6 +38,10 @@ export function GoalCard({ goal }: GoalCardProps) {
     : isUnderPace
       ? "bg-warning/10"
       : "bg-success/10";
+
+  function formatCurrency(amount: number): string {
+    return amount.toLocaleString(locale, { style: "currency", currency: "EUR" });
+  }
 
   return (
     <Card className="gap-3 p-4">
@@ -86,11 +89,11 @@ export function GoalCard({ goal }: GoalCardProps) {
           >
             <span>{Math.round(goal.progress_percent)}%</span>
             {isOverBudget ? (
-              <span>Over by {formatCurrency(Math.abs(goal.remaining))}</span>
+              <span>{t("overBy", { amount: formatCurrency(Math.abs(goal.remaining)) })}</span>
             ) : isUnderPace ? (
-              <span>Under pace</span>
+              <span>{t("underPace")}</span>
             ) : (
-              <span>On track</span>
+              <span>{t("onTrack")}</span>
             )}
           </div>
 
@@ -102,8 +105,8 @@ export function GoalCard({ goal }: GoalCardProps) {
             )}
           >
             {isOverBudget
-              ? `over by ${formatCurrency(Math.abs(goal.remaining))}`
-              : `${formatCurrency(goal.remaining)} left`}
+              ? t("overByShort", { amount: formatCurrency(Math.abs(goal.remaining)) })
+              : t("left", { amount: formatCurrency(goal.remaining) })}
           </span>
         </div>
       </div>
