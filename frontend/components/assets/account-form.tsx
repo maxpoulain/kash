@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslations } from "next-intl";
 import { Landmark, PiggyBank, TrendingUp, Home, Package, Zap, Sprout, Trash2, X, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -82,6 +83,7 @@ interface AccountFormProps {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function AccountForm({ account, onSave, onDelete, onClose, variant = "desktop" }: AccountFormProps) {
+  const t = useTranslations("assets.form");
   const isEdit = !!account;
 
   const { register, handleSubmit, setValue, watch } = useForm<FormValues>({
@@ -120,14 +122,14 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
 
   const typePickerDesktop = (
     <div className="grid grid-cols-4 gap-1.5">
-      {ACCOUNT_TYPES.map((t) => {
-        const Icon = TYPE_ICON[t];
-        const active = selectedType === t;
+      {ACCOUNT_TYPES.map((at) => {
+        const Icon = TYPE_ICON[at];
+        const active = selectedType === at;
         return (
           <button
-            key={t}
+            key={at}
             type="button"
-            onClick={() => setValue("type", t)}
+            onClick={() => setValue("type", at)}
             className={cn(
               "flex flex-col items-center gap-1 px-1.5 py-2.5 rounded-[10px] text-[10px] border transition-all cursor-pointer leading-tight text-center",
               active
@@ -137,7 +139,7 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
             style={active ? { background: "var(--ink)" } : { background: "var(--bg-elev)" }}
           >
             <Icon className="h-4 w-4" />
-            <span>{shortLabel(t)}</span>
+            <span>{shortLabel(at)}</span>
           </button>
         );
       })}
@@ -159,7 +161,7 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
               <TypeIcon className="h-[18px] w-[18px]" style={{ color: "var(--pig)" }} />
             </div>
             <div className="font-display text-[20px] font-medium tracking-[-0.02em] leading-tight">
-              {isEdit ? "Modifier le compte" : "Nouveau compte"}
+              {isEdit ? t("editTitle") : t("newTitle")}
             </div>
           </div>
           <button
@@ -178,7 +180,7 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
           <div className="space-y-[18px] border-r px-[22px] py-[18px]">
             {/* Balance */}
             <div>
-              <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Solde actuel</div>
+              <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{t("balance")}</div>
               <div
                 className="flex items-baseline gap-2 rounded-[14px] px-4 py-3.5"
                 style={{ background: "var(--bg-elev)", border: "1.5px solid var(--ink)" }}
@@ -199,11 +201,11 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
 
             {/* Name */}
             <div>
-              <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Intitulé</div>
+              <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{t("name")}</div>
               <input
                 {...register("name")}
                 type="text"
-                placeholder="ex. Livret A principal"
+                placeholder={t("namePlaceholder")}
                 className="w-full rounded-[10px] border px-3 py-2.5 text-[13px] outline-none transition-colors focus:border-foreground"
                 style={{ background: "var(--bg-elev)", borderColor: "var(--line)" }}
               />
@@ -212,12 +214,12 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
             {/* Institution */}
             <div>
               <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                Établissement <span className="normal-case opacity-50">(optionnel)</span>
+                {t("institution")} <span className="normal-case opacity-50">({t("optional")})</span>
               </div>
               <input
                 {...register("institution")}
                 type="text"
-                placeholder="ex. Boursorama, BNP Paribas…"
+                placeholder={t("institutionPlaceholder")}
                 className="w-full rounded-[10px] border px-3 py-2.5 text-[13px] outline-none transition-colors focus:border-foreground"
                 style={{ background: "var(--bg-elev)", borderColor: "var(--line)" }}
               />
@@ -226,7 +228,7 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
 
           {/* Right */}
           <div className="px-[22px] py-[18px]" style={{ background: "var(--bg-sunk)" }}>
-            <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Type</div>
+            <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{t("type")}</div>
             {typePickerDesktop}
           </div>
         </div>
@@ -241,7 +243,7 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
                 className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-medium text-destructive transition-colors hover:bg-destructive/10"
               >
                 <Trash2 className="h-3.5 w-3.5" />
-                Supprimer
+                {t("delete")}
               </button>
             )}
           </div>
@@ -252,14 +254,14 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
               className="w-28 rounded-[10px] py-2.5 text-center text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
               style={{ background: "var(--bg-sunk)" }}
             >
-              Annuler
+              {t("cancel")}
             </button>
             <button
               type="submit"
               className="w-40 rounded-[10px] py-2.5 text-[13px] font-semibold text-background transition-opacity"
               style={{ background: "var(--ink)" }}
             >
-              {isEdit ? "Enregistrer" : "Ajouter"}
+              {isEdit ? t("save") : t("add")}
             </button>
           </div>
         </div>
@@ -280,7 +282,7 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="font-display text-[22px] font-medium tracking-[-0.02em]">
-            {isEdit ? "Modifier le compte" : "Nouveau compte"}
+            {isEdit ? t("editTitle") : t("newTitle")}
           </div>
           <button
             type="button"
@@ -295,7 +297,7 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
         {/* Large balance */}
         <div className="pb-1 pt-3 text-center">
           <div className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-            Solde · EUR
+            {t("mobileBalanceLabel")}
           </div>
           <div className="flex items-end justify-center">
             <span className="font-display font-medium text-muted-foreground" style={{ fontSize: 30, lineHeight: 1, marginBottom: 8, marginRight: 2 }}>€</span>
@@ -323,11 +325,11 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
               <TypeIcon className="h-[13px] w-[13px]" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground">Intitulé</div>
+              <div className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground">{t("mobileNameLabel")}</div>
               <input
                 {...register("name")}
                 type="text"
-                placeholder="ex. Livret A principal"
+                placeholder={t("namePlaceholder")}
                 className="w-full border-none bg-transparent text-[13px] font-medium outline-none placeholder:text-muted-foreground"
               />
             </div>
@@ -342,11 +344,11 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
               <Building2 className="h-[13px] w-[13px]" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground">Établissement (optionnel)</div>
+              <div className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground">{t("mobileInstitutionLabel")}</div>
               <input
                 {...register("institution")}
                 type="text"
-                placeholder="ex. Boursorama…"
+                placeholder={t("mobileInstitutionPlaceholder")}
                 className="w-full border-none bg-transparent text-[13px] font-medium outline-none placeholder:text-muted-foreground"
               />
             </div>
@@ -355,16 +357,16 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
 
         {/* Type picker */}
         <div>
-          <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Type</div>
+          <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{t("type")}</div>
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
-            {ACCOUNT_TYPES.map((t) => {
-              const Icon = TYPE_ICON[t];
-              const active = selectedType === t;
+            {ACCOUNT_TYPES.map((at) => {
+              const Icon = TYPE_ICON[at];
+              const active = selectedType === at;
               return (
                 <button
-                  key={t}
+                  key={at}
                   type="button"
-                  onClick={() => setValue("type", t)}
+                  onClick={() => setValue("type", at)}
                   className={cn(
                     "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-[12px] font-medium whitespace-nowrap transition-all",
                     active ? "border-foreground" : "border-border hover:border-foreground/40"
@@ -375,7 +377,7 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
                   }}
                 >
                   <Icon className="h-3.5 w-3.5" />
-                  {t}
+                  {at}
                 </button>
               );
             })}
@@ -400,14 +402,14 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
             className="flex-1 rounded-[14px] py-[15px] text-[14px] font-semibold text-muted-foreground"
             style={{ background: "var(--bg-sunk)" }}
           >
-            Annuler
+            {t("cancel")}
           </button>
           <button
             type="submit"
             className="flex-[2] rounded-[14px] py-[15px] text-[14px] font-semibold text-background"
             style={{ background: "var(--ink)" }}
           >
-            {isEdit ? "Enregistrer" : "Ajouter"}
+            {isEdit ? t("save") : t("add")}
           </button>
         </div>
       </div>

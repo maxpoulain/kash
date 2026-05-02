@@ -1,0 +1,210 @@
+{
+  "nav": {
+    "main": "Main",
+    "dashboard": "Transactions",
+    "goals": "Goals",
+    "assets": "Net worth",
+    "addTransaction": "Add transaction"
+  },
+  "landing": {
+    "signIn": "Sign In",
+    "getStarted": "Get Started",
+    "heroTitle": "Save smarter,",
+    "heroHighlight": " live better",
+    "heroDescription": "Track expenses, set savings goals, and build healthy financial habits with Kash. Your personal finance companion that makes saving fun.",
+    "ctaPrimary": "Start Saving Free",
+    "ctaSecondary": "Learn More",
+    "featuresTitle": "Everything you need to save",
+    "featuresSubtitle": "Simple tools to help you take control of your finances",
+    "featureTrack": {
+      "title": "Track Spending",
+      "description": "See where your money goes with automatic categorization and insights",
+      "detail": "Connect your accounts or add transactions manually. Get a clear picture of your spending habits."
+    },
+    "featureGoals": {
+      "title": "Set Goals",
+      "description": "Save for what matters with personalized goals and progress tracking",
+      "detail": "Whether it is a vacation, emergency fund, or new gadget, reach your goals faster."
+    },
+    "featureHabits": {
+      "title": "Build Habits",
+      "description": "Turn saving into a habit with streaks, achievements, and rewards",
+      "detail": "Stay motivated with gamified challenges that make finance management enjoyable."
+    },
+    "trust": {
+      "title": "Your data is safe with us",
+      "description": "Bank-level security with 256-bit encryption. We never sell your data and you can export or delete it anytime.",
+      "encryption": "Encryption",
+      "privacy": "Private"
+    },
+    "finalCta": {
+      "title": "Ready to start saving?",
+      "description": "Join thousands of people who are taking control of their finances with Kash.",
+      "createAccount": "Create Free Account",
+      "contactSales": "Contact Sales"
+    },
+    "footer": {
+      "copyright": "© 2025 Kash. All rights reserved."
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to your Kash account",
+      "email": "Email",
+      "password": "Password",
+      "submitLoading": "Signing in…",
+      "submit": "Sign in",
+      "noAccount": "No account?",
+      "createOne": "Create one"
+    },
+    "signup": {
+      "title": "Create your account",
+      "subtitle": "Start saving smarter with Kash",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "passwordMismatch": "Passwords do not match",
+      "passwordLength": "Password must be at least 8 characters",
+      "submitLoading": "Creating account…",
+      "submit": "Create account",
+      "hasAccount": "Already have an account?",
+      "signIn": "Sign in"
+    }
+  },
+  "dashboard": {
+    "title": "Transactions",
+    "thisMonth": "{count} this month",
+    "uncategorized": "{count} uncategorized",
+    "add": "Add",
+    "addAria": "Add a transaction"
+  },
+  "transactions": {
+    "list": {
+      "all": "All",
+      "expenses": "Expenses",
+      "income": "Income",
+      "filters": "Filters",
+      "allCategories": "All categories",
+      "loading": "Loading…",
+      "empty": "No transactions this month",
+      "date": "Date",
+      "category": "Category",
+      "amount": "Amount",
+      "uncategorized": "Uncategorized",
+      "today": "Today",
+      "yesterday": "Yesterday"
+    },
+    "sheet": {
+      "title": "New transaction",
+      "success": "Transaction saved!"
+    },
+    "form": {
+      "piggyGains": "Piggy gains",
+      "piggySpends": "Piggy spends",
+      "expense": "Expense",
+      "income": "Income",
+      "mobileTitle": "Add a transaction",
+      "desktopTitle": "New transaction",
+      "amount": "Amount",
+      "date": "Date",
+      "today": "Today",
+      "note": "Note",
+      "notePlaceholder": "Add a description…",
+      "mobileNotePlaceholder": "Add a note…",
+      "category": "Category",
+      "cancel": "Cancel",
+      "addIncome": "Add income",
+      "addExpense": "Add expense",
+      "amountError": "Amount must be positive",
+      "categoryError": "Select a category",
+      "dateError": "Invalid date",
+      "submitError": "Something went wrong. Please try again."
+    }
+  },
+  "goals": {
+    "list": {
+      "title": "Goals",
+      "budgetSummary": "{spent} of {goal} budgeted",
+      "add": "Add",
+      "addAria": "Add a goal",
+      "loading": "Loading…"
+    },
+    "card": {
+      "overBy": "Over by {amount}",
+      "underPace": "Under pace",
+      "onTrack": "On track",
+      "overByShort": "over by {amount}",
+      "left": "{amount} left"
+    },
+    "empty": {
+      "title": "No goals for {month}",
+      "description": "Set a monthly spending limit per category to stay on track. You can always change it later.",
+      "cta": "Create a goal"
+    },
+    "form": {
+      "title": "New goal",
+      "amount": "Amount",
+      "category": "Category",
+      "allCategoriesUsed": "All categories already have a goal this month.",
+      "cancel": "Cancel",
+      "create": "Create",
+      "categoryError": "Select a category",
+      "amountError": "Amount must be greater than 0",
+      "submitError": "Something went wrong. Please try again.",
+      "success": "Goal created!"
+    }
+  },
+  "assets": {
+    "list": {
+      "mobileTitle": "Net worth",
+      "desktopTitle": "Net worth",
+      "accountCount": "{count, plural, one {# account} other {# accounts}}",
+      "add": "Add an account",
+      "addAria": "Add an account",
+      "netWorthLabel": "Net worth · EUR",
+      "allocation": "Allocation",
+      "emptyMobile": "No accounts. Add one!",
+      "accountsTitle": "Accounts",
+      "itemsCount": "{count, plural, one {# item} other {# items}}",
+      "emptyDesktop": "No accounts. Click \"Add an account\"."
+    },
+    "form": {
+      "editTitle": "Edit account",
+      "newTitle": "New account",
+      "balance": "Current balance",
+      "name": "Name",
+      "namePlaceholder": "e.g. Main savings account",
+      "institution": "Institution",
+      "optional": "optional",
+      "institutionPlaceholder": "e.g. Boursorama, Chase…",
+      "type": "Type",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "save": "Save",
+      "add": "Add",
+      "mobileBalanceLabel": "Balance · EUR",
+      "mobileNameLabel": "Name",
+      "mobileInstitutionLabel": "Institution (optional)",
+      "mobileInstitutionPlaceholder": "e.g. Boursorama…"
+    },
+    "sheet": {
+      "editTitle": "Edit account",
+      "newTitle": "Add an account"
+    }
+  },
+  "monthSwitcher": {
+    "prevMonthAria": "Previous month",
+    "nextMonthAria": "Next month",
+    "dayCounter": "Day {currentDay} · {daysLeft} left",
+    "thisMonth": "This month"
+  },
+  "common": {
+    "loading": "Loading…",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "add": "Add",
+    "create": "Create"
+  }
+}

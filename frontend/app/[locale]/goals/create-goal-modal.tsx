@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Dialog } from "@base-ui/react/dialog";
 import { Package, Target, X } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations, useLocale } from "next-intl";
 import { CATEGORY_ICONS } from "@/lib/category-icons";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -19,8 +20,8 @@ function CategoryIcon({ name, className }: { name: string; className?: string })
 }
 
 const schema = z.object({
-  category_id: z.string().uuid("Sélectionne une catégorie"),
-  amount: z.number().positive("Le montant doit être supérieur à 0"),
+  category_id: z.string().uuid("categoryError"),
+  amount: z.number().positive("amountError"),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -34,6 +35,8 @@ interface CreateGoalFormProps {
 }
 
 function CreateGoalForm({ month, usedCategoryIds, onSuccess, onClose, variant = "mobile" }: CreateGoalFormProps) {
+  const t = useTranslations("goals.form");
+  const locale = useLocale();
   const [categories, setCategories] = useState<Category[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -62,8 +65,12 @@ function CreateGoalForm({ month, usedCategoryIds, onSuccess, onClose, variant = 
       await createGoal({ month, ...values });
       onSuccess();
     } catch {
-      setSubmitError("Une erreur est survenue. Réessaie.");
+      setSubmitError(t("submitError"));
     }
+  }
+
+  function formatCurrency(amount: number): string {
+    return amount.toLocaleString(locale, { style: "currency", currency: "EUR" });
   }
 
   // -------------------------------------------------------------------------
@@ -86,7 +93,7 @@ function CreateGoalForm({ month, usedCategoryIds, onSuccess, onClose, variant = 
               <Target size={20} />
             </div>
             <div className="font-display text-[20px] font-medium tracking-[-0.02em] leading-tight">
-              Nouvel objectif
+              {t("title")}
             </div>
           </div>
           <button
@@ -104,7 +111,7 @@ function CreateGoalForm({ month, usedCategoryIds, onSuccess, onClose, variant = 
           {/* amount */}
           <div>
             <div className="text-[10px] font-mono text-muted-foreground tracking-[0.12em] uppercase mb-2">
-              Montant
+              {t("amount")}
             </div>
             <div
               className="flex items-baseline gap-2 rounded-[14px] px-4 py-3.5"
@@ -123,21 +130,21 @@ function CreateGoalForm({ month, usedCategoryIds, onSuccess, onClose, variant = 
               <span className="font-mono text-[11px] text-muted-foreground tracking-[0.1em]">EUR</span>
             </div>
             {errors.amount && (
-              <p className="text-destructive text-xs mt-1">{errors.amount.message}</p>
+              <p className="text-destructive text-xs mt-1">{t(errors.amount.message as string)}</p>
             )}
           </div>
 
           {/* category */}
           <div>
             <div className="text-[10px] font-mono text-muted-foreground tracking-[0.12em] uppercase mb-2">
-              Catégorie
+              {t("category")}
             </div>
             {errors.category_id && (
-              <p className="text-destructive text-xs mb-2">{errors.category_id.message}</p>
+              <p className="text-destructive text-xs mb-2">{t(errors.category_id.message as string)}</p>
             )}
             {availableCategories.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Toutes les catégories ont déjà un objectif ce mois-ci.
+                {t("allCategoriesUsed")}
               </p>
             ) : (
               <div className="grid grid-cols-4 gap-1.5">
@@ -182,7 +189,7 @@ function CreateGoalForm({ month, usedCategoryIds, onSuccess, onClose, variant = 
               className="w-28 py-2.5 rounded-[10px] text-muted-foreground font-medium text-[13px] hover:text-foreground transition-colors text-center"
               style={{ background: "var(--bg-sunk)" }}
             >
-              Annuler
+              {t("cancel")}
             </button>
             <button
               type="submit"
@@ -193,7 +200,7 @@ function CreateGoalForm({ month, usedCategoryIds, onSuccess, onClose, variant = 
               {isSubmitting ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                "Créer"
+                t("create")
               )}
             </button>
           </div>
@@ -216,7 +223,7 @@ function CreateGoalForm({ month, usedCategoryIds, onSuccess, onClose, variant = 
         {/* header */}
         <div className="flex items-center justify-between">
           <div className="font-display text-[22px] font-medium tracking-[-0.02em]">
-            Nouvel objectif
+            {t("title")}
           </div>
           <button
             type="button"
@@ -231,7 +238,7 @@ function CreateGoalForm({ month, usedCategoryIds, onSuccess, onClose, variant = 
         {/* amount */}
         <div className="text-center pt-3 pb-1">
           <div className="text-[10px] font-mono text-muted-foreground tracking-[0.12em] uppercase mb-1.5">
-            Montant · EUR
+            {t("amount")} · EUR
           </div>
           <div className="flex items-end justify-center">
             <span
@@ -252,7 +259,7 @@ function CreateGoalForm({ month, usedCategoryIds, onSuccess, onClose, variant = 
             />
           </div>
           {errors.amount && (
-            <p className="text-destructive text-xs mt-1">{errors.amount.message}</p>
+            <p className="text-destructive text-xs mt-1">{t(errors.amount.message as string)}</p>
           )}
         </div>
 
@@ -260,15 +267,15 @@ function CreateGoalForm({ month, usedCategoryIds, onSuccess, onClose, variant = 
         <div>
           <div className="mb-2">
             <div className="text-[10px] font-mono text-muted-foreground tracking-[0.12em] uppercase">
-              Catégorie
+              {t("category")}
             </div>
           </div>
           {errors.category_id && (
-            <p className="text-destructive text-xs mb-1">{errors.category_id.message}</p>
+            <p className="text-destructive text-xs mb-1">{t(errors.category_id.message as string)}</p>
           )}
           {availableCategories.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Toutes les catégories ont déjà un objectif ce mois-ci.
+              {t("allCategoriesUsed")}
             </p>
           ) : (
             <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
@@ -311,7 +318,7 @@ function CreateGoalForm({ month, usedCategoryIds, onSuccess, onClose, variant = 
             className="flex-1 py-[15px] rounded-[14px] font-semibold text-[14px] text-muted-foreground"
             style={{ background: "var(--bg-sunk)" }}
           >
-            Annuler
+            {t("cancel")}
           </button>
           <button
             type="submit"
@@ -324,7 +331,7 @@ function CreateGoalForm({ month, usedCategoryIds, onSuccess, onClose, variant = 
             {isSubmitting ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
-              "Créer"
+              t("create")
             )}
           </button>
         </div>
@@ -346,6 +353,7 @@ interface CreateGoalModalProps {
 }
 
 export function CreateGoalModal({ open, onOpenChange, month, usedCategoryIds, onGoalCreated }: CreateGoalModalProps) {
+  const t = useTranslations("goals.form");
   const [isMobile, setIsMobile] = useState(true);
 
   useEffect(() => {
@@ -357,7 +365,7 @@ export function CreateGoalModal({ open, onOpenChange, month, usedCategoryIds, on
 
   function handleSuccess() {
     onOpenChange(false);
-    toast.success("Objectif créé !");
+    toast.success(t("success"));
     onGoalCreated();
   }
 
@@ -370,7 +378,7 @@ export function CreateGoalModal({ open, onOpenChange, month, usedCategoryIds, on
       {isMobile ? (
         <Sheet open={open} onOpenChange={onOpenChange}>
           <SheetContent side="bottom" showCloseButton={false} className="max-h-[90dvh] overflow-y-auto rounded-t-2xl p-0">
-            <SheetTitle className="sr-only">Nouvel objectif</SheetTitle>
+            <SheetTitle className="sr-only">{t("title")}</SheetTitle>
             <CreateGoalForm
               month={month}
               usedCategoryIds={usedCategoryIds}
@@ -385,7 +393,7 @@ export function CreateGoalModal({ open, onOpenChange, month, usedCategoryIds, on
           <Dialog.Portal>
             <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 duration-200" />
             <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 w-full max-w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-[20px] overflow-hidden shadow-2xl data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 duration-200">
-              <Dialog.Title className="sr-only">Nouvel objectif</Dialog.Title>
+              <Dialog.Title className="sr-only">{t("title")}</Dialog.Title>
               <CreateGoalForm
                 month={month}
                 usedCategoryIds={usedCategoryIds}

@@ -1,9 +1,13 @@
+import { getTranslations } from "next-intl/server";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { PiggyBank, TrendingUp, Target, Shield, Sparkles } from "lucide-react";
 import Link from "next/link";
 
-export default function Home() {
+export default async function Home() {
+  const t = await getTranslations("landing");
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       {/* Navigation */}
@@ -15,9 +19,10 @@ export default function Home() {
             </div>
             <span className="font-display text-2xl font-semibold">Kash</span>
           </Link>
-          <div className="flex gap-3">
-            <Link href="/login" className={buttonVariants({ variant: "ghost" })}>Sign In</Link>
-            <Link href="/signup" className={buttonVariants()}>Get Started</Link>
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+            <Link href="/login" className={buttonVariants({ variant: "ghost" })}>{t("signIn")}</Link>
+            <Link href="/signup" className={buttonVariants()}>{t("getStarted")}</Link>
           </div>
         </div>
       </header>
@@ -27,29 +32,28 @@ export default function Home() {
         <section className="mx-auto max-w-6xl px-4 py-20 md:py-32">
           <div className="text-center">
             <h1 className="font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-              Save smarter,
-              <span className="text-primary"> live better</span>
+              {t("heroTitle")}
+              <span className="text-primary">{t("heroHighlight")}</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              Track expenses, set savings goals, and build healthy financial habits with Kash.
-              Your personal finance companion that makes saving fun.
+              {t("heroDescription")}
             </p>
             <div className="mt-10 flex justify-center gap-4">
-              <Link href="/signup" className={buttonVariants({ size: "lg" })}>Start Saving Free</Link>
-              <Link href="#features" className={buttonVariants({ variant: "outline", size: "lg" })}>Learn More</Link>
+              <Link href="/signup" className={buttonVariants({ size: "lg" })}>{t("ctaPrimary")}</Link>
+              <Link href="#features" className={buttonVariants({ variant: "outline", size: "lg" })}>{t("ctaSecondary")}</Link>
             </div>
           </div>
         </section>
 
         {/* Features Section */}
-        <section className="border-t border-border bg-muted/30 px-4 py-16">
+        <section id="features" className="border-t border-border bg-muted/30 px-4 py-16">
           <div className="mx-auto max-w-6xl">
             <div className="text-center">
               <h2 className="font-display text-3xl font-semibold text-foreground">
-                Everything you need to save
+                {t("featuresTitle")}
               </h2>
               <p className="mt-4 text-lg text-muted-foreground">
-                Simple tools to help you take control of your finances
+                {t("featuresSubtitle")}
               </p>
             </div>
 
@@ -59,14 +63,14 @@ export default function Home() {
                   <div className="mb-3 flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <TrendingUp className="size-6" />
                   </div>
-                  <CardTitle>Track Spending</CardTitle>
+                  <CardTitle>{t("featureTrack.title")}</CardTitle>
                   <CardDescription>
-                    See where your money goes with automatic categorization and insights
+                    {t("featureTrack.description")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    Connect your accounts or add transactions manually. Get a clear picture of your spending habits.
+                    {t("featureTrack.detail")}
                   </p>
                 </CardContent>
               </Card>
@@ -76,14 +80,14 @@ export default function Home() {
                   <div className="mb-3 flex size-12 items-center justify-center rounded-xl bg-accent/15 text-accent">
                     <Target className="size-6" />
                   </div>
-                  <CardTitle>Set Goals</CardTitle>
+                  <CardTitle>{t("featureGoals.title")}</CardTitle>
                   <CardDescription>
-                    Save for what matters with personalized goals and progress tracking
+                    {t("featureGoals.description")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    Whether it is a vacation, emergency fund, or new gadget, reach your goals faster.
+                    {t("featureGoals.detail")}
                   </p>
                 </CardContent>
               </Card>
@@ -93,14 +97,14 @@ export default function Home() {
                   <div className="mb-3 flex size-12 items-center justify-center rounded-xl bg-secondary/30 text-secondary-foreground">
                     <Sparkles className="size-6" />
                   </div>
-                  <CardTitle>Build Habits</CardTitle>
+                  <CardTitle>{t("featureHabits.title")}</CardTitle>
                   <CardDescription>
-                    Turn saving into a habit with streaks, achievements, and rewards
+                    {t("featureHabits.description")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    Stay motivated with gamified challenges that make finance management enjoyable.
+                    {t("featureHabits.detail")}
                   </p>
                 </CardContent>
               </Card>
@@ -116,20 +120,20 @@ export default function Home() {
                 <Shield className="size-6" />
               </div>
               <h2 className="mt-4 font-display text-2xl font-semibold text-foreground">
-                Your data is safe with us
+                {t("trust.title")}
               </h2>
               <p className="mt-2 text-muted-foreground">
-                Bank-level security with 256-bit encryption. We never sell your data and you can export or delete it anytime.
+                {t("trust.description")}
               </p>
             </div>
             <div className="flex gap-8 text-center">
               <div>
                 <p className="font-display text-3xl font-bold text-primary">256-bit</p>
-                <p className="text-sm text-muted-foreground">Encryption</p>
+                <p className="text-sm text-muted-foreground">{t("trust.encryption")}</p>
               </div>
               <div>
                 <p className="font-display text-3xl font-bold text-primary">100%</p>
-                <p className="text-sm text-muted-foreground">Private</p>
+                <p className="text-sm text-muted-foreground">{t("trust.privacy")}</p>
               </div>
             </div>
           </Card>
@@ -139,14 +143,14 @@ export default function Home() {
         <section className="border-t border-border px-4 py-16">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="font-display text-3xl font-semibold text-foreground">
-              Ready to start saving?
+              {t("finalCta.title")}
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Join thousands of people who are taking control of their finances with Kash.
+              {t("finalCta.description")}
             </p>
             <div className="mt-8 flex justify-center gap-4">
-              <Link href="/signup" className={buttonVariants({ size: "lg" })}>Create Free Account</Link>
-              <Link href="/login" className={buttonVariants({ variant: "outline", size: "lg" })}>Contact Sales</Link>
+              <Link href="/signup" className={buttonVariants({ size: "lg" })}>{t("finalCta.createAccount")}</Link>
+              <Link href="/login" className={buttonVariants({ variant: "outline", size: "lg" })}>{t("finalCta.contactSales")}</Link>
             </div>
           </div>
         </section>
@@ -163,7 +167,7 @@ export default function Home() {
               <span className="font-display text-lg font-semibold">Kash</span>
             </div>
             <p className="text-center text-sm text-muted-foreground">
-              © 2025 Kash. All rights reserved.
+              {t("footer.copyright")}
             </p>
           </div>
         </div>

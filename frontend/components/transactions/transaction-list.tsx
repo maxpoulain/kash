@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Check, Filter, Package, Plus } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,37 +13,31 @@ import { CATEGORY_ICONS } from "@/lib/category-icons";
 import { currentMonth } from "@/lib/month";
 import type { Category, Transaction } from "@/types/api";
 
-function formatDateLabel(dateStr: string): string {
+function formatDateLabel(dateStr: string, locale: string): string {
   const today = new Date().toISOString().slice(0, 10);
   const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
-  if (dateStr === today) return "Aujourd'hui";
-  if (dateStr === yesterday) return "Hier";
+  if (dateStr === today) return "today";
+  if (dateStr === yesterday) return "yesterday";
   const d = new Date(dateStr + "T12:00:00");
-  return d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+  return d.toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" });
 }
 
-function formatDateShort(dateStr: string): string {
+function formatDateShort(dateStr: string, locale: string): string {
   const d = new Date(dateStr + "T12:00:00");
-  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  return d.toLocaleDateString(locale, { day: "numeric", month: "short" });
 }
 
-function groupByDate(txns: Transaction[]): { date: string; label: string; items: Transaction[] }[] {
+function groupByDate(txns: Transaction[], locale: string): { date: string; label: string; items: Transaction[] }[] {
   const map: Record<string, Transaction[]> = {};
   for (const t of txns) {
     (map[t.date] ??= []).push(t);
   }
   return Object.entries(map)
     .sort(([a], [b]) => b.localeCompare(a))
-    .map(([date, items]) => ({ date, label: formatDateLabel(date), items }));
+    .map(([date, items]) => ({ date, label: formatDateLabel(date, locale), items }));
 }
 
 type FilterType = "all" | "expense" | "income";
-
-const TYPE_FILTERS: { key: FilterType; label: string }[] = [
-  { key: "all", label: "Tout" },
-  { key: "expense", label: "Dépenses" },
-  { key: "income", label: "Revenus" },
-];
 
 interface TransactionListProps {
   refreshKey?: number;
@@ -50,6 +45,9 @@ interface TransactionListProps {
 }
 
 export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps) {
+  const t = useTranslations("transactions.list");
+  const td = useTranslations("dashboard");
+  const locale = useLocale();
   const [month, setMonth] = useState(currentMonth);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -75,9 +73,9 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
   }, [load]);
 
   function getCategoryInfo(categoryId: string | null) {
-    if (!categoryId) return { name: "Sans catégorie", Icon: Package };
+    if (!categoryId) return { name: t("uncategorized"), Icon: Package };
     const cat = categories.find((c) => c.id === categoryId);
-    if (!cat) return { name: "Sans catégorie", Icon: Package };
+    if (!cat) return { name: t("uncategorized"), Icon: Package };
     return { name: cat.name, Icon: CATEGORY_ICONS[cat.name] ?? Package };
   }
 
@@ -87,11 +85,11 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
     .filter((t) => typeFilter === "all" || t.type === typeFilter)
     .filter((t) => !categoryFilter || t.category_id === categoryFilter);
 
-  const groups = groupByDate(filtered);
+  const groups = groupByDate(filtered, locale);
 
   function formatAmount(t: Transaction) {
     const sign = t.type === "expense" ? "−" : "+";
-    return sign + t.amount.toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
+    return sign + t.amount.toLocaleString(locale, { style: "currency", currency: "EUR" });
   }
 
   const activeCategoryName = categoryFilter
@@ -105,17 +103,23 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
   );
   const visibleCategories = categories.filter((c) => visibleCategoryIds.has(c.id));
 
+  const typeFilters: { key: FilterType; label: string }[] = [
+    { key: "all", label: t("all") },
+    { key: "expense", label: t("expenses") },
+    { key: "income", label: t("income") },
+  ];
+
   return (
     <div className="flex flex-col gap-4">
       {/* ── Page header: title + month nav ────────────────── */}
       <div className="flex flex-col gap-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="font-display text-2xl font-medium tracking-tight">Transactions</h1>
+            <h1 className="font-display text-2xl font-medium tracking-tight">{td("title")}</h1>
             {!loading && (
               <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-                {transactions.length} ce mois
-                {uncategorizedCount > 0 && ` · ${uncategorizedCount} non catégorisées`}
+                {td("thisMonth", { count: transactions.length })}
+                {uncategorizedCount > 0 && ` · ${td("uncategorized", { count: uncategorizedCount })}`}
               </p>
             )}
           </div>
@@ -124,7 +128,7 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
             size="icon"
             onClick={onAdd}
             className="h-10 w-10 shrink-0 rounded-xl lg:hidden"
-            aria-label="Ajouter une transaction"
+            aria-label={td("addAria")}
           >
             <Plus className="h-4 w-4" />
           </Button>
@@ -137,7 +141,7 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
           endSlot={
             <Button size="sm" onClick={onAdd} className="gap-1.5 rounded-full">
               <Plus className="h-4 w-4" />
-              Ajouter
+              {td("add")}
             </Button>
           }
         />
@@ -146,7 +150,7 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
       {/* ── Filter row ─────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          {TYPE_FILTERS.map(({ key, label }) => (
+          {typeFilters.map(({ key, label }) => (
             <button
               key={key}
               onClick={() => { setTypeFilter(key); setCategoryFilter(null); }}
@@ -172,7 +176,7 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
               )}
             >
               <Filter className="h-3 w-3" />
-              {activeCategoryName ?? "Filtres"}
+              {activeCategoryName ?? t("filters")}
             </button>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-56 p-1.5">
@@ -185,7 +189,7 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
             >
               {!categoryFilter && <Check className="h-3.5 w-3.5 shrink-0" />}
               {categoryFilter && <span className="h-3.5 w-3.5 shrink-0" />}
-              Toutes les catégories
+              {t("allCategories")}
             </button>
             {visibleCategories.map((cat) => {
               const isActive = categoryFilter === cat.id;
@@ -214,9 +218,9 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
 
       {/* ── Loading / empty ────────────────────────────────── */}
       {loading ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">Chargement…</p>
+        <p className="py-8 text-center text-sm text-muted-foreground">{t("loading")}</p>
       ) : filtered.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">Aucune transaction ce mois-ci</p>
+        <p className="py-8 text-center text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
         <>
           {/* ── Desktop: table ─────────────────────────────── */}
@@ -225,9 +229,9 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
               className="grid gap-3.5 px-3.5 pb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
               style={{ gridTemplateColumns: "130px 1fr 110px" }}
             >
-              <span>Date</span>
-              <span>Catégorie</span>
-              <span className="text-right">Montant</span>
+              <span>{t("date")}</span>
+              <span>{t("category")}</span>
+              <span className="text-right">{t("amount")}</span>
             </div>
             <Card className="gap-0 py-0">
               {filtered.map((t, i) => {
@@ -241,7 +245,7 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
                     )}
                     style={{ gridTemplateColumns: "130px 1fr 110px" }}
                   >
-                    <p className="text-[13px] font-medium">{formatDateShort(t.date)}</p>
+                    <p className="text-[13px] font-medium">{formatDateShort(t.date, locale)}</p>
                     <div className="flex items-center gap-3 min-w-0">
                       <div className={cn(
                         "h-8 w-8 shrink-0 rounded-[8px] flex items-center justify-center",

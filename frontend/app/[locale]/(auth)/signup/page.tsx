@@ -3,11 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 
 export default function SignupPage() {
+  const t = useTranslations("auth.signup");
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,12 +22,12 @@ export default function SignupPage() {
     setError(null);
 
     if (password !== confirm) {
-      setError("Passwords do not match");
+      setError(t("passwordMismatch"));
       return;
     }
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters");
+      setError(t("passwordLength"));
       return;
     }
 
@@ -47,14 +49,14 @@ export default function SignupPage() {
   return (
     <div className="w-full max-w-sm rounded-3xl border border-border bg-card p-8 shadow-sm">
       <div className="mb-6">
-        <h1 className="font-display text-2xl font-semibold text-foreground">Create your account</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Start saving smarter with Kash</p>
+        <h1 className="font-display text-2xl font-semibold text-foreground">{t("title")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="email" className="text-sm font-medium text-foreground">
-            Email
+            {t("email")}
           </label>
           <Input
             id="email"
@@ -68,7 +70,7 @@ export default function SignupPage() {
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="password" className="text-sm font-medium text-foreground">
-            Password
+            {t("password")}
           </label>
           <Input
             id="password"
@@ -82,7 +84,7 @@ export default function SignupPage() {
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="confirm" className="text-sm font-medium text-foreground">
-            Confirm password
+            {t("confirmPassword")}
           </label>
           <Input
             id="confirm"
@@ -98,14 +100,14 @@ export default function SignupPage() {
           <p className="text-sm text-destructive">{error}</p>
         )}
         <Button type="submit" className="mt-1 w-full" disabled={loading}>
-          {loading ? "Creating account…" : "Create account"}
+          {loading ? t("submitLoading") : t("submit")}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
+        {t("hasAccount")}{" "}
         <Link href="/login" className="font-medium text-foreground hover:underline">
-          Sign in
+          {t("signIn")}
         </Link>
       </p>
     </div>

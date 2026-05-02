@@ -22,6 +22,14 @@ const data: ElectionResult = fetchData();
 function process(item: Candidate): ProcessedCandidate { ... }
 ```
 
+## i18n & Translations
+
+- All user-facing text must use `next-intl` — never hardcode strings in JSX
+- `useTranslations()` for client components, `getTranslations()` for server components
+- When adding or changing any translation key, update **both** `messages/en.json` and `messages/fr.json`
+- Keep keys in identical structure across both files
+- English is the source of truth — write it first, then add the French equivalent
+
 ### Configuration
 
 ```json

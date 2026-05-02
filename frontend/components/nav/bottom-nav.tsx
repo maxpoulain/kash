@@ -3,22 +3,25 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { CircleDollarSign, Plus, Target, TrendingUp } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 interface BottomNavProps {
   onAdd?: () => void;
 }
 
 export function BottomNav({ onAdd }: BottomNavProps) {
+  const t = useTranslations("nav");
   const pathname = usePathname();
   const router = useRouter();
   const handleAdd = onAdd ?? (() => router.push("/dashboard?add=1"));
 
   const navItems = [
-    { href: "/dashboard", label: "Transactions", icon: CircleDollarSign },
-    { href: "/goals", label: "Objectifs", icon: Target },
+    { href: "/dashboard", label: t("dashboard"), icon: CircleDollarSign },
+    { href: "/goals", label: t("goals"), icon: Target },
     null, // FAB
-    { href: "/assets", label: "Patrimoine", icon: TrendingUp },
+    { href: "/assets", label: t("assets"), icon: TrendingUp },
   ];
 
   return (
@@ -29,7 +32,7 @@ export function BottomNav({ onAdd }: BottomNavProps) {
             <button
               key="add"
               onClick={handleAdd}
-              aria-label="Ajouter une transaction"
+              aria-label={t("addTransaction")}
               className="-mt-7 flex h-12 w-12 items-center justify-center rounded-full border-2 border-background bg-primary text-foreground shadow-[inset_0_-3px_0_var(--pig-shadow),0_8px_20px_-6px_rgba(0,0,0,0.3)] transition-transform hover:scale-105 active:scale-95"
             >
               <Plus className="h-5 w-5" />
@@ -52,6 +55,7 @@ export function BottomNav({ onAdd }: BottomNavProps) {
           </Link>
         );
       })}
+      <LanguageSwitcher className="border-background/20 bg-transparent text-background/55 hover:border-background hover:text-background" />
     </nav>
   );
 }

@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { format, parseISO } from "date-fns";
-import { fr } from "date-fns/locale";
+import { format, parseISO, type Locale } from "date-fns";
+import { fr, enUS } from "date-fns/locale";
 import {
   CalendarIcon,
   ChevronRight,
@@ -15,6 +15,7 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
 import { CATEGORY_ICONS } from "@/lib/category-icons";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
@@ -23,12 +24,18 @@ import { PiggyMark } from "@/components/kash-piggy";
 import { getCategories, createTransaction } from "@/lib/api";
 import type { Category, TransactionType } from "@/types/api";
 
+const DATE_FNS_LOCALES: Record<string, Locale> = {
+  en: enUS,
+  fr,
+};
+
 function CategoryIcon({ name, className }: { name: string; className?: string }) {
   const Icon = CATEGORY_ICONS[name] ?? Package;
   return <Icon className={className} />;
 }
 
 function PiggyPreview({ amount, isIncome }: { amount: number | undefined; isIncome: boolean }) {
+  const t = useTranslations("transactions.form");
   const val = amount && !isNaN(amount) && amount > 0 ? amount : 0;
   return (
     <div
@@ -51,7 +58,7 @@ function PiggyPreview({ amount, isIncome }: { amount: number | undefined; isInco
             className="text-[10px] font-mono tracking-[0.12em] uppercase"
             style={{ color: "var(--pig-shadow)" }}
           >
-            {isIncome ? "Piggy gains" : "Piggy spends"}
+            {isIncome ? t("piggyGains") : t("piggySpends")}
           </div>
           <div
             className="font-display text-[26px] font-semibold tracking-[-0.02em] leading-tight"
@@ -77,9 +84,9 @@ const QUICK_AMOUNTS = [5, 10, 20, 50, 100];
 
 const schema = z.object({
   type: z.enum(["income", "expense"]),
-  amount: z.number().positive("Le montant doit être positif"),
-  category_id: z.string().uuid("Sélectionne une catégorie"),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date invalide"),
+  amount: z.number().positive("amountPositive"),
+  category_id: z.string().uuid("selectCategory"),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "invalidDate"),
   note: z.string().max(200).optional(),
 });
 
@@ -108,6 +115,9 @@ function shortLabel(name: string) {
 }
 
 export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: TransactionFormProps) {
+  const t = useTranslations("transactions.form");
+  const locale = useLocale();
+  const dateFnsLocale = DATE_FNS_LOCALES[locale] ?? enUS;
   const [categories, setCategories] = useState<Category[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -146,27 +156,27 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
       await createTransaction(values);
       onSuccess();
     } catch {
-      setSubmitError("Une erreur est survenue. Réessaie.");
+      setSubmitError(t("submitError"));
     }
   }
 
   const typeToggle = (
     <div className="grid grid-cols-2 gap-1.5 p-1 bg-muted rounded-[12px]">
-      {(["expense", "income"] as TransactionType[]).map((t) => {
-        const active = selectedType === t;
+      {(["expense", "income"] as TransactionType[]).map((txType) => {
+        const active = selectedType === txType;
         return (
           <button
-            key={t}
+            key={txType}
             type="button"
-            onClick={() => setValue("type", t)}
+            onClick={() => setValue("type", txType)}
             className={cn(
               "flex items-center justify-center gap-1.5 rounded-[8px] py-2.5 text-[13px] font-semibold transition-all",
               active ? "text-white" : "text-muted-foreground hover:text-foreground/70"
             )}
-            style={active ? { background: t === "expense" ? "var(--ink)" : "var(--accent)" } : {}}
+            style={active ? { background: txType === "expense" ? "var(--ink)" : "var(--accent)" } : {}}
           >
-            {t === "expense" ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-            {t === "expense" ? "Dépense" : "Revenu"}
+            {txType === "expense" ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+            {txType === "expense" ? t("expense") : t("income")}
           </button>
         );
       })}
@@ -181,7 +191,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
         onSelect={(d) => d && setValue("date", format(d, "yyyy-MM-dd"))}
         disabled={{ after: new Date() }}
         endMonth={new Date()}
-        locale={fr}
+        locale={dateFnsLocale}
       />
       <div className="border-t p-2">
         <button
@@ -189,7 +199,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
           className="w-full text-sm text-center py-1.5 text-muted-foreground hover:text-foreground transition-colors"
           onClick={() => setValue("date", today())}
         >
-          {"Aujourd'hui"}
+          {t("today")}
         </button>
       </div>
     </>
@@ -216,7 +226,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
             </div>
             <div>
               <div className="font-display text-[20px] font-medium tracking-[-0.02em] leading-tight">
-                Nouvelle transaction
+                {t("desktopTitle")}
               </div>
             </div>
           </div>
@@ -241,7 +251,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
             {/* amount */}
             <div>
               <div className="text-[10px] font-mono text-muted-foreground tracking-[0.12em] uppercase mb-2">
-                Montant
+                {t("amount")}
               </div>
               <div
                 className="flex items-baseline gap-2 rounded-[14px] px-4 py-3.5"
@@ -273,14 +283,14 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
                 ))}
               </div>
               {errors.amount && (
-                <p className="text-destructive text-xs mt-1">{errors.amount.message}</p>
+                <p className="text-destructive text-xs mt-1">{t(errors.amount.message as string)}</p>
               )}
             </div>
 
             {/* date */}
             <div>
               <div className="text-[10px] font-mono text-muted-foreground tracking-[0.12em] uppercase mb-2">
-                Date
+                {t("date")}
               </div>
               <Popover>
                 <PopoverTrigger asChild>
@@ -291,8 +301,8 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
                   >
                     <span>
                       {selectedDate
-                        ? format(parseISO(selectedDate), "PPP", { locale: fr })
-                        : "Aujourd'hui"}
+                        ? format(parseISO(selectedDate), "PPP", { locale: dateFnsLocale })
+                        : t("today")}
                     </span>
                     <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
                   </button>
@@ -306,12 +316,12 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
             {/* note */}
             <div>
               <div className="text-[10px] font-mono text-muted-foreground tracking-[0.12em] uppercase mb-2">
-                Note
+                {t("note")}
               </div>
               <textarea
                 {...register("note")}
                 rows={2}
-                placeholder="Ajouter une description..."
+                placeholder={t("notePlaceholder")}
                 className="w-full px-3 py-2.5 border rounded-[10px] text-[13px] resize-none outline-none focus:border-foreground transition-colors font-sans"
                 style={{ background: "var(--bg-elev)", borderColor: "var(--line)" }}
               />
@@ -327,10 +337,10 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
 
             <div>
               <div className="text-[10px] font-mono text-muted-foreground tracking-[0.12em] uppercase mb-2">
-                Catégorie
+                {t("category")}
               </div>
               {errors.category_id && (
-                <p className="text-destructive text-xs mb-2">{errors.category_id.message}</p>
+                <p className="text-destructive text-xs mb-2">{t(errors.category_id.message as string)}</p>
               )}
               <div className="grid grid-cols-4 gap-1.5">
                 {filteredCategories.map((c) => {
@@ -375,7 +385,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
                 className="w-28 py-2.5 rounded-[10px] text-muted-foreground font-medium text-[13px] hover:text-foreground transition-colors text-center"
                 style={{ background: "var(--bg-sunk)" }}
               >
-                Annuler
+                {t("cancel")}
               </button>
             )}
             <button
@@ -390,7 +400,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
               {isSubmitting ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <>{isIncome ? "Ajouter revenu" : "Ajouter dépense"}</>
+                <>{isIncome ? t("addIncome") : t("addExpense")}</>
               )}
             </button>
           </div>
@@ -413,7 +423,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
         {/* header */}
         <div className="flex items-center justify-between">
           <div className="font-display text-[22px] font-medium tracking-[-0.02em]">
-            Ajouter une transaction
+            {t("mobileTitle")}
           </div>
           {onClose && (
             <button
@@ -432,7 +442,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
         {/* large amount display */}
         <div className="text-center pt-3 pb-1">
           <div className="text-[10px] font-mono text-muted-foreground tracking-[0.12em] uppercase mb-1.5">
-            Montant · EUR
+            {t("amount")} · EUR
           </div>
           <div className="flex items-end justify-center">
             <span
@@ -453,7 +463,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
             />
           </div>
           {errors.amount && (
-            <p className="text-destructive text-xs mt-1">{errors.amount.message}</p>
+            <p className="text-destructive text-xs mt-1">{t(errors.amount.message as string)}</p>
           )}
         </div>
 
@@ -464,11 +474,11 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
         <div>
           <div className="mb-2">
             <div className="text-[10px] font-mono text-muted-foreground tracking-[0.12em] uppercase">
-              Catégorie
+              {t("category")}
             </div>
           </div>
           {errors.category_id && (
-            <p className="text-destructive text-xs mb-1">{errors.category_id.message}</p>
+            <p className="text-destructive text-xs mb-1">{t(errors.category_id.message as string)}</p>
           )}
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
             {filteredCategories.map((c) => {
@@ -515,12 +525,12 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
                 </div>
                 <div className="flex-1">
                   <div className="text-[9px] font-mono text-muted-foreground uppercase tracking-[0.1em]">
-                    Date
+                    {t("date")}
                   </div>
                   <div className="text-[13px] font-medium">
                     {selectedDate
-                      ? format(parseISO(selectedDate), "PPP", { locale: fr })
-                      : "Aujourd'hui"}
+                      ? format(parseISO(selectedDate), "PPP", { locale: dateFnsLocale })
+                      : t("today")}
                   </div>
                 </div>
                 <ChevronRight className="w-[13px] h-[13px] text-muted-foreground" />
@@ -544,12 +554,12 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-[9px] font-mono text-muted-foreground uppercase tracking-[0.1em]">
-                Note
+                {t("note")}
               </div>
               <input
                 {...register("note")}
                 type="text"
-                placeholder="Ajouter une note..."
+                placeholder={t("mobileNotePlaceholder")}
                 maxLength={200}
                 className="w-full bg-transparent border-none outline-none text-[13px] font-medium placeholder:text-muted-foreground"
               />
@@ -571,7 +581,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
               className="flex-1 py-[15px] rounded-[14px] font-semibold text-[14px] text-muted-foreground"
               style={{ background: "var(--bg-sunk)" }}
             >
-              Annuler
+              {t("cancel")}
             </button>
           )}
           <button
@@ -589,7 +599,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
             {isSubmitting ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
-              <>{isIncome ? "Ajouter revenu" : "Ajouter dépense"}</>
+              <>{isIncome ? t("addIncome") : t("addExpense")}</>
             )}
           </button>
         </div>
