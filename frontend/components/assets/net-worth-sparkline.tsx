@@ -40,7 +40,7 @@ export function NetWorthSparkline({ points, width = 320, height = 60 }: Props) {
         strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        opacity="0.4"
+        opacity="0.7"
       />
     </svg>
   );

@@ -3,10 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  Home, PiggyBank, Coins, BarChart3, User, Plus, Minus,
+  Home, PiggyBank, Coins, BarChart3, User, Plus,
   Search, Bell, Check, Flame, Trophy, Zap, Globe, Lock,
   Gift, Sparkles, Wallet, ShoppingCart, UtensilsCrossed,
-  Car, ArrowUpRight, ArrowDownRight, Loader2,
+  Car, ArrowUpRight, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Piggy as PiggyMascot, PiggyMark } from "@/components/kash-piggy";
