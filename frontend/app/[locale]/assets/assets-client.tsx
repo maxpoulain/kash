@@ -11,7 +11,6 @@ import { AccountSheet } from "@/components/assets/account-sheet";
 import { getSavingsAccounts, createSavingsAccount, updateSavingsAccount, deleteSavingsAccount, getNetWorthHistory } from "@/lib/api";
 import type { SavingsAccount, AccountType } from "@/components/assets/account-form";
 import type { NetWorthHistoryPoint } from "@/types/api";
-import { NetWorthSparkline } from "@/components/assets/net-worth-sparkline";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -87,6 +86,28 @@ function fmt(amount: number, locale: string): string {
 
 function fmtFull(amount: number, locale: string): string {
   return amount.toLocaleString(locale, { style: "currency", currency: "EUR" });
+}
+
+function computeDelta(history: NetWorthHistoryPoint[]) {
+  if (history.length < 2) return null;
+  const latest = history[history.length - 1];
+  const thirtyDaysAgo = new Date(latest.date);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const ref = history.reduce((best, p) => {
+    const d = Math.abs(new Date(p.date).getTime() - thirtyDaysAgo.getTime());
+    const bestD = Math.abs(new Date(best.date).getTime() - thirtyDaysAgo.getTime());
+    return d < bestD ? p : best;
+  });
+
+  if (ref.date === latest.date) return null;
+
+  const delta = latest.total - ref.total;
+  const pct = (delta / ref.total) * 100;
+  const days = Math.round((new Date(latest.date).getTime() - new Date(ref.date).getTime()) / 86400000);
+  const label = days >= 300 ? `${Math.round(days / 365)}a` : days >= 25 ? `${Math.round(days / 30)}m` : `${days}j`;
+
+  return { delta, pct, label };
 }
 
 function computeAllocation(accounts: SavingsAccount[]) {
@@ -190,6 +211,7 @@ export function AssetsClient() {
 
   const total = accounts.reduce((s, a) => s + a.balance, 0);
   const allocation = computeAllocation(accounts);
+  const delta = computeDelta(history);
 
   function openAdd() {
     setEditing(undefined);
@@ -259,9 +281,14 @@ export function AssetsClient() {
           >
             <p className="font-mono text-[10px] uppercase tracking-widest text-accent-ink/70">{t("netWorthLabel")}</p>
             <div className="mt-2 font-display text-5xl font-medium leading-none tracking-tight">{fmt(total, locale)}</div>
-            {history.length >= 2 && (
-              <div className="absolute bottom-0 right-0">
-                <NetWorthSparkline points={history} width={320} height={60} />
+            {delta && (
+              <div className="mt-2 flex gap-2">
+                <span className="inline-flex items-center rounded-full bg-foreground px-2.5 py-0.5 font-mono text-[11px] font-semibold text-background">
+                  {delta.delta >= 0 ? "↑" : "↓"} {fmt(Math.abs(delta.delta), locale)} / {delta.label}
+                </span>
+                <span className="inline-flex items-center rounded-full bg-background/60 px-2.5 py-0.5 font-mono text-[11px] font-semibold">
+                  {delta.pct >= 0 ? "+" : ""}{delta.pct.toFixed(1)}%
+                </span>
               </div>
             )}
           </Card>
