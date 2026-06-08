@@ -119,7 +119,12 @@
       "amountError": "Le montant doit être positif",
       "categoryError": "Sélectionne une catégorie",
       "dateError": "Date invalide",
-      "submitError": "Une erreur est survenue. Réessaie."
+      "submitError": "Une erreur est survenue. Réessaie.",
+      "monthly": "Mensuel",
+      "weekly": "Hebdo",
+      "addRecurring": "Ajouter la récurrence",
+      "repeat": "Répéter",
+      "once": "Ponctuel"
     }
   },
   "goals": {

@@ -1,5 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { getCategories, createTransaction, getTransactions } from "@/lib/api";
+import {
+  getCategories,
+  createTransaction,
+  getTransactions,
+  getRecurringTransactions,
+  createRecurringTransaction,
+  updateRecurringTransaction,
+  deleteRecurringTransaction,
+} from "@/lib/api";
 
 // Mock the Supabase client used by apiFetch
 vi.mock("@/lib/supabase/client", () => ({
@@ -114,5 +122,93 @@ describe("createTransaction", () => {
     await expect(
       createTransaction({ amount: 10, type: "expense", category_id: "uuid", date: "2026-04-15" })
     ).rejects.toThrow("Failed to create transaction");
+  });
+});
+
+describe("getRecurringTransactions", () => {
+  it("fetches recurring rules", async () => {
+    const rules = [{ id: "r1", amount: 1200, type: "expense", frequency: "monthly" }];
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => rules });
+
+    const result = await getRecurringTransactions();
+
+    expect(result).toEqual(rules);
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/recurring-transactions"),
+      expect.anything()
+    );
+  });
+
+  it("throws on non-ok response", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false });
+    await expect(getRecurringTransactions()).rejects.toThrow("Failed to fetch recurring transactions");
+  });
+});
+
+describe("createRecurringTransaction", () => {
+  it("POSTs the payload", async () => {
+    const payload = {
+      amount: 1200,
+      type: "expense" as const,
+      frequency: "monthly" as const,
+      start_date: "2026-06-05",
+    };
+    const created = { id: "r1", ...payload };
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => created });
+
+    const result = await createRecurringTransaction(payload);
+
+    expect(result).toEqual(created);
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/recurring-transactions"),
+      expect.objectContaining({ method: "POST", body: JSON.stringify(payload) })
+    );
+  });
+
+  it("throws on non-ok response", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false });
+    await expect(
+      createRecurringTransaction({ amount: 1, type: "expense", frequency: "weekly", start_date: "2026-06-01" })
+    ).rejects.toThrow("Failed to create recurring transaction");
+  });
+});
+
+describe("updateRecurringTransaction", () => {
+  it("PATCHes the rule by id", async () => {
+    const updated = { id: "r1", active: false };
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => updated });
+
+    const result = await updateRecurringTransaction("r1", { active: false });
+
+    expect(result).toEqual(updated);
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/recurring-transactions/r1"),
+      expect.objectContaining({ method: "PATCH", body: JSON.stringify({ active: false }) })
+    );
+  });
+
+  it("throws on non-ok response", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false });
+    await expect(updateRecurringTransaction("r1", { amount: 5 })).rejects.toThrow(
+      "Failed to update recurring transaction"
+    );
+  });
+});
+
+describe("deleteRecurringTransaction", () => {
+  it("DELETEs the rule by id", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true });
+
+    await deleteRecurringTransaction("r1");
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/recurring-transactions/r1"),
+      expect.objectContaining({ method: "DELETE" })
+    );
+  });
+
+  it("throws on non-ok response", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false });
+    await expect(deleteRecurringTransaction("r1")).rejects.toThrow("Failed to delete recurring transaction");
   });
 });
