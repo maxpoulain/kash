@@ -92,9 +92,11 @@ Schemas Pydantic : `RecurringTransactionCreate`, `RecurringTransactionUpdate`, `
 
 ## Critères de validation
 
-- [ ] On peut créer/lister/modifier/supprimer une règle récurrente via l'API
-- [ ] `GET /transactions` matérialise les échéances dues (rattrapage) et avance `next_run_date`
-- [ ] Aucun doublon si l'endpoint est appelé plusieurs fois le même jour
-- [ ] Une règle inactive ne génère rien
-- [ ] Supprimer une règle conserve les transactions déjà générées
-- [ ] Tests unitaires + API verts, `just check` passe
+- [x] On peut créer/lister/modifier/supprimer une règle récurrente via l'API
+- [x] `GET /transactions` matérialise les échéances dues (rattrapage) et avance `next_run_date`
+- [x] Aucun doublon si l'endpoint est appelé plusieurs fois le même jour
+- [x] Une règle inactive ne génère rien (filtrée par `eq("active", True)`)
+- [x] Supprimer une règle conserve les transactions déjà générées (`recurring_id ON DELETE SET NULL`)
+- [x] Tests unitaires + API verts (20 nouveaux, 57 backend au total) — `just check` backend OK ⚠️ voir note
+
+> ⚠️ **Note CI** : `just check` échoue sur 2 erreurs lint **frontend pré-existantes** (`goals-client.tsx`, `transaction-list.tsx`, règle `react-hooks/set-state-in-effect`), sans rapport avec ce ticket backend. Les checks backend (ruff, pyright, pytest) passent tous.
