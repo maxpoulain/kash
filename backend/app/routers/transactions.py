@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.core.auth import get_current_user
 from app.core.supabase import get_supabase
+from app.routers.recurring_transactions import materialize_due_for_household
 from app.schemas.transactions import (
     CategoryOut,
     TransactionCreate,
@@ -77,8 +78,12 @@ async def list_transactions(
     month: str | None = Query(None, description="Filter by month, format YYYY-MM"),
     claims: dict = Depends(get_current_user),
 ) -> list[TransactionOut]:
-    """List transactions for the user's household, optionally filtered by month."""
+    """List transactions for the user's household, optionally filtered by month.
+
+    Materializes any due recurring transactions before returning (lazy generation).
+    """
     household_id = _get_household_id(claims["sub"])
+    materialize_due_for_household(household_id)
     supabase = get_supabase()
 
     query = supabase.table("transactions").select("*").eq("household_id", household_id)

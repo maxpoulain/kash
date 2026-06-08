@@ -2,7 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import health, savings_accounts, spending_goals, transactions, users
+from app.routers import (
+    health,
+    recurring_transactions,
+    savings_accounts,
+    spending_goals,
+    transactions,
+    users,
+)
 
 app = FastAPI(title="Kash API", version="0.1.0")
 
@@ -22,3 +29,4 @@ app.include_router(users.router)
 app.include_router(transactions.router)
 app.include_router(spending_goals.router)
 app.include_router(savings_accounts.router)
+app.include_router(recurring_transactions.router)
