@@ -87,3 +87,46 @@ export interface SpendingGoalsResponse {
   total_remaining: number;
   goals: SpendingGoal[];
 }
+
+// Recurring Transactions
+
+export type Frequency = "weekly" | "monthly";
+
+export interface RecurringTransaction {
+  id: string;
+  household_id: string;
+  created_by: string;
+  category_id: string | null;
+  amount: number;
+  type: TransactionType;
+  note: string | null;
+  frequency: Frequency;
+  anchor_day: number;
+  start_date: string; // YYYY-MM-DD
+  end_date: string | null;
+  next_run_date: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RecurringTransactionCreate {
+  amount: number;
+  type: TransactionType;
+  category_id?: string | null;
+  note?: string | null;
+  frequency: Frequency;
+  start_date: string; // YYYY-MM-DD
+  end_date?: string | null;
+}
+
+export interface RecurringTransactionUpdate {
+  amount?: number;
+  type?: TransactionType;
+  category_id?: string | null;
+  note?: string | null;
+  frequency?: Frequency;
+  start_date?: string;
+  end_date?: string | null;
+  active?: boolean;
+}

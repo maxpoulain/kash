@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import type { Category, CreateGoalPayload, CreateTransactionPayload, NetWorthHistoryPoint, SavingsAccountAPI, SavingsAccountCreate, SavingsAccountUpdate, SpendingGoal, SpendingGoalsResponse, Transaction } from "@/types/api";
+import type { Category, CreateGoalPayload, CreateTransactionPayload, NetWorthHistoryPoint, RecurringTransaction, RecurringTransactionCreate, RecurringTransactionUpdate, SavingsAccountAPI, SavingsAccountCreate, SavingsAccountUpdate, SpendingGoal, SpendingGoalsResponse, Transaction } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -93,6 +93,35 @@ export async function getNetWorthHistory(): Promise<NetWorthHistoryPoint[]> {
   const res = await apiFetch("/api/savings-accounts/history");
   if (!res.ok) throw new Error("Failed to fetch net worth history");
   return res.json();
+}
+
+export async function getRecurringTransactions(): Promise<RecurringTransaction[]> {
+  const res = await apiFetch("/api/recurring-transactions");
+  if (!res.ok) throw new Error("Failed to fetch recurring transactions");
+  return res.json();
+}
+
+export async function createRecurringTransaction(payload: RecurringTransactionCreate): Promise<RecurringTransaction> {
+  const res = await apiFetch("/api/recurring-transactions", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to create recurring transaction");
+  return res.json();
+}
+
+export async function updateRecurringTransaction(id: string, payload: RecurringTransactionUpdate): Promise<RecurringTransaction> {
+  const res = await apiFetch(`/api/recurring-transactions/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to update recurring transaction");
+  return res.json();
+}
+
+export async function deleteRecurringTransaction(id: string): Promise<void> {
+  const res = await apiFetch(`/api/recurring-transactions/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Failed to delete recurring transaction");
 }
 
 export async function apiFetch(path: string, init?: RequestInit): Promise<Response> {

@@ -12,6 +12,7 @@ import {
   Minus,
   Package,
   Plus,
+  Repeat,
   Sparkles,
   X,
 } from "lucide-react";
@@ -21,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PiggyMark } from "@/components/kash-piggy";
-import { getCategories, createTransaction } from "@/lib/api";
+import { getCategories, createTransaction, createRecurringTransaction } from "@/lib/api";
 import type { Category, TransactionType } from "@/types/api";
 
 const DATE_FNS_LOCALES: Record<string, Locale> = {
@@ -88,6 +89,7 @@ const schema = z.object({
   category_id: z.string().uuid("selectCategory"),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "invalidDate"),
   note: z.string().max(200).optional(),
+  repeat: z.enum(["once", "weekly", "monthly"]).optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -129,7 +131,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { type: "expense", date: today() },
+    defaultValues: { type: "expense", date: today(), repeat: "once" },
   });
 
   const selectedType = watch("type") as TransactionType;
@@ -137,6 +139,8 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
   const selectedDate = watch("date");
   const amount = watch("amount");
   const isIncome = selectedType === "income";
+  const repeat = watch("repeat") ?? "once";
+  const isRecurring = repeat !== "once";
 
 
   useEffect(() => {
@@ -153,7 +157,24 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
   async function onSubmit(values: FormValues) {
     setSubmitError(null);
     try {
-      await createTransaction(values);
+      if (values.repeat && values.repeat !== "once") {
+        await createRecurringTransaction({
+          amount: values.amount,
+          type: values.type,
+          category_id: values.category_id,
+          note: values.note?.trim() || null,
+          frequency: values.repeat,
+          start_date: values.date,
+        });
+      } else {
+        await createTransaction({
+          amount: values.amount,
+          type: values.type,
+          category_id: values.category_id,
+          date: values.date,
+          note: values.note,
+        });
+      }
       onSuccess();
     } catch {
       setSubmitError(t("submitError"));
@@ -189,8 +210,8 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
         mode="single"
         selected={selectedDate ? parseISO(selectedDate) : undefined}
         onSelect={(d) => d && setValue("date", format(d, "yyyy-MM-dd"))}
-        disabled={{ after: new Date() }}
-        endMonth={new Date()}
+        disabled={isRecurring ? undefined : { after: new Date() }}
+        endMonth={isRecurring ? undefined : new Date()}
         locale={dateFnsLocale}
       />
       <div className="border-t p-2">
@@ -203,6 +224,48 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
         </button>
       </div>
     </>
+  );
+
+  const repeatSegment = (
+    <div className="grid grid-cols-3 gap-1.5 rounded-[12px] bg-muted p-1">
+      {(["once", "weekly", "monthly"] as const).map((opt) => {
+        const active = repeat === opt;
+        return (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => setValue("repeat", opt)}
+            className={cn(
+              "rounded-[8px] py-2.5 text-[12px] font-semibold transition-all",
+              active ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground/70"
+            )}
+          >
+            {t(opt)}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  // Desktop: label above the segment (matches the amount/date/note fields).
+  const recurringSection = (
+    <div>
+      <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{t("repeat")}</div>
+      {repeatSegment}
+    </div>
+  );
+
+  // Mobile: icon on the left, label + segment stacked to its right (matches the date/note rows).
+  const recurringRowMobile = (
+    <div className="flex items-center gap-3 rounded-xl border px-3 py-[11px]" style={{ background: "var(--bg-elev)", borderColor: "var(--line)" }}>
+      <div className="flex h-7 w-7 items-center justify-center rounded-[7px] shrink-0" style={{ background: "var(--bg-sunk)" }}>
+        <Repeat className="h-[13px] w-[13px]" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground">{t("repeat")}</div>
+        <div className="mt-1.5">{repeatSegment}</div>
+      </div>
+    </div>
   );
 
   // -------------------------------------------------------------------------
@@ -313,6 +376,8 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
               </Popover>
             </div>
 
+            {recurringSection}
+
             {/* note */}
             <div>
               <div className="text-[10px] font-mono text-muted-foreground tracking-[0.12em] uppercase mb-2">
@@ -400,7 +465,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
               {isSubmitting ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <>{isIncome ? t("addIncome") : t("addExpense")}</>
+                <>{isRecurring ? t("addRecurring") : isIncome ? t("addIncome") : t("addExpense")}</>
               )}
             </button>
           </div>
@@ -540,6 +605,8 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
               {datePickerContent}
             </PopoverContent>
           </Popover>
+
+          {recurringRowMobile}
 
           {/* note row */}
           <div

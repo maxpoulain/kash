@@ -119,7 +119,12 @@
       "amountError": "Amount must be positive",
       "categoryError": "Select a category",
       "dateError": "Invalid date",
-      "submitError": "Something went wrong. Please try again."
+      "submitError": "Something went wrong. Please try again.",
+      "monthly": "Monthly",
+      "weekly": "Weekly",
+      "addRecurring": "Add recurring",
+      "repeat": "Repeat",
+      "once": "One-off"
     }
   },
   "goals": {
