@@ -69,6 +69,9 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
   }, [month, refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    // load() flips a loading flag synchronously to show the skeleton during
+    // fetch — the cascading render is intentional and cheap here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load]);
 
