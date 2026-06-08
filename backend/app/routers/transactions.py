@@ -82,25 +82,27 @@ async def list_transactions(
 
     Materializes any due recurring transactions before returning (lazy generation).
     """
-    household_id = _get_household_id(claims["sub"])
-    materialize_due_for_household(household_id)
-    supabase = get_supabase()
-
-    query = supabase.table("transactions").select("*").eq("household_id", household_id)
-
+    # Validate input before doing any I/O.
+    month_bounds: tuple[str, str] | None = None
     if month:
         try:
             year_str, month_str = month.split("-")
             year, m = int(year_str), int(month_str)
             next_year, next_month = (year, m + 1) if m < 12 else (year + 1, 1)
-            query = query.gte("date", f"{year}-{m:02d}-01").lt(
-                "date", f"{next_year}-{next_month:02d}-01"
-            )
+            month_bounds = (f"{year}-{m:02d}-01", f"{next_year}-{next_month:02d}-01")
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="month must be in YYYY-MM format",
             )
+
+    household_id = _get_household_id(claims["sub"])
+    materialize_due_for_household(household_id)
+    supabase = get_supabase()
+
+    query = supabase.table("transactions").select("*").eq("household_id", household_id)
+    if month_bounds:
+        query = query.gte("date", month_bounds[0]).lt("date", month_bounds[1])
 
     result = query.order("date", desc=True).execute()
     rows = cast(list[dict], result.data if isinstance(result.data, list) else [])
