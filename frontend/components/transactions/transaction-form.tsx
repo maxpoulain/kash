@@ -236,9 +236,10 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
             type="button"
             onClick={() => setValue("repeat", opt)}
             className={cn(
-              "rounded-[8px] py-2.5 text-[12px] font-semibold transition-all",
-              active ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground/70"
+              "rounded-[8px] py-2.5 text-[13px] font-semibold transition-all",
+              active ? "text-background" : "text-muted-foreground hover:text-foreground/70"
             )}
+            style={active ? { background: "var(--ink)" } : {}}
           >
             {t(opt)}
           </button>
