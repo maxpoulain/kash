@@ -31,3 +31,30 @@ Exposer un endpoint d'agrégation qui alimente la future page **Analyse** : flux
 
 - L'agrégation à la lecture est assez rapide au volume actuel (pas de vue matérialisée nécessaire pour l'instant)
 - Le mois est l'unité de période suffisante pour la V1 (pas de range custom)
+
+## Implementation Plan
+
+### Décisions
+
+- `GET /api/summary?month=YYYY-MM` — `month` optionnel, défaut = mois courant (UTC)
+- Réutilise le pattern existant : `_get_household_id`, `materialize_due_for_household`, bornes de mois identiques à `list_transactions`
+- Agrégation **en Python** (pas de SQL custom) : on lit les transactions du mois + les catégories du foyer, on construit une map `category_id → (name, icon)`, puis on somme par type
+- `category_id` nul → bucket "Sans catégorie" (`category_id: null`, `name: null`, `icon: null`)
+- `savings_rate = (income − expense) / income` si `income > 0`, sinon `null`
+
+### Fichiers
+
+1. `app/schemas/summary.py` — `CategoryAmount` (`category_id`, `name`, `icon`, `amount`) + `SummaryOut` (`month`, `total_income`, `total_expense`, `net`, `savings_rate`, `income_by_category`, `expense_by_category`)
+2. `app/routers/summary.py` — router `prefix="/api"`, `GET /summary`, validation du mois (422), agrégation
+3. `app/main.py` — `include_router(summary.router)`
+4. `tests/test_summary.py` — tests (cf. liste)
+
+### Test list
+
+- [ ] `GET /api/summary` sans token → 401
+- [ ] `?month=bad` → 422
+- [ ] Agrégation : totaux revenus/dépenses/net corrects sur un jeu de transactions mock
+- [ ] `savings_rate` correct (income > 0) et `null` quand income = 0
+- [ ] Somme de `expense_by_category` == `total_expense` (idem revenus)
+- [ ] Mois sans transaction → tous les totaux à 0, `savings_rate: null`, listes vides
+- [ ] Transaction sans catégorie → bucket "Sans catégorie"

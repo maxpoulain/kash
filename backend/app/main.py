@@ -7,6 +7,7 @@ from app.routers import (
     recurring_transactions,
     savings_accounts,
     spending_goals,
+    summary,
     transactions,
     users,
 )
@@ -30,3 +31,4 @@ app.include_router(transactions.router)
 app.include_router(spending_goals.router)
 app.include_router(savings_accounts.router)
 app.include_router(recurring_transactions.router)
+app.include_router(summary.router)
