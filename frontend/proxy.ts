@@ -28,7 +28,7 @@ function getLocale(pathname: string): string {
   return routing.defaultLocale;
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Run next-intl middleware first for locale routing
   const intlResponse = intlMiddleware(request);
 

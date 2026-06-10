@@ -2,10 +2,18 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { CircleDollarSign, Plus, Target, TrendingUp } from "lucide-react";
+import { BarChart3, CircleDollarSign, Globe, Menu, Plus, Target, TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 interface BottomNavProps {
   onAdd?: () => void;
@@ -55,7 +63,47 @@ export function BottomNav({ onAdd }: BottomNavProps) {
           </Link>
         );
       })}
-      <LanguageSwitcher className="border-background/20 bg-transparent text-background/55 hover:border-background hover:text-background" />
+
+      {/* "More" menu: secondary destinations + language */}
+      <Sheet>
+        <SheetTrigger
+          aria-label={t("more")}
+          className={cn(
+            "flex flex-col items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-all",
+            pathname.startsWith("/analyse")
+              ? "bg-background text-foreground"
+              : "text-background/55 hover:text-background/80"
+          )}
+        >
+          <Menu className="h-[18px] w-[18px]" />
+        </SheetTrigger>
+        <SheetContent side="bottom" className="rounded-t-2xl px-4 pb-8 pt-4">
+          <SheetHeader className="px-0">
+            <SheetTitle className="font-display text-lg">{t("more")}</SheetTitle>
+          </SheetHeader>
+          <div className="flex flex-col gap-1">
+            <SheetClose
+              nativeButton={false}
+              render={
+                <Link
+                  href="/analyse"
+                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium hover:bg-muted"
+                >
+                  <BarChart3 className="h-5 w-5 shrink-0 text-muted-foreground" />
+                  {t("analyse")}
+                </Link>
+              }
+            />
+            <div className="flex items-center justify-between rounded-xl px-3 py-3 text-sm font-medium">
+              <span className="flex items-center gap-3">
+                <Globe className="h-5 w-5 shrink-0 text-muted-foreground" />
+                {t("language")}
+              </span>
+              <LanguageSwitcher />
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </nav>
   );
 }

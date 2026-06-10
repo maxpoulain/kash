@@ -40,5 +40,31 @@ Créer une **section "Analyse" dédiée** (à la manière de YNAB Reports / Fina
 ## Hypothèses à valider
 
 - Sur mobile, faire d'Analyse une destination secondaire (derrière le menu "Plus") plutôt que primaire est acceptable — à confirmer à l'usage vs la découvrabilité visée par YNAB/Finary
-- Choix d'une lib de charting gérant le Sankey (ex. `@nivo/sankey` ou `visx`) acceptable en taille de bundle — `recharts` (déjà éventuellement présent) n'a pas de Sankey robuste
 - Le drill-down catégorie → transactions est reporté à un incrément ultérieur (V2)
+
+## Implementation Plan
+
+### Décisions design (issues du design system + arbitrages)
+
+- **Pas de lib de charting** : le codebase hand-roll ses charts en SVG (cf. `net-worth-sparkline`). On fait pareil pour le Sankey, le donut et les barres → zéro nouvelle dépendance.
+- **Hybride** : Sankey custom en hero (notre différenciateur vs YNAB), puis sections **donut + liste catégories à barres** reprises des mockups `desktop-insights` / `mobile-stats`.
+- **Revenus ET dépenses** : les deux dimensions, cohérent avec le Sankey de flux et l'endpoint `/summary`.
+- **Tokens** : revenus/épargne = `--accent` (moss green), dépenses = palette catégories (`--pig`, `--gold`, `--warn`, `--pig-deep`, `--accent`, `--ink-2`), neutres `--ink-3`/`--line`/`--bg-sunk`.
+
+### Fichiers
+
+1. `types/api.ts` — `CategoryAmount`, `Summary`
+2. `lib/api.ts` — `getSummary(month?)`
+3. `lib/sankey.ts` — fonction **pure** `computeSankeyLayout(...)` (nœuds + liens proportionnels) → testable
+4. `components/analyse/sankey-flow.tsx` — SVG hero (revenus → pool → dépenses + épargne)
+5. `components/analyse/category-breakdown.tsx` — carte donut + légende à barres (revenus / dépenses)
+6. `app/[locale]/analyse/page.tsx` + `analyse-client.tsx` — auth redirect + MonthSwitcher + fetch + KPI + Sankey + 2 breakdowns + empty state
+7. `components/nav/sidebar.tsx` — item "Analyse"
+8. `components/nav/bottom-nav.tsx` — menu burger "Plus" (Sheet) remplaçant le LanguageSwitcher, contenant Analyse + langue
+9. `messages/fr.json` + `messages/en.json` — `nav.analyse`, `nav.more`, section `analyse`
+
+### Test list
+
+- [ ] `lib/sankey.ts` : largeurs de liens proportionnelles aux montants, somme cohérente, cas épargne négative (déficit)
+- [ ] `lib/api.ts` : `getSummary` appelle `/api/summary?month=…`, parse la réponse, throw si non-ok
+- [ ] `just check` vert (lint + typecheck + tests front & back)

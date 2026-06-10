@@ -4,7 +4,32 @@
     "dashboard": "Transactions",
     "goals": "Objectifs",
     "assets": "Patrimoine",
+    "analyse": "Analyse",
+    "more": "Plus",
+    "language": "Langue",
     "addTransaction": "Ajouter une transaction"
+  },
+  "analyse": {
+    "title": "Analyse",
+    "subtitle": "Où va votre argent",
+    "kpiIncome": "Revenus",
+    "kpiExpense": "Dépenses",
+    "kpiNet": "Épargne",
+    "savingsRate": "Taux d'épargne",
+    "savingsRateNa": "—",
+    "flowTitle": "Flux du mois",
+    "flowIncome": "Revenus",
+    "flowExpenses": "Dépenses",
+    "flowSavings": "Épargne",
+    "incomeByCategory": "Revenus par catégorie",
+    "expenseByCategory": "Dépenses par catégorie",
+    "noIncome": "Aucun revenu ce mois-ci.",
+    "noExpense": "Aucune dépense ce mois-ci.",
+    "uncategorized": "Sans catégorie",
+    "empty": {
+      "title": "Rien à analyser pour {month}",
+      "description": "Ajoutez des transactions ce mois-ci pour voir le flux de votre argent et la répartition par catégorie."
+    }
   },
   "landing": {
     "signIn": "Se connecter",
