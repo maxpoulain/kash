@@ -30,6 +30,25 @@ export interface Transaction {
 }
 
 
+// Financial summary (Analyse page)
+
+export interface CategoryAmount {
+  category_id: string | null;
+  name: string | null;
+  icon: string | null;
+  amount: number;
+}
+
+export interface Summary {
+  month: string;
+  total_income: number;
+  total_expense: number;
+  net: number;
+  savings_rate: number | null;
+  income_by_category: CategoryAmount[];
+  expense_by_category: CategoryAmount[];
+}
+
 // Savings Accounts
 
 export interface SavingsAccountAPI {

@@ -4,7 +4,32 @@
     "dashboard": "Transactions",
     "goals": "Goals",
     "assets": "Net worth",
+    "analyse": "Analytics",
+    "more": "More",
+    "language": "Language",
     "addTransaction": "Add transaction"
+  },
+  "analyse": {
+    "title": "Analytics",
+    "subtitle": "Where your money goes",
+    "kpiIncome": "Income",
+    "kpiExpense": "Expenses",
+    "kpiNet": "Savings",
+    "savingsRate": "Savings rate",
+    "savingsRateNa": "—",
+    "flowTitle": "This month's flow",
+    "flowIncome": "Income",
+    "flowExpenses": "Expenses",
+    "flowSavings": "Savings",
+    "incomeByCategory": "Income by category",
+    "expenseByCategory": "Spending by category",
+    "noIncome": "No income this month.",
+    "noExpense": "No spending this month.",
+    "uncategorized": "Uncategorized",
+    "empty": {
+      "title": "Nothing to analyze for {month}",
+      "description": "Add transactions this month to see your money flow and the breakdown by category."
+    }
   },
   "landing": {
     "signIn": "Sign In",

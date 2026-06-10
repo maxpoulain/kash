@@ -3,6 +3,7 @@ import {
   getCategories,
   createTransaction,
   getTransactions,
+  getSummary,
   getRecurringTransactions,
   createRecurringTransaction,
   updateRecurringTransaction,
@@ -122,6 +123,44 @@ describe("createTransaction", () => {
     await expect(
       createTransaction({ amount: 10, type: "expense", category_id: "uuid", date: "2026-04-15" })
     ).rejects.toThrow("Failed to create transaction");
+  });
+});
+
+describe("getSummary", () => {
+  it("requests the summary for the given month", async () => {
+    const summary = {
+      month: "2026-06",
+      total_income: 2500,
+      total_expense: 400,
+      net: 2100,
+      savings_rate: 0.84,
+      income_by_category: [],
+      expense_by_category: [],
+    };
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => summary });
+
+    const result = await getSummary("2026-06");
+
+    expect(result).toEqual(summary);
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/summary?month=2026-06"),
+      expect.anything()
+    );
+  });
+
+  it("omits the month query param when not provided", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({}) });
+
+    await getSummary();
+
+    const url = mockFetch.mock.calls[0][0] as string;
+    expect(url).toContain("/api/summary");
+    expect(url).not.toContain("month=");
+  });
+
+  it("throws on non-ok response", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false });
+    await expect(getSummary("2026-06")).rejects.toThrow("Failed to fetch summary");
   });
 });
 

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import type { Category, CreateGoalPayload, CreateTransactionPayload, NetWorthHistoryPoint, RecurringTransaction, RecurringTransactionCreate, RecurringTransactionUpdate, SavingsAccountAPI, SavingsAccountCreate, SavingsAccountUpdate, SpendingGoal, SpendingGoalsResponse, Transaction } from "@/types/api";
+import type { Category, CreateGoalPayload, CreateTransactionPayload, NetWorthHistoryPoint, RecurringTransaction, RecurringTransactionCreate, RecurringTransactionUpdate, SavingsAccountAPI, SavingsAccountCreate, SavingsAccountUpdate, SpendingGoal, SpendingGoalsResponse, Summary, Transaction } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -44,6 +44,13 @@ export async function createTransaction(payload: CreateTransactionPayload): Prom
   return res.json();
 }
 
+
+export async function getSummary(month?: string): Promise<Summary> {
+  const url = month ? `/api/summary?month=${month}` : "/api/summary";
+  const res = await apiFetch(url);
+  if (!res.ok) throw new Error("Failed to fetch summary");
+  return res.json();
+}
 
 export async function getSpendingGoals(month: string): Promise<SpendingGoalsResponse> {
   const res = await apiFetch(`/api/spending-goals?month=${month}`);

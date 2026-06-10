@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { CircleDollarSign, PiggyBank, Plus, Target, TrendingUp } from "lucide-react";
+import { BarChart3, CircleDollarSign, PiggyBank, Plus, Target, TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -19,6 +19,7 @@ export function Sidebar({ onAdd }: SidebarProps) {
 
   const mainNav = [
     { href: "/dashboard", label: t("dashboard"), icon: CircleDollarSign },
+    { href: "/analyse", label: t("analyse"), icon: BarChart3 },
     { href: "/goals", label: t("goals"), icon: Target },
     { href: "/assets", label: t("assets"), icon: TrendingUp },
   ];
