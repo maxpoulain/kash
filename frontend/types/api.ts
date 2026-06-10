@@ -5,7 +5,7 @@ export interface Category {
   household_id: string | null;
   name: string;
   icon: string | null;
-  is_default: boolean;
+  type: TransactionType;
 }
 
 export interface CreateTransactionPayload {

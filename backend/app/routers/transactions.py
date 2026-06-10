@@ -5,6 +5,10 @@ from typing import cast
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.core.auth import get_current_user
+from app.core.categories import (
+    SUGGESTED_BY_ID,
+    _ensure_category_exists,
+)
 from app.core.supabase import get_supabase
 from app.routers.recurring_transactions import materialize_due_for_household
 from app.schemas.transactions import (
@@ -12,6 +16,7 @@ from app.schemas.transactions import (
     TransactionCreate,
     TransactionOut,
     TransactionUpdate,
+    TransactionType,
 )
 
 router = APIRouter(prefix="/api")
@@ -39,23 +44,38 @@ def _get_household_id(user_id: str) -> str:
 
 @router.get("/categories", response_model=list[CategoryOut])
 async def list_categories(claims: dict = Depends(get_current_user)) -> list[CategoryOut]:
-    """List predefined categories plus custom ones for the user's household."""
+    """List suggested categories plus custom ones for the user's household."""
     household_id = _get_household_id(claims["sub"])
     supabase = get_supabase()
     result = (
         supabase.table("categories")
         .select("*")
-        .or_(f"household_id.is.null,household_id.eq.{household_id}")
+        .eq("household_id", household_id)
         .execute()
     )
     rows = cast(list[dict], result.data if isinstance(result.data, list) else [])
-    return [CategoryOut(**row) for row in rows]
+    custom_names = {row["name"] for row in rows}
+    categories = [
+        CategoryOut(
+            id=s.id,
+            household_id=None,
+            name=s.name,
+            icon=s.icon,
+            type=s.type,
+        )
+        for s in SUGGESTED_BY_ID.values()
+        if s.name not in custom_names
+    ]
+    for row in rows:
+        categories.append(CategoryOut(**row))
+    return categories
 
 
 @router.post("/categories", response_model=CategoryOut, status_code=status.HTTP_201_CREATED)
 async def create_category(
     name: str,
     icon: str | None = None,
+    type: TransactionType = TransactionType.expense,
     claims: dict = Depends(get_current_user),
 ) -> CategoryOut:
     """Create a custom category for the user's household."""
@@ -63,7 +83,7 @@ async def create_category(
     supabase = get_supabase()
     result = (
         supabase.table("categories")
-        .insert({"household_id": household_id, "name": name, "icon": icon, "is_default": False})
+        .insert({"household_id": household_id, "name": name, "icon": icon, "type": type.value})
         .execute()
     )
     rows = cast(list[dict], result.data if isinstance(result.data, list) else [])
@@ -118,6 +138,10 @@ async def create_transaction(
     household_id = _get_household_id(claims["sub"])
     supabase = get_supabase()
 
+    category_id = _ensure_category_exists(
+        household_id, str(body.category_id) if body.category_id else None
+    )
+
     payload = {
         "household_id": household_id,
         "created_by": claims["sub"],
@@ -125,7 +149,7 @@ async def create_transaction(
         "type": body.type.value,
         "date": body.date.isoformat(),
         "note": body.note,
-        "category_id": str(body.category_id) if body.category_id else None,
+        "category_id": category_id,
     }
 
     result = supabase.table("transactions").insert(payload).execute()
@@ -162,7 +186,9 @@ async def update_transaction(
     if "date" in updates:
         updates["date"] = updates["date"].isoformat()
     if "category_id" in updates:
-        updates["category_id"] = str(updates["category_id"])
+        updates["category_id"] = _ensure_category_exists(
+            household_id, str(updates["category_id"])
+        )
 
     result = (
         supabase.table("transactions").update(updates).eq("id", transaction_id).execute()

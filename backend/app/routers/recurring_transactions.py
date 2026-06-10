@@ -6,6 +6,7 @@ from typing import cast
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.core.auth import get_current_user
+from app.core.categories import _ensure_category_exists
 from app.core.supabase import get_supabase
 from app.schemas.recurring_transactions import (
     RecurringTransactionCreate,
@@ -120,10 +121,14 @@ async def create_recurring_transaction(
     anchor_day = cast(int, body.anchor_day)
     next_run = initial_next_run_date(body.start_date, anchor_day, body.frequency.value)
 
+    category_id = _ensure_category_exists(
+        household_id, str(body.category_id) if body.category_id else None
+    )
+
     payload = {
         "household_id": household_id,
         "created_by": claims["sub"],
-        "category_id": str(body.category_id) if body.category_id else None,
+        "category_id": category_id,
         "amount": body.amount,
         "type": body.type.value,
         "note": body.note,
@@ -171,11 +176,13 @@ async def update_recurring_transaction(
     for key in ("type", "frequency"):
         if key in updates:
             updates[key] = updates[key].value
-    for key in ("category_id", "start_date", "end_date"):
+    for key in ("start_date", "end_date"):
         if key in updates and updates[key] is not None:
-            updates[key] = (
-                updates[key].isoformat() if key != "category_id" else str(updates[key])
-            )
+            updates[key] = updates[key].isoformat()
+    if "category_id" in updates and updates["category_id"] is not None:
+        updates["category_id"] = _ensure_category_exists(
+            household_id, str(updates["category_id"])
+        )
 
     rows = cast(
         list[dict],

@@ -17,10 +17,10 @@ FAKE_CLAIMS = {"sub": USER_ID, "email": "test@example.com"}
 
 FAKE_CATEGORY = {
     "id": CATEGORY_ID,
-    "household_id": None,
+    "household_id": HOUSEHOLD_ID,
     "name": "Loyer",
     "icon": "🏠",
-    "is_default": True,
+    "type": "expense",
 }
 
 FAKE_TRANSACTION = {
@@ -67,7 +67,7 @@ async def test_list_categories_without_token_returns_401():
 
 
 @pytest.mark.asyncio
-async def test_list_categories_returns_predefined_and_custom():
+async def test_list_categories_returns_suggested_and_custom():
     with (
         patch("app.core.auth.get_jwks_client") as mock_jwks,
         patch("app.routers.transactions.get_supabase") as mock_supabase,
@@ -84,7 +84,7 @@ async def test_list_categories_returns_predefined_and_custom():
         (
             supabase_instance.table.return_value
             .select.return_value
-            .or_.return_value
+            .eq.return_value
             .execute.return_value
         ) = categories_result
 
@@ -95,8 +95,11 @@ async def test_list_categories_returns_predefined_and_custom():
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 1
-    assert data[0]["name"] == "Loyer"
+    # Should include suggestions + custom categories
+    assert len(data) > 1
+    names = {c["name"] for c in data}
+    assert "Loyer" in names
+    assert "Courses" in names
 
 
 # --- /api/transactions ---
@@ -234,3 +237,82 @@ async def test_update_transaction_from_other_household_returns_403():
             )
 
     assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_create_transaction_with_unknown_suggested_category_creates_it():
+    """Using a suggested category ID not yet in the household creates it lazily."""
+    from uuid import UUID
+    from app.core.categories import SUGGESTED_BY_ID
+
+    suggested = SUGGESTED_BY_ID[
+        UUID("0192a8c4-7b3d-7f2a-9e1b-4c5d6e7f8a9c")
+    ]  # Courses
+    SUGGESTED_CATEGORY_ID = str(suggested.id)
+
+    created_category = {
+        "id": SUGGESTED_CATEGORY_ID,
+        "household_id": HOUSEHOLD_ID,
+        "name": suggested.name,
+        "icon": suggested.icon,
+        "type": suggested.type.value,
+    }
+    created_transaction = {
+        **FAKE_TRANSACTION,
+        "category_id": SUGGESTED_CATEGORY_ID,
+    }
+
+    with (
+        patch("app.core.auth.get_jwks_client") as mock_jwks,
+        patch("app.routers.transactions.get_supabase") as mock_supabase,
+        patch("app.core.categories.get_supabase") as mock_core_supabase,
+        patch("app.core.auth.jwt.decode", return_value=FAKE_CLAIMS),
+        patch("app.routers.transactions._get_household_id", return_value=HOUSEHOLD_ID),
+    ):
+        _mock_auth(mock_jwks)
+
+        supabase_instance = MagicMock()
+        mock_supabase.return_value = supabase_instance
+        mock_core_supabase.return_value = supabase_instance
+
+        # First call: categories SELECT for _ensure_category_exists → not found
+        not_found = MagicMock()
+        not_found.data = {}
+
+        # Second call: categories INSERT for lazy creation
+        insert_result = MagicMock()
+        insert_result.data = [created_category]
+
+        # Third call: transaction insert
+        created_result = MagicMock()
+        created_result.data = [created_transaction]
+
+        (
+            supabase_instance.table.return_value
+            .select.return_value
+            .eq.return_value
+            .eq.return_value
+            .limit.return_value
+            .execute
+        ).side_effect = [not_found]
+
+        supabase_instance.table.return_value.insert.return_value.execute.side_effect = [
+            insert_result,
+            created_result,
+        ]
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post(
+                "/api/transactions",
+                json={
+                    "amount": 100.0,
+                    "type": "expense",
+                    "category_id": SUGGESTED_CATEGORY_ID,
+                    "date": "2026-04-01",
+                },
+                headers={"Authorization": "Bearer valid.token"},
+            )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["category_id"] == SUGGESTED_CATEGORY_ID

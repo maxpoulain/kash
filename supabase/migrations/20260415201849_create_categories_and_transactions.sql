@@ -8,18 +8,6 @@ create table categories (
   created_at   timestamptz default now()
 );
 
--- Predefined categories (shared across all households)
-insert into categories (name, icon, is_default) values
-  ('Loyer',        '🏠', true),
-  ('Courses',      '🛒', true),
-  ('Transport',    '🚗', true),
-  ('Restaurants',  '🍽️', true),
-  ('Santé',        '💊', true),
-  ('Loisirs',      '🎬', true),
-  ('Abonnements',  '📱', true),
-  ('Salaire',      '💰', true),
-  ('Autre',        '📦', true);
-
 -- RLS on categories
 alter table categories enable row level security;
 
