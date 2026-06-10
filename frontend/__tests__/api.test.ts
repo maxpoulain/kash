@@ -30,7 +30,7 @@ beforeEach(() => {
 describe("getCategories", () => {
   it("returns categories on success", async () => {
     const categories = [
-      { id: "00000000-0000-0000-0000-000000000001", name: "Loyer", icon: "🏠", household_id: null, is_default: true },
+      { id: "00000000-0000-0000-0000-000000000001", name: "Loyer", icon: "🏠", household_id: null, type: "expense" },
     ];
     mockFetch.mockResolvedValueOnce({
       ok: true,

@@ -1,4 +1,3 @@
-insert into categories (name, icon, is_default) values
-  ('Investissement', '📈', true),
-  ('Cadeau reçu',    '🎁', true),
-  ('Autre revenu',   '✨', true);
+-- Income categories were previously seeded here.
+-- Categories are now created lazily from code suggestions (SUGGESTED_CATEGORIES).
+-- No static seed needed.

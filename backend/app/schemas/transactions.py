@@ -21,7 +21,7 @@ class CategoryOut(BaseModel):
     household_id: UUID | None
     name: str
     icon: str | None
-    is_default: bool
+    type: TransactionType
 
 
 # --- Transactions ---

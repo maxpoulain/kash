@@ -104,8 +104,6 @@ function today(): string {
   return new Date().toISOString().split("T")[0];
 }
 
-const INCOME_CATEGORIES = new Set(["Salaire", "Investissement", "Cadeau reçu", "Autre revenu"]);
-
 const SHORT_LABEL: Record<string, string> = {
   "Investissement": "Invest.",
   "Abonnements": "Abonn.",
@@ -149,10 +147,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
       .catch(() => setCategories([]));
   }, []);
 
-  const filteredCategories = categories.filter((c) => {
-    if (selectedType === "income") return INCOME_CATEGORIES.has(c.name) || !c.is_default;
-    return !INCOME_CATEGORIES.has(c.name);
-  });
+  const filteredCategories = categories.filter((c) => c.type === selectedType);
 
   async function onSubmit(values: FormValues) {
     setSubmitError(null);
