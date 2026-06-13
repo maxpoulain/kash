@@ -8,23 +8,35 @@ import { ArrowDown, CalendarIcon, PiggyBank, Wallet, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PiggyMark } from "@/components/kash-piggy";
 import { createTransfer } from "@/lib/api";
 import type { Account, SavingsAccountAPI, TransferKind } from "@/types/api";
 
 const DATE_FNS_LOCALES: Record<string, Locale> = { en: enUS, fr };
 
-interface LegOption {
+export interface LegOption {
   id: string;
   name: string;
   kind: TransferKind;
 }
 
-const KIND_ICON: Record<TransferKind, React.ElementType> = {
-  courant: Wallet,
-  epargne: PiggyBank,
-};
+/**
+ * Validate a transfer; returns an i18n error key, or null when valid.
+ * Pure (no React) so it's unit-testable without driving the Select UI.
+ */
+export function transferError(
+  from: LegOption | undefined,
+  to: LegOption | undefined,
+  amount: number,
+): "invalid" | "transferDifferent" | "transferNeedsCourant" | null {
+  if (!from || !to || isNaN(amount) || amount <= 0) return "invalid";
+  if (from.id === to.id) return "transferDifferent";
+  if (from.kind !== "courant" && to.kind !== "courant") return "transferNeedsCourant";
+  return null;
+}
 
+/** Grouped dropdown (Comptes courants / Comptes épargnes) — scales past a row of pills. */
 function LegPicker({ options, value, onSelect, label, exclude }: {
   options: LegOption[];
   value: string;
@@ -32,30 +44,41 @@ function LegPicker({ options, value, onSelect, label, exclude }: {
   label: string;
   exclude?: string;
 }) {
+  const t = useTranslations("transactions.form");
+  const courants = options.filter((o) => o.kind === "courant" && o.id !== exclude);
+  const epargnes = options.filter((o) => o.kind === "epargne" && o.id !== exclude);
   return (
     <div>
       <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{label}</div>
-      <div className="flex flex-wrap gap-1.5">
-        {options.filter((o) => o.id !== exclude).map((o) => {
-          const Icon = KIND_ICON[o.kind];
-          const active = value === o.id;
-          return (
-            <button
-              key={o.id}
-              type="button"
-              onClick={() => onSelect(o.id)}
-              className={cn(
-                "flex items-center gap-1.5 rounded-[9px] border px-3 py-1.5 text-xs font-semibold transition-colors",
-                active ? "border-foreground bg-muted" : "border-transparent text-muted-foreground hover:text-foreground",
-              )}
-              style={active ? undefined : { background: "var(--bg-sunk)" }}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {o.name}
-            </button>
-          );
-        })}
-      </div>
+      <Select value={value || undefined} onValueChange={onSelect}>
+        <SelectTrigger className="w-full rounded-[10px]" style={{ background: "var(--bg-elev)", borderColor: "var(--line)" }}>
+          <SelectValue placeholder={t("transferSelect")} />
+        </SelectTrigger>
+        <SelectContent>
+          {courants.length > 0 && (
+            <SelectGroup>
+              <SelectLabel>{t("groupCourant")}</SelectLabel>
+              {courants.map((o) => (
+                <SelectItem key={o.id} value={o.id}>
+                  <Wallet className="size-4" />
+                  {o.name}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          )}
+          {epargnes.length > 0 && (
+            <SelectGroup>
+              <SelectLabel>{t("groupEpargne")}</SelectLabel>
+              {epargnes.map((o) => (
+                <SelectItem key={o.id} value={o.id}>
+                  <PiggyBank className="size-4" />
+                  {o.name}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          )}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
@@ -95,14 +118,13 @@ export function TransferForm({ variant, toggle, comptes, epargnes, onSuccess, on
   const fromOpt = options.find((o) => o.id === fromId);
   const toOpt = options.find((o) => o.id === toId);
   const amt = parseFloat(amount);
-  const oneCourant = fromOpt?.kind === "courant" || toOpt?.kind === "courant";
-  const distinct = !!fromId && !!toId && fromId !== toId;
-  const valid = !!fromOpt && !!toOpt && distinct && oneCourant && !isNaN(amt) && amt > 0;
+  const errKey = transferError(fromOpt, toOpt, amt);
+  const valid = errKey === null;
 
   async function submit() {
     if (!valid || !fromOpt || !toOpt) {
-      if (fromId && toId && !distinct) setError(t("transferDifferent"));
-      else if (fromOpt && toOpt && !oneCourant) setError(t("transferNeedsCourant"));
+      // Surface actionable errors only (not the generic "form incomplete" one).
+      if (errKey && errKey !== "invalid") setError(t(errKey));
       return;
     }
     setError(null);
