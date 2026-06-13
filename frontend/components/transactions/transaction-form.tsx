@@ -14,6 +14,7 @@ import {
   Plus,
   Repeat,
   Sparkles,
+  Wallet,
   X,
 } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
@@ -22,8 +23,8 @@ import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PiggyMark } from "@/components/kash-piggy";
-import { getCategories, createTransaction, createRecurringTransaction } from "@/lib/api";
-import type { Category, TransactionType } from "@/types/api";
+import { getCategories, createTransaction, createRecurringTransaction, getAccounts } from "@/lib/api";
+import type { Account, Category, TransactionType } from "@/types/api";
 
 const DATE_FNS_LOCALES: Record<string, Locale> = {
   en: enUS,
@@ -87,6 +88,7 @@ const schema = z.object({
   type: z.enum(["income", "expense"]),
   amount: z.number().positive("amountPositive"),
   category_id: z.string().uuid("selectCategory"),
+  account_id: z.string().uuid().optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "invalidDate"),
   note: z.string().max(200).optional(),
   repeat: z.enum(["once", "weekly", "monthly"]).optional(),
@@ -119,6 +121,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
   const locale = useLocale();
   const dateFnsLocale = DATE_FNS_LOCALES[locale] ?? enUS;
   const [categories, setCategories] = useState<Category[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
@@ -145,7 +148,16 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
     getCategories()
       .then(setCategories)
       .catch(() => setCategories([]));
-  }, []);
+    getAccounts()
+      .then((rows) => {
+        setAccounts(rows);
+        // Pre-fill the principal (first/oldest) account.
+        if (rows.length > 0) setValue("account_id", rows[0].id);
+      })
+      .catch(() => setAccounts([]));
+  }, [setValue]);
+
+  const selectedAccountId = watch("account_id");
 
   const filteredCategories = categories.filter((c) => c.type === selectedType);
 
@@ -166,6 +178,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
           amount: values.amount,
           type: values.type,
           category_id: values.category_id,
+          account_id: values.account_id,
           date: values.date,
           note: values.note,
         });
@@ -260,6 +273,48 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
       <div className="min-w-0 flex-1">
         <div className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground">{t("repeat")}</div>
         <div className="mt-1.5">{repeatSegment}</div>
+      </div>
+    </div>
+  );
+
+  // Account selector — only shown when the household has more than one account
+  // (with a single account the backend defaults to the principal).
+  const accountSegment = (
+    <div className="flex flex-wrap gap-1.5">
+      {accounts.map((a) => {
+        const active = selectedAccountId === a.id;
+        return (
+          <button
+            key={a.id}
+            type="button"
+            onClick={() => setValue("account_id", a.id)}
+            className={cn(
+              "rounded-[9px] px-3 py-1.5 text-xs font-semibold transition-colors border",
+              active ? "border-foreground bg-muted" : "border-transparent bg-[var(--bg-sunk)] text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {a.name}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const accountSection = (
+    <div>
+      <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{t("account")}</div>
+      {accountSegment}
+    </div>
+  );
+
+  const accountRowMobile = (
+    <div className="flex items-center gap-3 rounded-xl border px-3 py-[11px]" style={{ background: "var(--bg-elev)", borderColor: "var(--line)" }}>
+      <div className="flex h-7 w-7 items-center justify-center rounded-[7px] shrink-0" style={{ background: "var(--bg-sunk)" }}>
+        <Wallet className="h-[13px] w-[13px]" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground">{t("account")}</div>
+        <div className="mt-1.5">{accountSegment}</div>
       </div>
     </div>
   );
@@ -372,6 +427,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
               </Popover>
             </div>
 
+            {accounts.length > 1 && accountSection}
             {recurringSection}
 
             {/* note */}
@@ -602,6 +658,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
             </PopoverContent>
           </Popover>
 
+          {accounts.length > 1 && accountRowMobile}
           {recurringRowMobile}
 
           {/* note row */}

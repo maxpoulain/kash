@@ -149,6 +149,7 @@
       "weekly": "Hebdo",
       "addRecurring": "Ajouter la récurrence",
       "repeat": "Répéter",
+      "account": "Compte",
       "once": "Ponctuel"
     }
   },
@@ -195,7 +196,7 @@
       "netWorthLabel": "Patrimoine · EUR",
       "allocation": "Répartition",
       "emptyMobile": "Aucun compte. Ajoutez-en un !",
-      "accountsTitle": "Comptes",
+      "accountsTitle": "Épargne & placements",
       "itemsCount": "{count, plural, one {# poste} other {# postes}}",
       "emptyDesktop": "Aucun compte. Cliquez sur \"Ajouter un compte\"."
     },
@@ -221,6 +222,32 @@
     "sheet": {
       "editTitle": "Modifier le compte",
       "newTitle": "Ajouter un compte"
+    }
+  },
+  "comptes": {
+    "add": "Ajouter un compte",
+    "empty": "Aucun compte. Ajoutez-en un !",
+    "tabs": {
+      "comptes": "Comptes",
+      "patrimoine": "Patrimoine"
+    },
+    "sheet": {
+      "newTitle": "Nouveau compte",
+      "editTitle": "Modifier le compte",
+      "name": "Nom",
+      "namePlaceholder": "ex. Compte commun",
+      "type": "Type",
+      "kind": {
+        "checking": "Courant",
+        "savings": "Épargne",
+        "cash": "Espèces"
+      },
+      "initialBalance": "Solde initial",
+      "initialBalanceHint": "Solde de départ ; les transactions s'y ajoutent.",
+      "save": "Enregistrer",
+      "create": "Créer",
+      "archive": "Archiver",
+      "delete": "Supprimer"
     }
   },
   "monthSwitcher": {
