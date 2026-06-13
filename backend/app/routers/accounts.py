@@ -1,0 +1,162 @@
+"""Accounts endpoints — cash-flow containers with calculated balances.
+
+Part of 00058-comptes-multiples (T2). Balance = initial_balance + Σ income −
+Σ expense (transfers join in T3). Listing scopes through visible_account_ids so
+T4 can hide other members' private accounts without touching this router.
+"""
+
+from collections import defaultdict
+from datetime import datetime, timezone
+from typing import cast
+
+from fastapi import APIRouter, Depends, HTTPException, status
+
+from app.core.accounts import visible_account_ids
+from app.core.auth import get_current_user
+from app.core.supabase import get_supabase
+from app.routers.transactions import _get_household_id
+from app.schemas.accounts import AccountCreate, AccountOut, AccountUpdate
+
+router = APIRouter(prefix="/api/accounts")
+
+
+def _compute_balances(account_ids: list[str]) -> dict[str, float]:
+    """Net transaction delta per account: +income, −expense. Excludes initial_balance."""
+    if not account_ids:
+        return {}
+    supabase = get_supabase()
+    result = (
+        supabase.table("transactions")
+        .select("account_id,amount,type")
+        .in_("account_id", account_ids)
+        .execute()
+    )
+    rows = cast(list[dict], result.data or [])
+    deltas: dict[str, float] = defaultdict(float)
+    for row in rows:
+        amount = float(row["amount"])
+        deltas[row["account_id"]] += amount if row["type"] == "income" else -amount
+    return deltas
+
+
+def _to_out(row: dict, delta: float) -> AccountOut:
+    return AccountOut(**row, balance=float(row["initial_balance"]) + delta)
+
+
+@router.get("", response_model=list[AccountOut])
+async def list_accounts(
+    include_archived: bool = False,
+    claims: dict = Depends(get_current_user),
+) -> list[AccountOut]:
+    """List the user's visible accounts with calculated balances."""
+    household_id = _get_household_id(claims["sub"])
+    supabase = get_supabase()
+
+    visible = visible_account_ids(household_id, claims["sub"])
+    if not visible:
+        return []
+
+    query = supabase.table("accounts").select("*").in_("id", visible)
+    if not include_archived:
+        query = query.is_("archived_at", "null")
+    rows = cast(list[dict], query.order("created_at").execute().data or [])
+
+    deltas = _compute_balances([row["id"] for row in rows])
+    return [_to_out(row, deltas.get(row["id"], 0.0)) for row in rows]
+
+
+@router.post("", response_model=AccountOut, status_code=status.HTTP_201_CREATED)
+async def create_account(
+    payload: AccountCreate,
+    claims: dict = Depends(get_current_user),
+) -> AccountOut:
+    """Create an account for the user's household (owner_id null = household account)."""
+    household_id = _get_household_id(claims["sub"])
+    supabase = get_supabase()
+    result = (
+        supabase.table("accounts")
+        .insert(
+            {
+                "household_id": household_id,
+                "name": payload.name,
+                "type": payload.type,
+                "initial_balance": payload.initial_balance,
+            }
+        )
+        .execute()
+    )
+    rows = cast(list[dict], result.data or [])
+    if not rows:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Insert failed"
+        )
+    # Fresh account: no transactions yet, so balance == initial_balance.
+    return _to_out(rows[0], 0.0)
+
+
+@router.patch("/{account_id}", response_model=AccountOut)
+async def update_account(
+    account_id: str,
+    payload: AccountUpdate,
+    claims: dict = Depends(get_current_user),
+) -> AccountOut:
+    """Rename, retype, adjust initial_balance, or archive/unarchive an account."""
+    household_id = _get_household_id(claims["sub"])
+    supabase = get_supabase()
+
+    updates: dict = {}
+    if payload.name is not None:
+        updates["name"] = payload.name
+    if payload.type is not None:
+        updates["type"] = payload.type
+    if payload.initial_balance is not None:
+        updates["initial_balance"] = payload.initial_balance
+    if payload.archived is not None:
+        updates["archived_at"] = (
+            datetime.now(timezone.utc).isoformat() if payload.archived else None
+        )
+    if not updates:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="No fields to update"
+        )
+
+    result = (
+        supabase.table("accounts")
+        .update(updates)
+        .eq("id", account_id)
+        .eq("household_id", household_id)
+        .execute()
+    )
+    rows = cast(list[dict], result.data or [])
+    if not rows:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found")
+
+    deltas = _compute_balances([account_id])
+    return _to_out(rows[0], deltas.get(account_id, 0.0))
+
+
+@router.delete("/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_account(
+    account_id: str,
+    claims: dict = Depends(get_current_user),
+) -> None:
+    """Hard-delete an account, but only if it carries no transactions (else 409)."""
+    household_id = _get_household_id(claims["sub"])
+    supabase = get_supabase()
+
+    existing = (
+        supabase.table("transactions")
+        .select("id")
+        .eq("account_id", account_id)
+        .limit(1)
+        .execute()
+    )
+    if cast(list[dict], existing.data or []):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Account has transactions; archive it instead",
+        )
+
+    supabase.table("accounts").delete().eq("id", account_id).eq(
+        "household_id", household_id
+    ).execute()

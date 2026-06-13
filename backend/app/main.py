@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.routers import (
+    accounts,
     health,
     recurring_transactions,
     savings_accounts,
@@ -27,6 +28,7 @@ app.add_middleware(
 
 app.include_router(health.router)
 app.include_router(users.router)
+app.include_router(accounts.router)
 app.include_router(transactions.router)
 app.include_router(spending_goals.router)
 app.include_router(savings_accounts.router)
