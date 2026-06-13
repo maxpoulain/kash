@@ -3,7 +3,7 @@
     "main": "Main",
     "dashboard": "Transactions",
     "goals": "Goals",
-    "assets": "Net worth",
+    "assets": "Accounts",
     "analyse": "Analytics",
     "more": "More",
     "language": "Language",
@@ -188,12 +188,12 @@
   },
   "assets": {
     "list": {
-      "mobileTitle": "Net worth",
-      "desktopTitle": "Net worth",
+      "mobileTitle": "Accounts",
+      "desktopTitle": "Accounts",
       "accountCount": "{count, plural, one {# account} other {# accounts}}",
       "add": "Add an account",
       "addAria": "Add an account",
-      "netWorthLabel": "Net worth · EUR",
+      "netWorthLabel": "Savings · EUR",
       "allocation": "Allocation",
       "emptyMobile": "No accounts. Add one!",
       "accountsTitle": "Savings & investments",
@@ -204,6 +204,9 @@
       "editTitle": "Edit account",
       "newTitle": "New account",
       "balance": "Current balance",
+      "initialBalance": "Initial balance",
+      "initialBalanceHint": "Starting balance; transactions add to it.",
+      "courant": "Checking account",
       "name": "Name",
       "namePlaceholder": "e.g. Main savings account",
       "institution": "Institution",
@@ -228,26 +231,33 @@
     "add": "Add account",
     "empty": "No accounts. Add one!",
     "tabs": {
-      "comptes": "Accounts",
-      "patrimoine": "Wealth"
+      "comptes": "Checking accounts",
+      "patrimoine": "Savings accounts"
+    },
+    "addSheet": {
+      "title": "Add an account",
+      "close": "Close",
+      "courant": "Checking account",
+      "investissement": "Savings account"
     },
     "sheet": {
       "newTitle": "New account",
       "editTitle": "Edit account",
-      "name": "Name",
+      "name": "Label",
       "namePlaceholder": "e.g. Joint account",
+      "institution": "Institution",
+      "optional": "optional",
+      "institutionPlaceholder": "e.g. Boursorama, BNP Paribas…",
       "type": "Type",
       "kind": {
         "checking": "Checking",
-        "savings": "Savings",
-        "cash": "Cash"
+        "savings": "Savings"
       },
       "initialBalance": "Initial balance",
       "initialBalanceHint": "Starting balance; transactions add to it.",
       "save": "Save",
       "create": "Create",
-      "archive": "Archive",
-      "delete": "Delete"
+      "cancel": "Cancel"
     }
   },
   "monthSwitcher": {

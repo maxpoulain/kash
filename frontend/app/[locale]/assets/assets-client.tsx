@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AccountSheet } from "@/components/assets/account-sheet";
 import { ComptesSheet } from "@/components/assets/compte-sheet";
-import { getSavingsAccounts, createSavingsAccount, updateSavingsAccount, deleteSavingsAccount, getNetWorthHistory, getAccounts, createAccount, updateAccount, deleteAccount } from "@/lib/api";
-import type { SavingsAccount, AccountType } from "@/components/assets/account-form";
+import { getSavingsAccounts, createSavingsAccount, updateSavingsAccount, deleteSavingsAccount, getNetWorthHistory, getAccounts, createAccount, updateAccount } from "@/lib/api";
+import { COURANT_TYPE } from "@/components/assets/account-form";
+import type { SavingsAccount, AccountType, AccountFormData } from "@/components/assets/account-form";
 import type { NetWorthHistoryPoint, Account, AccountCreate, AccountUpdate } from "@/types/api";
 
 type Tab = "comptes" | "patrimoine";
@@ -247,6 +248,7 @@ export function AssetsClient() {
   const [comptes, setComptes] = useState<Account[]>([]);
   const [compteSheetOpen, setCompteSheetOpen] = useState(false);
   const [editingCompte, setEditingCompte] = useState<Account | undefined>(undefined);
+  const [addOpen, setAddOpen] = useState(false);
 
   useEffect(() => {
     getSavingsAccounts().then((rows) =>
@@ -263,13 +265,8 @@ export function AssetsClient() {
   const delta = computeDelta(history);
 
   function openAdd() {
-    if (tab === "comptes") {
-      setEditingCompte(undefined);
-      setCompteSheetOpen(true);
-    } else {
-      setEditing(undefined);
-      setSheetOpen(true);
-    }
+    // Single unified add modal — the user picks "courant" or "investissement" inside.
+    setAddOpen(true);
   }
 
   function openEdit(account: SavingsAccount) {
@@ -295,17 +292,34 @@ export function AssetsClient() {
     );
   }
 
-  async function handleDeleteCompte(id: string) {
-    await deleteAccount(id);
-    setComptes((prev) => prev.filter((c) => c.id !== id));
+  // Unified add: the form's type decides which backend the account lands in —
+  // COURANT_TYPE → cash-flow accounts (calculated balance), else → savings accounts.
+  async function handleAdd(data: AccountFormData) {
+    if (data.type === COURANT_TYPE) {
+      await handleCreateCompte({
+        name: data.name,
+        type: "checking",
+        initial_balance: data.balance,
+        institution: data.institution,
+      });
+    } else {
+      const created = await createSavingsAccount({
+        name: data.name,
+        type: data.type,
+        balance: data.balance,
+        institution: data.institution,
+      });
+      setAccounts((prev) => [...prev, { ...created, institution: created.institution ?? undefined, type: created.type as AccountType }]);
+    }
   }
 
-  async function handleSave(data: Omit<SavingsAccount, "id">) {
+  async function handleSave(data: AccountFormData) {
+    const payload = { name: data.name, type: data.type, balance: data.balance, institution: data.institution };
     if (editing) {
-      const updated = await updateSavingsAccount(editing.id, data);
+      const updated = await updateSavingsAccount(editing.id, payload);
       setAccounts((prev) => prev.map((a) => a.id === editing.id ? { ...updated, institution: updated.institution ?? undefined, type: updated.type as AccountType } : a));
     } else {
-      const created = await createSavingsAccount(data);
+      const created = await createSavingsAccount(payload);
       setAccounts((prev) => [...prev, { ...created, institution: created.institution ?? undefined, type: created.type as AccountType }]);
     }
   }
@@ -346,7 +360,7 @@ export function AssetsClient() {
           </div>
           <Button size="sm" className="gap-1.5 rounded-full" onClick={openAdd}>
             <Plus className="h-4 w-4" />
-            {tab === "comptes" ? tc("add") : t("add")}
+            {tc("add")}
           </Button>
         </div>
 
@@ -461,7 +475,7 @@ export function AssetsClient() {
 
       </div>
 
-      {/* ── Patrimoine sheet ── */}
+      {/* ── Épargne edit sheet ── */}
       <AccountSheet
         open={sheetOpen}
         onOpenChange={setSheetOpen}
@@ -470,14 +484,21 @@ export function AssetsClient() {
         onDelete={editing ? handleDelete : undefined}
       />
 
-      {/* ── Comptes sheet ── */}
+      {/* ── Comptes courants edit sheet ── */}
       <ComptesSheet
         open={compteSheetOpen}
         onOpenChange={setCompteSheetOpen}
         account={editingCompte}
         onCreate={handleCreateCompte}
         onUpdate={handleUpdateCompte}
-        onDelete={handleDeleteCompte}
+      />
+
+      {/* ── Unified add sheet: one type picker, "Compte courant" first ── */}
+      <AccountSheet
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        onSave={handleAdd}
+        allowCourant
       />
     </AppLayout>
   );

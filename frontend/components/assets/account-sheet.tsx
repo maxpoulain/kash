@@ -5,17 +5,19 @@ import { useTranslations } from "next-intl";
 import { Dialog } from "@base-ui/react/dialog";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { AccountForm } from "./account-form";
-import type { SavingsAccount } from "./account-form";
+import type { SavingsAccount, AccountFormData } from "./account-form";
 
 interface AccountSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   account?: SavingsAccount;
-  onSave: (data: Omit<SavingsAccount, "id">) => void;
+  onSave: (data: AccountFormData) => void;
   onDelete?: () => void;
+  /** Show "Compte courant" as the first type (unified add modal). */
+  allowCourant?: boolean;
 }
 
-export function AccountSheet({ open, onOpenChange, account, onSave, onDelete }: AccountSheetProps) {
+export function AccountSheet({ open, onOpenChange, account, onSave, onDelete, allowCourant }: AccountSheetProps) {
   const t = useTranslations("assets.sheet");
   const [isMobile, setIsMobile] = useState(true);
 
@@ -26,7 +28,7 @@ export function AccountSheet({ open, onOpenChange, account, onSave, onDelete }: 
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  function handleSave(data: Omit<SavingsAccount, "id">) {
+  function handleSave(data: AccountFormData) {
     onSave(data);
     onOpenChange(false);
   }
@@ -45,6 +47,7 @@ export function AccountSheet({ open, onOpenChange, account, onSave, onDelete }: 
     onSave: handleSave,
     onDelete: account ? handleDelete : undefined,
     onClose: handleClose,
+    allowCourant,
   };
 
   return (
