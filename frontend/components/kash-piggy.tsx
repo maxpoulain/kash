@@ -3,7 +3,7 @@
 // Kash mascot components — faithful ports of the design system's primitives.jsx
 // Both consume CSS variables so they re-skin by direction.
 
-import { useState } from "react"
+import { useId } from "react"
 
 interface PiggyMarkProps {
   size?: number
@@ -50,11 +50,12 @@ interface PiggyProps {
   className?: string
 }
 
-let piggyIdCounter = 0
-
 // Full side-profile piggy with fill window (240×200 viewBox)
 export function Piggy({ size = 160, mood = "happy", fill = 0.5, coin = false, className }: PiggyProps) {
-  const [id] = useState(() => `pigWin-${piggyIdCounter++}`)
+  // useId() is hydration-stable (a module counter produced different ids on the
+  // server vs client → clip-path url(#…) attribute mismatch). Strip colons so the
+  // id is a valid CSS/SVG selector target.
+  const id = `pigWin-${useId().replace(/:/g, "")}`
   const W = 240, H = 200
   return (
     <svg
