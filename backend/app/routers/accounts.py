@@ -21,21 +21,43 @@ router = APIRouter(prefix="/api/accounts")
 
 
 def _compute_balances(account_ids: list[str]) -> dict[str, float]:
-    """Net transaction delta per account: +income, −expense. Excludes initial_balance."""
+    """Net delta per account, excluding initial_balance:
+    +income −expense (transactions) +transfer-in −transfer-out (transfers, compte legs).
+    """
     if not account_ids:
         return {}
     supabase = get_supabase()
-    result = (
+    deltas: dict[str, float] = defaultdict(float)
+
+    tx = (
         supabase.table("transactions")
         .select("account_id,amount,type")
         .in_("account_id", account_ids)
         .execute()
     )
-    rows = cast(list[dict], result.data or [])
-    deltas: dict[str, float] = defaultdict(float)
-    for row in rows:
+    tx_rows = cast(list[dict], tx.data if isinstance(tx.data, list) else [])
+    for row in tx_rows:
         amount = float(row["amount"])
         deltas[row["account_id"]] += amount if row["type"] == "income" else -amount
+
+    # Transfers: a leg only affects a balance when it's a compte. Patrimoine legs
+    # are recorded but leave the asset value untouched (manual/snapshot).
+    ids_csv = ",".join(account_ids)
+    tr = (
+        supabase.table("transfers")
+        .select("from_kind,from_id,to_kind,to_id,amount")
+        .or_(f"from_id.in.({ids_csv}),to_id.in.({ids_csv})")
+        .execute()
+    )
+    tr_rows = cast(list[dict], tr.data if isinstance(tr.data, list) else [])
+    account_set = set(account_ids)
+    for row in tr_rows:
+        amount = float(row["amount"])
+        if row["from_kind"] == "compte" and row["from_id"] in account_set:
+            deltas[row["from_id"]] -= amount
+        if row["to_kind"] == "compte" and row["to_id"] in account_set:
+            deltas[row["to_id"]] += amount
+
     return deltas
 
 

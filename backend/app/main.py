@@ -10,6 +10,7 @@ from app.routers import (
     spending_goals,
     summary,
     transactions,
+    transfers,
     users,
 )
 
@@ -34,3 +35,4 @@ app.include_router(spending_goals.router)
 app.include_router(savings_accounts.router)
 app.include_router(recurring_transactions.router)
 app.include_router(summary.router)
+app.include_router(transfers.router)
