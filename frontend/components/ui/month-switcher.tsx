@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -37,6 +37,12 @@ export function MonthSwitcher({
 }: MonthSwitcherProps) {
   const t = useTranslations("monthSwitcher");
   const locale = useLocale();
+  // The day counter depends on "today", which differs between the SSR instant
+  // and the client (day rollover / timezone) → hydration mismatch. Only render
+  // it after mount so server and first client render agree.
+  const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setMounted(true), []);
   const atCurrent = isCurrentMonth(value);
   const nextDisabled = disableFutureMonths && atCurrent;
 
@@ -99,7 +105,7 @@ export function MonthSwitcher({
         </Button>
         <div className="ml-2 flex flex-col">
           <span className="text-sm font-medium capitalize">{formatMonth(value, locale)}</span>
-          {showDayCounter && (
+          {showDayCounter && mounted && (
             <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
               {t("dayCounter", { currentDay, daysLeft })}
             </span>
@@ -121,7 +127,7 @@ export function MonthSwitcher({
       {/* Mobile: centered label (+ day counter) */}
       <div className="flex flex-1 flex-col items-center text-center lg:hidden">
         <span className="text-sm font-medium capitalize">{formatMonth(value, locale)}</span>
-        {showDayCounter && (
+        {showDayCounter && mounted && (
           <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
             {t("dayCounter", { currentDay, daysLeft })}
           </span>
