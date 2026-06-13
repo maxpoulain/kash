@@ -149,6 +149,7 @@
       "weekly": "Weekly",
       "addRecurring": "Add recurring",
       "repeat": "Repeat",
+      "account": "Account",
       "once": "One-off"
     }
   },
@@ -195,7 +196,7 @@
       "netWorthLabel": "Net worth · EUR",
       "allocation": "Allocation",
       "emptyMobile": "No accounts. Add one!",
-      "accountsTitle": "Accounts",
+      "accountsTitle": "Savings & investments",
       "itemsCount": "{count, plural, one {# item} other {# items}}",
       "emptyDesktop": "No accounts. Click \"Add an account\"."
     },
@@ -221,6 +222,32 @@
     "sheet": {
       "editTitle": "Edit account",
       "newTitle": "Add an account"
+    }
+  },
+  "comptes": {
+    "add": "Add account",
+    "empty": "No accounts. Add one!",
+    "tabs": {
+      "comptes": "Accounts",
+      "patrimoine": "Wealth"
+    },
+    "sheet": {
+      "newTitle": "New account",
+      "editTitle": "Edit account",
+      "name": "Name",
+      "namePlaceholder": "e.g. Joint account",
+      "type": "Type",
+      "kind": {
+        "checking": "Checking",
+        "savings": "Savings",
+        "cash": "Cash"
+      },
+      "initialBalance": "Initial balance",
+      "initialBalanceHint": "Starting balance; transactions add to it.",
+      "save": "Save",
+      "create": "Create",
+      "archive": "Archive",
+      "delete": "Delete"
     }
   },
   "monthSwitcher": {

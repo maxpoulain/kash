@@ -1,16 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Landmark, PiggyBank, TrendingUp, Home, Package, Zap, Sprout, Plus, Pencil } from "lucide-react";
+import { Landmark, PiggyBank, TrendingUp, Home, Package, Zap, Sprout, Plus, Pencil, Wallet, Coins } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AccountSheet } from "@/components/assets/account-sheet";
-import { getSavingsAccounts, createSavingsAccount, updateSavingsAccount, deleteSavingsAccount, getNetWorthHistory } from "@/lib/api";
+import { ComptesSheet } from "@/components/assets/compte-sheet";
+import { getSavingsAccounts, createSavingsAccount, updateSavingsAccount, deleteSavingsAccount, getNetWorthHistory, getAccounts, createAccount, updateAccount, deleteAccount } from "@/lib/api";
 import type { SavingsAccount, AccountType } from "@/components/assets/account-form";
-import type { NetWorthHistoryPoint } from "@/types/api";
+import type { NetWorthHistoryPoint, Account, AccountCreate, AccountUpdate } from "@/types/api";
+
+type Tab = "comptes" | "patrimoine";
+
+const COMPTE_ICON: Record<string, React.ElementType> = {
+  checking: Wallet,
+  savings: PiggyBank,
+  cash: Coins,
+};
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -192,35 +201,103 @@ function AccountRowDesktop({ account, last, onEdit }: { account: SavingsAccount;
   );
 }
 
+// ─── Compte row (cash-flow account, calculated balance) ───────────────────────
+
+function CompteRow({ account, last, onEdit, typeLabel }: { account: Account; last: boolean; onEdit: () => void; typeLabel: string }) {
+  const locale = useLocale();
+  const Icon = COMPTE_ICON[account.type] ?? Wallet;
+  return (
+    <div
+      className={cn(
+        "grid items-center gap-4 px-4 py-3.5 cursor-pointer transition-colors hover:bg-muted/50",
+        !last && "border-b border-border"
+      )}
+      style={{ gridTemplateColumns: "44px 1fr 120px 40px" }}
+      onClick={onEdit}
+    >
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-foreground">
+        <Icon className="h-4 w-4 text-background" />
+      </div>
+      <div>
+        <div className="text-sm font-medium">{account.name}</div>
+        <div className="font-mono text-[11px] text-muted-foreground">{typeLabel}</div>
+      </div>
+      <div className={cn("text-right font-mono text-sm font-semibold", account.balance < 0 ? "text-destructive" : "")}>
+        {fmtFull(account.balance, locale)}
+      </div>
+      <div className="flex justify-end">
+        <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function AssetsClient() {
   const t = useTranslations("assets.list");
+  const tc = useTranslations("comptes");
   const locale = useLocale();
+  const [tab, setTab] = useState<Tab>("comptes");
   const [accounts, setAccounts] = useState<SavingsAccount[]>([]);
   const [history, setHistory] = useState<NetWorthHistoryPoint[]>([]);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<SavingsAccount | undefined>(undefined);
+
+  const [comptes, setComptes] = useState<Account[]>([]);
+  const [compteSheetOpen, setCompteSheetOpen] = useState(false);
+  const [editingCompte, setEditingCompte] = useState<Account | undefined>(undefined);
 
   useEffect(() => {
     getSavingsAccounts().then((rows) =>
       setAccounts(rows.map((r) => ({ ...r, institution: r.institution ?? undefined, type: r.type as AccountType })))
     ).catch(() => {});
     getNetWorthHistory().then(setHistory).catch(() => {});
+    getAccounts().then(setComptes).catch(() => {});
   }, []);
 
   const total = accounts.reduce((s, a) => s + a.balance, 0);
+  const comptesTotal = comptes.reduce((s, a) => s + a.balance, 0);
+  const combinedTotal = total + comptesTotal;
   const allocation = computeAllocation(accounts);
   const delta = computeDelta(history);
 
   function openAdd() {
-    setEditing(undefined);
-    setSheetOpen(true);
+    if (tab === "comptes") {
+      setEditingCompte(undefined);
+      setCompteSheetOpen(true);
+    } else {
+      setEditing(undefined);
+      setSheetOpen(true);
+    }
   }
 
   function openEdit(account: SavingsAccount) {
     setEditing(account);
     setSheetOpen(true);
+  }
+
+  function openEditCompte(account: Account) {
+    setEditingCompte(account);
+    setCompteSheetOpen(true);
+  }
+
+  async function handleCreateCompte(data: AccountCreate) {
+    const created = await createAccount(data);
+    setComptes((prev) => [...prev, created]);
+  }
+
+  async function handleUpdateCompte(id: string, data: AccountUpdate) {
+    const updated = await updateAccount(id, data);
+    // Archiving removes it from the active list; otherwise replace in place.
+    setComptes((prev) =>
+      data.archived ? prev.filter((c) => c.id !== id) : prev.map((c) => (c.id === id ? updated : c)),
+    );
+  }
+
+  async function handleDeleteCompte(id: string) {
+    await deleteAccount(id);
+    setComptes((prev) => prev.filter((c) => c.id !== id));
   }
 
   async function handleSave(data: Omit<SavingsAccount, "id">) {
@@ -250,7 +327,7 @@ export function AssetsClient() {
             <div>
               <h1 className="font-display text-2xl font-medium tracking-tight">{t("mobileTitle")}</h1>
               <div className="font-display text-4xl font-medium tracking-tight leading-tight mt-1">
-                {fmt(total, locale)}
+                {fmt(combinedTotal, locale)}
               </div>
             </div>
             <Button size="icon" className="h-10 w-10 shrink-0 rounded-xl" onClick={openAdd} aria-label={t("addAria")}>
@@ -259,20 +336,59 @@ export function AssetsClient() {
           </div>
         </div>
 
-        {/* ── Desktop header ── */}
-        <div className="hidden lg:flex lg:items-center lg:justify-between">
+        {/* ── Desktop header (combined net worth) ── */}
+        <div className="hidden lg:flex lg:items-end lg:justify-between">
           <div>
             <h1 className="font-display text-2xl font-medium tracking-tight">{t("desktopTitle")}</h1>
-            <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-              {t("accountCount", { count: accounts.length })}
-            </p>
+            <div className="font-display text-4xl font-medium tracking-tight leading-tight mt-1">
+              {fmt(combinedTotal, locale)}
+            </div>
           </div>
           <Button size="sm" className="gap-1.5 rounded-full" onClick={openAdd}>
             <Plus className="h-4 w-4" />
-            {t("add")}
+            {tab === "comptes" ? tc("add") : t("add")}
           </Button>
         </div>
 
+        {/* ── Tabs ── */}
+        <div className="flex gap-1 self-start rounded-full bg-muted p-1">
+          {(["comptes", "patrimoine"] as const).map((tk) => (
+            <button
+              key={tk}
+              type="button"
+              onClick={() => setTab(tk)}
+              className={cn(
+                "rounded-full px-4 py-1.5 text-sm font-semibold transition-colors",
+                tab === tk ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {tc(`tabs.${tk}`)}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Comptes tab ── */}
+        {tab === "comptes" && (
+          comptes.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">{tc("empty")}</p>
+          ) : (
+            <Card className="gap-0 py-0">
+              {comptes.map((c, i) => (
+                <CompteRow
+                  key={c.id}
+                  account={c}
+                  last={i === comptes.length - 1}
+                  onEdit={() => openEditCompte(c)}
+                  typeLabel={tc(`sheet.kind.${c.type}`)}
+                />
+              ))}
+            </Card>
+          )
+        )}
+
+        {/* ── Patrimoine tab ── */}
+        {tab === "patrimoine" && (
+        <>
         {/* ── Desktop hero + allocation ── */}
         <div className="hidden lg:grid lg:grid-cols-[1.4fr_1fr] lg:gap-5">
           <Card
@@ -340,16 +456,28 @@ export function AssetsClient() {
             </Card>
           )}
         </div>
+        </>
+        )}
 
       </div>
 
-      {/* ── Sheet / Dialog ── */}
+      {/* ── Patrimoine sheet ── */}
       <AccountSheet
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         account={editing}
         onSave={handleSave}
         onDelete={editing ? handleDelete : undefined}
+      />
+
+      {/* ── Comptes sheet ── */}
+      <ComptesSheet
+        open={compteSheetOpen}
+        onOpenChange={setCompteSheetOpen}
+        account={editingCompte}
+        onCreate={handleCreateCompte}
+        onUpdate={handleUpdateCompte}
+        onDelete={handleDeleteCompte}
       />
     </AppLayout>
   );
