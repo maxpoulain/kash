@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import type { Category, CreateGoalPayload, CreateTransactionPayload, NetWorthHistoryPoint, RecurringTransaction, RecurringTransactionCreate, RecurringTransactionUpdate, SavingsAccountAPI, SavingsAccountCreate, SavingsAccountUpdate, SpendingGoal, SpendingGoalsResponse, Summary, Transaction } from "@/types/api";
+import type { Account, AccountCreate, AccountUpdate, Category, CreateGoalPayload, CreateTransactionPayload, NetWorthHistoryPoint, RecurringTransaction, RecurringTransactionCreate, RecurringTransactionUpdate, SavingsAccountAPI, SavingsAccountCreate, SavingsAccountUpdate, SpendingGoal, SpendingGoalsResponse, Summary, Transaction } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -65,6 +65,38 @@ export async function createGoal(payload: CreateGoalPayload): Promise<SpendingGo
   });
   if (!res.ok) throw new Error("Failed to create spending goal");
   return res.json();
+}
+
+// --- Accounts (cash-flow containers, calculated balance) ---
+
+export async function getAccounts(includeArchived = false): Promise<Account[]> {
+  const url = includeArchived ? "/api/accounts?include_archived=true" : "/api/accounts";
+  const res = await apiFetch(url);
+  if (!res.ok) throw new Error("Failed to fetch accounts");
+  return res.json();
+}
+
+export async function createAccount(payload: AccountCreate): Promise<Account> {
+  const res = await apiFetch("/api/accounts", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to create account");
+  return res.json();
+}
+
+export async function updateAccount(id: string, payload: AccountUpdate): Promise<Account> {
+  const res = await apiFetch(`/api/accounts/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to update account");
+  return res.json();
+}
+
+export async function deleteAccount(id: string): Promise<void> {
+  const res = await apiFetch(`/api/accounts/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Failed to delete account");
 }
 
 export async function getSavingsAccounts(): Promise<SavingsAccountAPI[]> {

@@ -12,6 +12,7 @@ export interface CreateTransactionPayload {
   amount: number;
   type: TransactionType;
   category_id: string;
+  account_id?: string; // defaults to the household's principal account
   date: string; // YYYY-MM-DD
   note?: string;
 }
@@ -47,6 +48,36 @@ export interface Summary {
   savings_rate: number | null;
   income_by_category: CategoryAmount[];
   expense_by_category: CategoryAmount[];
+}
+
+// Accounts (cash-flow containers, calculated balance) — 00058 comptes multiples
+// Distinct from SavingsAccount (patrimoine, manual balance).
+
+export type AccountKind = "checking" | "savings" | "cash";
+
+export interface Account {
+  id: string;
+  household_id: string;
+  owner_id: string | null;
+  name: string;
+  type: string; // AccountKind
+  visibility: string; // shared | private
+  initial_balance: number;
+  balance: number; // calculated: initial_balance + Σ income − Σ expense
+  archived_at: string | null;
+}
+
+export interface AccountCreate {
+  name: string;
+  type?: string;
+  initial_balance?: number;
+}
+
+export interface AccountUpdate {
+  name?: string;
+  type?: string;
+  initial_balance?: number;
+  archived?: boolean;
 }
 
 // Savings Accounts
