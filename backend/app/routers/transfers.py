@@ -69,8 +69,12 @@ async def create_transfer(
             detail="At least one leg must be courant (epargne→epargne not allowed)",
         )
 
-    for kind, leg_id in ((payload.from_kind, payload.from_id), (payload.to_kind, payload.to_id)):
-        if not _leg_belongs_to_household(kind, str(leg_id), household_id):
+    legs: list[tuple[Kind, str]] = [
+        (payload.from_kind, str(payload.from_id)),
+        (payload.to_kind, str(payload.to_id)),
+    ]
+    for kind, leg_id in legs:
+        if not _leg_belongs_to_household(kind, leg_id, household_id):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"{kind} {leg_id} not found in household",
