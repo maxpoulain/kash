@@ -70,7 +70,7 @@ export interface TransferFormProps {
   toggle: React.ReactNode;
   comptes: Account[];
   epargnes: SavingsAccountAPI[];
-  onSuccess: () => void;
+  onSuccess: (kind?: "transaction" | "transfer") => void;
   onClose?: () => void;
 }
 
@@ -113,7 +113,7 @@ export function TransferForm({ variant, toggle, comptes, epargnes, onSuccess, on
         to_kind: toOpt.kind, to_id: toId,
         amount: amt, date,
       });
-      onSuccess();
+      onSuccess("transfer");
     } catch {
       setError(t("submitError"));
       setSubmitting(false);

@@ -101,7 +101,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export interface TransactionFormProps {
-  onSuccess: () => void;
+  onSuccess: (kind?: "transaction" | "transfer") => void;
   onClose?: () => void;
   variant?: "mobile" | "desktop";
 }

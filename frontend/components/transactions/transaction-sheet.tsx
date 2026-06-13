@@ -24,9 +24,9 @@ export function TransactionSheet({ open, onOpenChange, onTransactionCreated }: T
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  function handleSuccess() {
+  function handleSuccess(kind: "transaction" | "transfer" = "transaction") {
     onOpenChange(false);
-    toast.success(t("success"));
+    toast.success(kind === "transfer" ? t("transferSuccess") : t("success"));
     onTransactionCreated?.();
   }
 

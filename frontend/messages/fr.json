@@ -118,11 +118,13 @@
       "amount": "Montant",
       "uncategorized": "Sans catégorie",
       "today": "Aujourd'hui",
-      "yesterday": "Hier"
+      "yesterday": "Hier",
+      "transfer": "Transfert"
     },
     "sheet": {
       "title": "Nouvelle transaction",
-      "success": "Transaction enregistrée !"
+      "success": "Transaction enregistrée !",
+      "transferSuccess": "Transfert effectué !"
     },
     "form": {
       "piggyGains": "Piggy gagne",
