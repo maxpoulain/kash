@@ -63,6 +63,7 @@ export interface Account {
   type: string; // AccountKind
   visibility: string; // shared | private
   initial_balance: number;
+  institution: string | null;
   balance: number; // calculated: initial_balance + Σ income − Σ expense
   archived_at: string | null;
 }
@@ -71,12 +72,14 @@ export interface AccountCreate {
   name: string;
   type?: string;
   initial_balance?: number;
+  institution?: string;
 }
 
 export interface AccountUpdate {
   name?: string;
   type?: string;
   initial_balance?: number;
+  institution?: string;
   archived?: boolean;
 }
 

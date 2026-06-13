@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, CircleDollarSign, Globe, Menu, Plus, Target, TrendingUp } from "lucide-react";
+import { BarChart3, CircleDollarSign, Globe, Landmark, Menu, Plus, Target } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -29,7 +29,7 @@ export function BottomNav({ onAdd }: BottomNavProps) {
     { href: "/dashboard", label: t("dashboard"), icon: CircleDollarSign },
     { href: "/goals", label: t("goals"), icon: Target },
     null, // FAB
-    { href: "/assets", label: t("assets"), icon: TrendingUp },
+    { href: "/assets", label: t("assets"), icon: Landmark },
   ];
 
   return (

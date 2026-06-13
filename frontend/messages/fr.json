@@ -3,7 +3,7 @@
     "main": "Menu",
     "dashboard": "Transactions",
     "goals": "Objectifs",
-    "assets": "Patrimoine",
+    "assets": "Comptes",
     "analyse": "Analyse",
     "more": "Plus",
     "language": "Langue",
@@ -188,12 +188,12 @@
   },
   "assets": {
     "list": {
-      "mobileTitle": "Patrimoine",
-      "desktopTitle": "Patrimoine",
+      "mobileTitle": "Comptes",
+      "desktopTitle": "Comptes",
       "accountCount": "{count, plural, one {# compte} other {# comptes}}",
       "add": "Ajouter un compte",
       "addAria": "Ajouter un compte",
-      "netWorthLabel": "Patrimoine · EUR",
+      "netWorthLabel": "Épargne · EUR",
       "allocation": "Répartition",
       "emptyMobile": "Aucun compte. Ajoutez-en un !",
       "accountsTitle": "Épargne & placements",
@@ -204,6 +204,9 @@
       "editTitle": "Modifier le compte",
       "newTitle": "Nouveau compte",
       "balance": "Solde actuel",
+      "initialBalance": "Solde initial",
+      "initialBalanceHint": "Solde de départ ; les transactions s'y ajoutent.",
+      "courant": "Compte courant",
       "name": "Intitulé",
       "namePlaceholder": "ex. Livret A principal",
       "institution": "Établissement",
@@ -228,26 +231,33 @@
     "add": "Ajouter un compte",
     "empty": "Aucun compte. Ajoutez-en un !",
     "tabs": {
-      "comptes": "Comptes",
-      "patrimoine": "Patrimoine"
+      "comptes": "Comptes courants",
+      "patrimoine": "Comptes épargnes"
+    },
+    "addSheet": {
+      "title": "Ajouter un compte",
+      "close": "Fermer",
+      "courant": "Compte courant",
+      "investissement": "Compte épargne"
     },
     "sheet": {
       "newTitle": "Nouveau compte",
       "editTitle": "Modifier le compte",
-      "name": "Nom",
+      "name": "Intitulé",
       "namePlaceholder": "ex. Compte commun",
+      "institution": "Établissement",
+      "optional": "optionnel",
+      "institutionPlaceholder": "ex. Boursorama, BNP Paribas…",
       "type": "Type",
       "kind": {
         "checking": "Courant",
-        "savings": "Épargne",
-        "cash": "Espèces"
+        "savings": "Épargne"
       },
       "initialBalance": "Solde initial",
       "initialBalanceHint": "Solde de départ ; les transactions s'y ajoutent.",
       "save": "Enregistrer",
       "create": "Créer",
-      "archive": "Archiver",
-      "delete": "Supprimer"
+      "cancel": "Annuler"
     }
   },
   "monthSwitcher": {

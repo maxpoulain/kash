@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
-import { Landmark, PiggyBank, TrendingUp, Home, Package, Zap, Sprout, Trash2, X, Building2 } from "lucide-react";
+import { Landmark, PiggyBank, TrendingUp, Home, Package, Zap, Sprout, Trash2, X, Building2, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -26,6 +26,11 @@ export const ACCOUNT_TYPES = [
 
 export type AccountType = (typeof ACCOUNT_TYPES)[number];
 
+// Synthetic first option in the unified add picker. Selecting it routes to the
+// cash-flow `accounts` backend (calculated balance) instead of `savings_accounts`.
+export const COURANT_TYPE = "__courant__";
+export type CompteType = AccountType | typeof COURANT_TYPE;
+
 export interface SavingsAccount {
   id: string;
   name: string;
@@ -34,9 +39,17 @@ export interface SavingsAccount {
   institution?: string;
 }
 
+/** What the form emits. `type` is `COURANT_TYPE` when the user picked a checking account. */
+export interface AccountFormData {
+  name: string;
+  type: CompteType;
+  institution?: string;
+  balance: number;
+}
+
 type FormValues = {
   name: string;
-  type: AccountType;
+  type: CompteType;
   institution: string;
   balance: number | undefined;
 };
@@ -49,10 +62,6 @@ const SHORT_LABEL: Partial<Record<AccountType, string>> = {
   "Compte titres": "Titres",
   "Diversification": "Diversif.",
 };
-
-function shortLabel(t: AccountType) {
-  return SHORT_LABEL[t] ?? t;
-}
 
 const TYPE_ICON: Record<AccountType, React.ElementType> = {
   "Livret A": PiggyBank,
@@ -70,26 +79,35 @@ const TYPE_ICON: Record<AccountType, React.ElementType> = {
   "Autre": Package,
 };
 
+function typeIcon(t: CompteType): React.ElementType {
+  return t === COURANT_TYPE ? Wallet : TYPE_ICON[t];
+}
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface AccountFormProps {
   account?: SavingsAccount;
-  onSave: (data: Omit<SavingsAccount, "id">) => void;
+  onSave: (data: AccountFormData) => void;
   onDelete?: () => void;
   onClose: () => void;
   variant?: "mobile" | "desktop";
+  /** Skip the form's own title/close header (when a parent modal owns it). */
+  hideHeader?: boolean;
+  /** Show "Compte courant" as the first type (unified add modal). */
+  allowCourant?: boolean;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function AccountForm({ account, onSave, onDelete, onClose, variant = "desktop" }: AccountFormProps) {
+export function AccountForm({ account, onSave, onDelete, onClose, variant = "desktop", hideHeader, allowCourant }: AccountFormProps) {
   const t = useTranslations("assets.form");
   const isEdit = !!account;
+  const pickerTypes: CompteType[] = allowCourant ? [COURANT_TYPE, ...ACCOUNT_TYPES] : [...ACCOUNT_TYPES];
 
   const { register, handleSubmit, setValue, watch } = useForm<FormValues>({
     defaultValues: {
       name: account?.name ?? "",
-      type: account?.type ?? "Livret A",
+      type: account?.type ?? (allowCourant ? COURANT_TYPE : "Livret A"),
       institution: account?.institution ?? "",
       balance: account?.balance ?? undefined,
     },
@@ -97,7 +115,13 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
 
   const selectedType = watch("type");
   const balance = watch("balance");
-  const TypeIcon = TYPE_ICON[selectedType];
+  const isCourant = selectedType === COURANT_TYPE;
+  const TypeIcon = typeIcon(selectedType);
+
+  function typeLabel(ct: CompteType) {
+    if (ct === COURANT_TYPE) return t("courant");
+    return SHORT_LABEL[ct] ?? ct;
+  }
 
   useEffect(() => {
     if (account) {
@@ -111,7 +135,8 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
   function onSubmit(values: FormValues) {
     if (!values.name.trim()) return;
     const bal = Number(values.balance);
-    if (isNaN(bal) || bal < 0) return;
+    // Checking accounts may be negative; savings balances may not.
+    if (isNaN(bal) || (values.type !== COURANT_TYPE && bal < 0)) return;
     onSave({
       name: values.name.trim(),
       type: values.type,
@@ -122,8 +147,8 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
 
   const typePickerDesktop = (
     <div className="grid grid-cols-4 gap-1.5">
-      {ACCOUNT_TYPES.map((at) => {
-        const Icon = TYPE_ICON[at];
+      {pickerTypes.map((at) => {
+        const Icon = typeIcon(at);
         const active = selectedType === at;
         return (
           <button
@@ -134,12 +159,13 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
               "flex flex-col items-center gap-1 px-1.5 py-2.5 rounded-[10px] text-[10px] border transition-all cursor-pointer leading-tight text-center",
               active
                 ? "text-background border-foreground"
-                : "text-muted-foreground border-border hover:border-foreground/40"
+                : "text-muted-foreground border-border hover:border-foreground/40",
+              at === COURANT_TYPE && "col-span-4 flex-row justify-center gap-2"
             )}
             style={active ? { background: "var(--ink)" } : { background: "var(--bg-elev)" }}
           >
             <Icon className="h-4 w-4" />
-            <span>{shortLabel(at)}</span>
+            <span>{typeLabel(at)}</span>
           </button>
         );
       })}
@@ -152,27 +178,29 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
     return (
       <form onSubmit={handleSubmit(onSubmit)} onKeyDown={(e) => { if (e.key === "Escape") onClose(); }} className="bg-background">
         {/* Header */}
-        <div className="flex items-center justify-between border-b px-[22px] py-3.5">
-          <div className="flex items-center gap-3">
-            <div
-              className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[10px]"
-              style={{ background: "var(--ink)", color: "var(--pig)" }}
+        {!hideHeader && (
+          <div className="flex items-center justify-between border-b px-[22px] py-3.5">
+            <div className="flex items-center gap-3">
+              <div
+                className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[10px]"
+                style={{ background: "var(--ink)", color: "var(--pig)" }}
+              >
+                <TypeIcon className="h-[18px] w-[18px]" style={{ color: "var(--pig)" }} />
+              </div>
+              <div className="font-display text-[20px] font-medium tracking-[-0.02em] leading-tight">
+                {isEdit ? t("editTitle") : t("newTitle")}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-[8px] text-muted-foreground hover:text-foreground transition-colors"
+              style={{ background: "var(--bg-sunk)" }}
             >
-              <TypeIcon className="h-[18px] w-[18px]" style={{ color: "var(--pig)" }} />
-            </div>
-            <div className="font-display text-[20px] font-medium tracking-[-0.02em] leading-tight">
-              {isEdit ? t("editTitle") : t("newTitle")}
-            </div>
+              <X className="h-4 w-4" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-[8px] text-muted-foreground hover:text-foreground transition-colors"
-            style={{ background: "var(--bg-sunk)" }}
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+        )}
 
         {/* Body — 2 columns */}
         <div className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
@@ -180,7 +208,7 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
           <div className="space-y-[18px] border-r px-[22px] py-[18px]">
             {/* Balance */}
             <div>
-              <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{t("balance")}</div>
+              <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{isCourant ? t("initialBalance") : t("balance")}</div>
               <div
                 className="flex items-baseline gap-2 rounded-[14px] px-4 py-3.5"
                 style={{ background: "var(--bg-elev)", border: "1.5px solid var(--ink)" }}
@@ -192,11 +220,12 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
                   inputMode="decimal"
                   placeholder="0"
                   step="0.01"
-                  min="0"
+                  min={isCourant ? undefined : "0"}
                   className="min-w-0 flex-1 border-none bg-transparent font-display text-[38px] font-medium tracking-[-0.03em] text-foreground outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 />
                 <span className="font-mono text-[11px] tracking-[0.1em] text-muted-foreground">EUR</span>
               </div>
+              {isCourant && <p className="mt-2 text-[11px] text-muted-foreground">{t("initialBalanceHint")}</p>}
             </div>
 
             {/* Name */}
@@ -274,30 +303,34 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="bg-background">
       {/* Grabber */}
-      <div className="mb-1.5 flex justify-center pt-3.5">
-        <div className="h-[5px] w-11 rounded-full bg-border" />
-      </div>
+      {!hideHeader && (
+        <div className="mb-1.5 flex justify-center pt-3.5">
+          <div className="h-[5px] w-11 rounded-full bg-border" />
+        </div>
+      )}
 
       <div className="space-y-4 px-5 pb-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="font-display text-[22px] font-medium tracking-[-0.02em]">
-            {isEdit ? t("editTitle") : t("newTitle")}
+        {!hideHeader && (
+          <div className="flex items-center justify-between">
+            <div className="font-display text-[22px] font-medium tracking-[-0.02em]">
+              {isEdit ? t("editTitle") : t("newTitle")}
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground"
+              style={{ background: "var(--bg-sunk)" }}
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground"
-            style={{ background: "var(--bg-sunk)" }}
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+        )}
 
         {/* Large balance */}
         <div className="pb-1 pt-3 text-center">
           <div className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-            {t("mobileBalanceLabel")}
+            {isCourant ? t("initialBalance") : t("mobileBalanceLabel")}
           </div>
           <div className="flex items-end justify-center">
             <span className="font-display font-medium text-muted-foreground" style={{ fontSize: 30, lineHeight: 1, marginBottom: 8, marginRight: 2 }}>€</span>
@@ -307,7 +340,7 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
               inputMode="decimal"
               placeholder="0"
               step="0.01"
-              min="0"
+              min={isCourant ? undefined : "0"}
               className="border-none bg-transparent text-center font-display font-medium tracking-[-0.035em] outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               style={{ fontSize: 64, lineHeight: 1, width: 200, color: "var(--ink)" }}
             />
@@ -359,8 +392,8 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
         <div>
           <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{t("type")}</div>
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
-            {ACCOUNT_TYPES.map((at) => {
-              const Icon = TYPE_ICON[at];
+            {pickerTypes.map((at) => {
+              const Icon = typeIcon(at);
               const active = selectedType === at;
               return (
                 <button
@@ -377,7 +410,7 @@ export function AccountForm({ account, onSave, onDelete, onClose, variant = "des
                   }}
                 >
                   <Icon className="h-3.5 w-3.5" />
-                  {at}
+                  {typeLabel(at)}
                 </button>
               );
             })}
