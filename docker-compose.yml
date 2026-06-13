@@ -17,11 +17,13 @@ services:
       - SUPABASE_URL_INTERNAL=http://host.docker.internal:54321
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH
     volumes:
-      - ./frontend/app:/app/app
-      - ./frontend/components:/app/components
-      - ./frontend/lib:/app/lib
-      - ./frontend/types:/app/types
-      - ./frontend/public:/app/public
+      # Mount the whole source tree so root files (proxy.ts, next.config.ts,
+      # i18n/, etc.) hot-reload too — not just app/components/lib.
+      - ./frontend:/app
+      # Anonymous volumes keep the image's node_modules/.next (built for Alpine)
+      # instead of letting the host tree shadow them.
+      - /app/node_modules
+      - /app/.next
     command: npm run dev
     networks:
       - kash-network
