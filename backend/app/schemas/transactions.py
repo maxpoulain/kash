@@ -31,6 +31,7 @@ class TransactionCreate(BaseModel):
     amount: float
     type: TransactionType
     category_id: UUID | None = None
+    account_id: UUID | None = None  # defaults to the household's principal account
     date: Date
     note: str | None = None
 
@@ -48,6 +49,7 @@ class TransactionOut(BaseModel):
     household_id: UUID
     created_by: UUID
     category_id: UUID | None
+    account_id: UUID | None = None
     amount: float
     type: TransactionType
     date: Date

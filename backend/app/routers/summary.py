@@ -10,6 +10,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from app.core.accounts import visible_account_ids
 from app.core.auth import get_current_user
 from app.core.supabase import get_supabase
 from app.routers.recurring_transactions import materialize_due_for_household
@@ -67,10 +68,15 @@ async def get_summary(
     cat_rows = cast(list[dict], cat_result.data if isinstance(cat_result.data, list) else [])
     cat_meta = {row["id"]: (row.get("name"), row.get("icon")) for row in cat_rows}
 
+    # Scope to visible accounts. No-op in T1 (all shared); T4 flips the helper to
+    # exclude other members' private accounts, and the summary follows automatically.
+    account_ids = visible_account_ids(household_id, claims["sub"])
+
     tx_result = (
         supabase.table("transactions")
         .select("amount,type,category_id")
         .eq("household_id", household_id)
+        .in_("account_id", account_ids)
         .gte("date", start)
         .lt("date", end)
         .execute()
