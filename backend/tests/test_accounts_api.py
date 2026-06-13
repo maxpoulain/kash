@@ -103,11 +103,11 @@ async def test_list_accounts_computes_balance_from_transactions():
 
 @pytest.mark.asyncio
 async def test_list_accounts_balance_includes_transfers():
-    """balance = initial + txns + Σ transfer-in − Σ transfer-out (compte legs)."""
+    """balance = initial + txns + Σ transfer-in − Σ transfer-out (courant legs)."""
     transactions = [{"account_id": ACCOUNT_ID, "amount": 200.0, "type": "income"}]
     transfers = [
-        {"from_kind": "compte", "from_id": ACCOUNT_ID, "to_kind": "patrimoine", "to_id": "pea", "amount": 30.0},
-        {"from_kind": "compte", "from_id": "other", "to_kind": "compte", "to_id": ACCOUNT_ID, "amount": 50.0},
+        {"from_kind": "courant", "from_id": ACCOUNT_ID, "to_kind": "epargne", "to_id": "pea", "amount": 30.0},
+        {"from_kind": "courant", "from_id": "other", "to_kind": "courant", "to_id": ACCOUNT_ID, "amount": 50.0},
     ]
     p_jwks, p_decode, p_household, p_supabase = _patches()
     with (

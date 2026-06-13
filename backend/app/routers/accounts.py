@@ -40,7 +40,7 @@ def _compute_balances(account_ids: list[str]) -> dict[str, float]:
         amount = float(row["amount"])
         deltas[row["account_id"]] += amount if row["type"] == "income" else -amount
 
-    # Transfers: a leg only affects a balance when it's a compte. Patrimoine legs
+    # Transfers: a leg only affects a balance when it's a courant. Epargne legs
     # are recorded but leave the asset value untouched (manual/snapshot).
     ids_csv = ",".join(account_ids)
     tr = (
@@ -53,9 +53,9 @@ def _compute_balances(account_ids: list[str]) -> dict[str, float]:
     account_set = set(account_ids)
     for row in tr_rows:
         amount = float(row["amount"])
-        if row["from_kind"] == "compte" and row["from_id"] in account_set:
+        if row["from_kind"] == "courant" and row["from_id"] in account_set:
             deltas[row["from_id"]] -= amount
-        if row["to_kind"] == "compte" and row["to_id"] in account_set:
+        if row["to_kind"] == "courant" and row["to_id"] in account_set:
             deltas[row["to_id"]] += amount
 
     return deltas

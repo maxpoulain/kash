@@ -83,9 +83,9 @@ export interface AccountUpdate {
   archived?: boolean;
 }
 
-// Transfers between accounts (00058 T3) — polymorphic legs (compte | patrimoine)
+// Transfers between accounts (00058 T3) — polymorphic legs (courant | epargne)
 
-export type TransferKind = "compte" | "patrimoine";
+export type TransferKind = "courant" | "epargne";
 
 export interface TransferCreate {
   from_kind: TransferKind;
