@@ -1,17 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Check, Filter, Package, Plus } from "lucide-react";
+import { ArrowLeftRight, Check, Filter, Package, Plus } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { MonthSwitcher } from "@/components/ui/month-switcher";
-import { getTransactions, getCategories } from "@/lib/api";
+import { getTransactions, getCategories, getTransfers, getAccounts, getSavingsAccounts } from "@/lib/api";
 import { CATEGORY_ICONS } from "@/lib/category-icons";
 import { currentMonth } from "@/lib/month";
-import type { Category, Transaction } from "@/types/api";
+import type { Category, Transaction, Transfer } from "@/types/api";
+
+// A list row is either a transaction or a transfer (rendered distinctly).
+type Row =
+  | { id: string; date: string; kind: "txn"; txn: Transaction }
+  | { id: string; date: string; kind: "transfer"; transfer: Transfer };
 
 function formatDateLabel(dateStr: string, locale: string): string {
   const today = new Date().toISOString().slice(0, 10);
@@ -27,10 +32,10 @@ function formatDateShort(dateStr: string, locale: string): string {
   return d.toLocaleDateString(locale, { day: "numeric", month: "short" });
 }
 
-function groupByDate(txns: Transaction[], locale: string): { date: string; label: string; items: Transaction[] }[] {
-  const map: Record<string, Transaction[]> = {};
-  for (const t of txns) {
-    (map[t.date] ??= []).push(t);
+function groupRowsByDate(rows: Row[], locale: string): { date: string; label: string; items: Row[] }[] {
+  const map: Record<string, Row[]> = {};
+  for (const r of rows) {
+    (map[r.date] ??= []).push(r);
   }
   return Object.entries(map)
     .sort(([a], [b]) => b.localeCompare(a))
@@ -51,6 +56,8 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
   const [month, setMonth] = useState(currentMonth);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [transfers, setTransfers] = useState<Transfer[]>([]);
+  const [accountNames, setAccountNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<FilterType>("all");
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
@@ -58,11 +65,19 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [txs, cats] = await Promise.all([getTransactions(month), getCategories()]);
+      const [txs, cats, trs, accs, sav] = await Promise.all([
+        getTransactions(month), getCategories(), getTransfers(), getAccounts(), getSavingsAccounts(),
+      ]);
       setTransactions(txs);
       setCategories(cats);
+      setTransfers(trs);
+      const names: Record<string, string> = {};
+      for (const a of accs) names[a.id] = a.name;
+      for (const s of sav) names[s.id] = s.name;
+      setAccountNames(names);
     } catch {
       setTransactions([]);
+      setTransfers([]);
     } finally {
       setLoading(false);
     }
@@ -88,11 +103,26 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
     .filter((t) => typeFilter === "all" || t.type === typeFilter)
     .filter((t) => !categoryFilter || t.category_id === categoryFilter);
 
-  const groups = groupByDate(filtered, locale);
+  const monthTransfers = transfers.filter((tr) => tr.date.startsWith(month));
+  // Transfers are neither income nor expense → only shown under "all", no category filter.
+  const showTransfers = typeFilter === "all" && !categoryFilter;
+  const rows: Row[] = [
+    ...filtered.map((txn) => ({ id: txn.id, date: txn.date, kind: "txn" as const, txn })),
+    ...(showTransfers ? monthTransfers.map((tr) => ({ id: tr.id, date: tr.date, kind: "transfer" as const, transfer: tr })) : []),
+  ].sort((a, b) => b.date.localeCompare(a.date));
+  const rowGroups = groupRowsByDate(rows, locale);
 
   function formatAmount(t: Transaction) {
     const sign = t.type === "expense" ? "−" : "+";
     return sign + t.amount.toLocaleString(locale, { style: "currency", currency: "EUR" });
+  }
+
+  function transferLabel(tr: Transfer) {
+    return `${accountNames[tr.from_id] ?? "—"} → ${accountNames[tr.to_id] ?? "—"}`;
+  }
+
+  function fmtCurrency(amount: number) {
+    return amount.toLocaleString(locale, { style: "currency", currency: "EUR" });
   }
 
   const activeCategoryName = categoryFilter
@@ -222,7 +252,7 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
       {/* ── Loading / empty ────────────────────────────────── */}
       {loading ? (
         <p className="py-8 text-center text-sm text-muted-foreground">{t("loading")}</p>
-      ) : filtered.length === 0 ? (
+      ) : rows.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
         <>
@@ -237,22 +267,45 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
               <span className="text-right">{t("amount")}</span>
             </div>
             <Card className="gap-0 py-0">
-              {filtered.map((t, i) => {
-                const { name, Icon } = getCategoryInfo(t.category_id);
+              {rows.map((row, i) => {
+                const border = i < rows.length - 1 && "border-b border-border";
+                if (row.kind === "transfer") {
+                  const tr = row.transfer;
+                  return (
+                    <div
+                      key={tr.id}
+                      className={cn("grid items-center gap-3.5 px-3.5 py-3.5", border)}
+                      style={{ gridTemplateColumns: "130px 1fr 110px" }}
+                    >
+                      <p className="text-[13px] font-medium">{formatDateShort(tr.date, locale)}</p>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-muted text-muted-foreground">
+                          <ArrowLeftRight className="h-3.5 w-3.5" />
+                        </div>
+                        <span className="flex min-w-0 flex-col">
+                          <span className="text-[13px] font-medium">{t("transfer")}</span>
+                          <span className="truncate font-mono text-[11px] text-muted-foreground">{transferLabel(tr)}</span>
+                        </span>
+                      </div>
+                      <div className="text-right font-mono text-[13px] font-semibold text-muted-foreground">
+                        {fmtCurrency(tr.amount)}
+                      </div>
+                    </div>
+                  );
+                }
+                const tx = row.txn;
+                const { name, Icon } = getCategoryInfo(tx.category_id);
                 return (
                   <div
-                    key={t.id}
-                    className={cn(
-                      "grid items-center gap-3.5 px-3.5 py-3.5",
-                      i < filtered.length - 1 && "border-b border-border"
-                    )}
+                    key={tx.id}
+                    className={cn("grid items-center gap-3.5 px-3.5 py-3.5", border)}
                     style={{ gridTemplateColumns: "130px 1fr 110px" }}
                   >
-                    <p className="text-[13px] font-medium">{formatDateShort(t.date, locale)}</p>
+                    <p className="text-[13px] font-medium">{formatDateShort(tx.date, locale)}</p>
                     <div className="flex items-center gap-3 min-w-0">
                       <div className={cn(
                         "h-8 w-8 shrink-0 rounded-[8px] flex items-center justify-center",
-                        t.type === "expense" ? "bg-primary/10 text-primary" : "bg-success/10 text-success"
+                        tx.type === "expense" ? "bg-primary/10 text-primary" : "bg-success/10 text-success"
                       )}>
                         <Icon className="h-3.5 w-3.5" />
                       </div>
@@ -260,9 +313,9 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
                     </div>
                     <div className={cn(
                       "text-right font-mono text-[13px] font-semibold",
-                      t.type === "expense" ? "text-foreground" : "text-success"
+                      tx.type === "expense" ? "text-foreground" : "text-success"
                     )}>
-                      {formatAmount(t)}
+                      {formatAmount(tx)}
                     </div>
                   </div>
                 );
@@ -272,23 +325,43 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
 
           {/* ── Mobile: grouped list ───────────────────────── */}
           <div className="flex flex-col gap-4 lg:hidden">
-            {groups.map(({ date, label, items }) => (
+            {rowGroups.map(({ date, label, items }) => (
               <div key={date}>
                 <p className="mb-2 px-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                   {label}
                 </p>
                 <ul className="flex flex-col gap-1.5">
-                  {items.map((t) => {
-                    const { name, Icon } = getCategoryInfo(t.category_id);
+                  {items.map((row) => {
+                    if (row.kind === "transfer") {
+                      const tr = row.transfer;
+                      return (
+                        <li key={tr.id} className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3">
+                          <div className="flex flex-1 items-center gap-3 min-w-0">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-muted text-muted-foreground">
+                              <ArrowLeftRight className="h-4 w-4" />
+                            </div>
+                            <div className="flex flex-col gap-0.5 min-w-0">
+                              <span className="truncate text-sm font-medium">{t("transfer")}</span>
+                              <span className="truncate font-mono text-[11px] text-muted-foreground">{transferLabel(tr)}</span>
+                            </div>
+                          </div>
+                          <span className="ml-3 shrink-0 font-mono text-sm font-semibold text-muted-foreground">
+                            {fmtCurrency(tr.amount)}
+                          </span>
+                        </li>
+                      );
+                    }
+                    const tx = row.txn;
+                    const { name, Icon } = getCategoryInfo(tx.category_id);
                     return (
                       <li
-                        key={t.id}
+                        key={tx.id}
                         className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3"
                       >
                         <div className="flex flex-1 items-center gap-3 min-w-0">
                           <div className={cn(
                             "h-9 w-9 shrink-0 rounded-[10px] flex items-center justify-center",
-                            t.type === "expense" ? "bg-primary/15 text-primary" : "bg-success/15 text-success"
+                            tx.type === "expense" ? "bg-primary/15 text-primary" : "bg-success/15 text-success"
                           )}>
                             <Icon className="h-4 w-4" />
                           </div>
@@ -298,9 +371,9 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
                         </div>
                         <span className={cn(
                           "ml-3 shrink-0 font-mono text-sm font-semibold",
-                          t.type === "expense" ? "text-foreground" : "text-success"
+                          tx.type === "expense" ? "text-foreground" : "text-success"
                         )}>
-                          {formatAmount(t)}
+                          {formatAmount(tx)}
                         </span>
                       </li>
                     );

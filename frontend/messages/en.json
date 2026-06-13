@@ -118,11 +118,13 @@
       "amount": "Amount",
       "uncategorized": "Uncategorized",
       "today": "Today",
-      "yesterday": "Yesterday"
+      "yesterday": "Yesterday",
+      "transfer": "Transfer"
     },
     "sheet": {
       "title": "New transaction",
-      "success": "Transaction saved!"
+      "success": "Transaction saved!",
+      "transferSuccess": "Transfer completed!"
     },
     "form": {
       "piggyGains": "Piggy gains",

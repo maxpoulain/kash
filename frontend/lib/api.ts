@@ -101,6 +101,12 @@ export async function deleteAccount(id: string): Promise<void> {
 
 // --- Transfers (00058 T3) ---
 
+export async function getTransfers(): Promise<Transfer[]> {
+  const res = await apiFetch("/api/transfers");
+  if (!res.ok) throw new Error("Failed to fetch transfers");
+  return res.json();
+}
+
 export async function createTransfer(payload: TransferCreate): Promise<Transfer> {
   const res = await apiFetch("/api/transfers", {
     method: "POST",
