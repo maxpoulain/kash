@@ -81,6 +81,7 @@ async def create_account(
                 "name": payload.name,
                 "type": payload.type,
                 "initial_balance": payload.initial_balance,
+                "institution": payload.institution,
             }
         )
         .execute()
@@ -111,6 +112,8 @@ async def update_account(
         updates["type"] = payload.type
     if payload.initial_balance is not None:
         updates["initial_balance"] = payload.initial_balance
+    if payload.institution is not None:
+        updates["institution"] = payload.institution
     if payload.archived is not None:
         updates["archived_at"] = (
             datetime.now(timezone.utc).isoformat() if payload.archived else None

@@ -21,6 +21,7 @@ ACCOUNT_ROW = {
     "type": "checking",
     "visibility": "shared",
     "initial_balance": 100.0,
+    "institution": None,
     "archived_at": None,
     "created_at": "2026-06-01T10:00:00+00:00",
     "updated_at": "2026-06-01T10:00:00+00:00",
@@ -142,6 +143,35 @@ async def test_create_account_returns_balance_equals_initial():
     data = response.json()
     assert data["balance"] == 100.0  # no transactions yet
     assert data["initial_balance"] == 100.0
+    assert data["institution"] is None
+
+
+@pytest.mark.asyncio
+async def test_create_account_persists_institution():
+    """The optional institution is forwarded to the insert and returned."""
+    row = {**ACCOUNT_ROW, "institution": "Boursorama"}
+    p_jwks, p_decode, p_household, p_supabase = _patches()
+    with p_jwks as mock_jwks, p_decode, p_household, p_supabase as mock_supabase:
+        _mock_auth(mock_jwks)
+        supabase_instance = MagicMock()
+        mock_supabase.return_value = supabase_instance
+
+        created = MagicMock()
+        created.data = [row]
+        insert = supabase_instance.table.return_value.insert
+        insert.return_value.execute.return_value = created
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post(
+                "/api/accounts",
+                json={"name": "Compte commun", "institution": "Boursorama"},
+                headers={"Authorization": "Bearer valid.token"},
+            )
+
+    assert response.status_code == 201
+    assert response.json()["institution"] == "Boursorama"
+    # institution made it into the inserted payload
+    assert insert.call_args.args[0]["institution"] == "Boursorama"
 
 
 @pytest.mark.asyncio
