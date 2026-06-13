@@ -83,6 +83,27 @@ export interface AccountUpdate {
   archived?: boolean;
 }
 
+// Transfers between accounts (00058 T3) — polymorphic legs (compte | patrimoine)
+
+export type TransferKind = "compte" | "patrimoine";
+
+export interface TransferCreate {
+  from_kind: TransferKind;
+  from_id: string;
+  to_kind: TransferKind;
+  to_id: string;
+  amount: number;
+  date: string;
+  note?: string;
+}
+
+export interface Transfer extends TransferCreate {
+  id: string;
+  household_id: string;
+  created_by: string | null;
+  created_at: string;
+}
+
 // Savings Accounts
 
 export interface SavingsAccountAPI {
