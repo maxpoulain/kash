@@ -158,6 +158,9 @@
       "transferFrom": "From",
       "transferTo": "To",
       "transferSubmit": "Transfer",
+      "transferSelect": "Choose an account",
+      "groupCourant": "Checking accounts",
+      "groupEpargne": "Savings accounts",
       "transferNeedsCourant": "At least one checking account",
       "transferDifferent": "Pick two different accounts"
     }

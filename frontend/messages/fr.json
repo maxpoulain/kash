@@ -158,6 +158,9 @@
       "transferFrom": "Depuis",
       "transferTo": "Vers",
       "transferSubmit": "Transférer",
+      "transferSelect": "Choisir un compte",
+      "groupCourant": "Comptes courants",
+      "groupEpargne": "Comptes épargnes",
       "transferNeedsCourant": "Au moins un compte courant",
       "transferDifferent": "Choisis deux comptes différents"
     }
