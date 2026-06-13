@@ -102,6 +102,58 @@ async def test_list_accounts_computes_balance_from_transactions():
 
 
 @pytest.mark.asyncio
+async def test_list_accounts_balance_includes_transfers():
+    """balance = initial + txns + Σ transfer-in − Σ transfer-out (compte legs)."""
+    transactions = [{"account_id": ACCOUNT_ID, "amount": 200.0, "type": "income"}]
+    transfers = [
+        {"from_kind": "compte", "from_id": ACCOUNT_ID, "to_kind": "patrimoine", "to_id": "pea", "amount": 30.0},
+        {"from_kind": "compte", "from_id": "other", "to_kind": "compte", "to_id": ACCOUNT_ID, "amount": 50.0},
+    ]
+    p_jwks, p_decode, p_household, p_supabase = _patches()
+    with (
+        p_jwks as mock_jwks,
+        p_decode,
+        p_household,
+        p_supabase as mock_supabase,
+        patch("app.routers.accounts.visible_account_ids", return_value=[ACCOUNT_ID]),
+    ):
+        _mock_auth(mock_jwks)
+        supabase_instance = MagicMock()
+        mock_supabase.return_value = supabase_instance
+
+        accounts_result = MagicMock()
+        accounts_result.data = [ACCOUNT_ROW]
+        (
+            supabase_instance.table.return_value
+            .select.return_value.in_.return_value.is_.return_value
+            .order.return_value.execute.return_value
+        ) = accounts_result
+
+        tx_result = MagicMock()
+        tx_result.data = transactions
+        (
+            supabase_instance.table.return_value
+            .select.return_value.in_.return_value.execute.return_value
+        ) = tx_result
+
+        tr_result = MagicMock()
+        tr_result.data = transfers
+        (
+            supabase_instance.table.return_value
+            .select.return_value.or_.return_value.execute.return_value
+        ) = tr_result
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get(
+                "/api/accounts", headers={"Authorization": "Bearer valid.token"}
+            )
+
+    assert response.status_code == 200
+    # 100 initial + 200 income − 30 transfer-out + 50 transfer-in = 320
+    assert response.json()[0]["balance"] == 320.0
+
+
+@pytest.mark.asyncio
 async def test_list_accounts_empty_when_no_visible_accounts():
     p_jwks, p_decode, p_household, p_supabase = _patches()
     with (
