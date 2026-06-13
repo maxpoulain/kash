@@ -4,6 +4,7 @@ from typing import cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from app.core.accounts import visible_account_ids
 from app.core.auth import get_current_user
 from app.core.categories import (
     SUGGESTED_BY_ID,
@@ -37,6 +38,25 @@ def _get_household_id(user_id: str) -> str:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     household_id: str = data["household_id"]
     return household_id
+
+
+def _get_default_account_id(household_id: str) -> str | None:
+    """Return the household's principal account: the oldest one.
+
+    At T1 there is exactly one account per household ("Compte principal"), so this
+    is unambiguous. Used to attach a transaction when no account_id is supplied.
+    """
+    supabase = get_supabase()
+    result = (
+        supabase.table("accounts")
+        .select("id")
+        .eq("household_id", household_id)
+        .order("created_at")
+        .limit(1)
+        .execute()
+    )
+    rows = cast(list[dict], result.data if isinstance(result.data, list) else [])
+    return rows[0]["id"] if rows else None
 
 
 # --- Categories ---
@@ -120,7 +140,16 @@ async def list_transactions(
     materialize_due_for_household(household_id)
     supabase = get_supabase()
 
-    query = supabase.table("transactions").select("*").eq("household_id", household_id)
+    # Scope to the accounts the user may see. No-op in T1 (all accounts shared);
+    # T4 flips visible_account_ids to exclude other members' private accounts.
+    account_ids = visible_account_ids(household_id, claims["sub"])
+
+    query = (
+        supabase.table("transactions")
+        .select("*")
+        .eq("household_id", household_id)
+        .in_("account_id", account_ids)
+    )
     if month_bounds:
         query = query.gte("date", month_bounds[0]).lt("date", month_bounds[1])
 
@@ -142,6 +171,10 @@ async def create_transaction(
         household_id, str(body.category_id) if body.category_id else None
     )
 
+    account_id = (
+        str(body.account_id) if body.account_id else _get_default_account_id(household_id)
+    )
+
     payload = {
         "household_id": household_id,
         "created_by": claims["sub"],
@@ -150,6 +183,7 @@ async def create_transaction(
         "date": body.date.isoformat(),
         "note": body.note,
         "category_id": category_id,
+        "account_id": account_id,
     }
 
     result = supabase.table("transactions").insert(payload).execute()

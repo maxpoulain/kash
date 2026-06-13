@@ -45,6 +45,7 @@ def _mock_supabase(mock_supabase, *, categories, transactions):
         supabase_instance.table.return_value
         .select.return_value
         .eq.return_value
+        .in_.return_value
         .gte.return_value
         .lt.return_value
         .execute.return_value
@@ -57,6 +58,7 @@ def _patches():
         patch("app.core.auth.jwt.decode", return_value=FAKE_CLAIMS),
         patch("app.routers.summary._get_household_id", return_value=HOUSEHOLD_ID),
         patch("app.routers.summary.materialize_due_for_household"),
+        patch("app.routers.summary.visible_account_ids", return_value=["acc-1"]),
         patch("app.routers.summary.get_supabase"),
     )
 
@@ -70,8 +72,8 @@ async def test_summary_without_token_returns_401():
 
 @pytest.mark.asyncio
 async def test_summary_invalid_month_returns_422():
-    p_jwks, p_decode, p_household, p_materialize, p_supabase = _patches()
-    with p_jwks as mock_jwks, p_decode, p_household, p_materialize, p_supabase:
+    p_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase = _patches()
+    with p_jwks as mock_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase:
         _mock_auth(mock_jwks)
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get(
@@ -89,8 +91,8 @@ async def test_summary_aggregates_totals_and_breakdown():
         {"amount": 300.0, "type": "expense", "category_id": CAT_FOOD},
         {"amount": 100.0, "type": "expense", "category_id": CAT_FOOD},
     ]
-    p_jwks, p_decode, p_household, p_materialize, p_supabase = _patches()
-    with p_jwks as mock_jwks, p_decode, p_household, p_materialize, p_supabase as mock_supabase:
+    p_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase = _patches()
+    with p_jwks as mock_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase as mock_supabase:
         _mock_auth(mock_jwks)
         _mock_supabase(mock_supabase, categories=CATEGORIES, transactions=transactions)
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
@@ -123,8 +125,8 @@ async def test_summary_uncategorized_bucket():
     transactions = [
         {"amount": 80.0, "type": "expense", "category_id": None},
     ]
-    p_jwks, p_decode, p_household, p_materialize, p_supabase = _patches()
-    with p_jwks as mock_jwks, p_decode, p_household, p_materialize, p_supabase as mock_supabase:
+    p_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase = _patches()
+    with p_jwks as mock_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase as mock_supabase:
         _mock_auth(mock_jwks)
         _mock_supabase(mock_supabase, categories=CATEGORIES, transactions=transactions)
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
@@ -147,8 +149,8 @@ async def test_summary_no_income_savings_rate_null():
     transactions = [
         {"amount": 120.0, "type": "expense", "category_id": CAT_FOOD},
     ]
-    p_jwks, p_decode, p_household, p_materialize, p_supabase = _patches()
-    with p_jwks as mock_jwks, p_decode, p_household, p_materialize, p_supabase as mock_supabase:
+    p_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase = _patches()
+    with p_jwks as mock_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase as mock_supabase:
         _mock_auth(mock_jwks)
         _mock_supabase(mock_supabase, categories=CATEGORIES, transactions=transactions)
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
@@ -165,8 +167,8 @@ async def test_summary_no_income_savings_rate_null():
 
 @pytest.mark.asyncio
 async def test_summary_empty_month_returns_zeros():
-    p_jwks, p_decode, p_household, p_materialize, p_supabase = _patches()
-    with p_jwks as mock_jwks, p_decode, p_household, p_materialize, p_supabase as mock_supabase:
+    p_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase = _patches()
+    with p_jwks as mock_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase as mock_supabase:
         _mock_auth(mock_jwks)
         _mock_supabase(mock_supabase, categories=CATEGORIES, transactions=[])
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
