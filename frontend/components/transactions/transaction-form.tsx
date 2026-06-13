@@ -7,6 +7,7 @@ import { z } from "zod";
 import { format, parseISO, type Locale } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
 import {
+  ArrowLeftRight,
   CalendarIcon,
   ChevronRight,
   Minus,
@@ -23,8 +24,11 @@ import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PiggyMark } from "@/components/kash-piggy";
-import { getCategories, createTransaction, createRecurringTransaction, getAccounts } from "@/lib/api";
-import type { Account, Category, TransactionType } from "@/types/api";
+import { getCategories, createTransaction, createRecurringTransaction, getAccounts, getSavingsAccounts } from "@/lib/api";
+import type { Account, Category, SavingsAccountAPI, TransactionType } from "@/types/api";
+import { TransferForm } from "./transfer-form";
+
+type Mode = "txn" | "transfer";
 
 const DATE_FNS_LOCALES: Record<string, Locale> = {
   en: enUS,
@@ -122,6 +126,8 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
   const dateFnsLocale = DATE_FNS_LOCALES[locale] ?? enUS;
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [epargnes, setEpargnes] = useState<SavingsAccountAPI[]>([]);
+  const [mode, setMode] = useState<Mode>("txn");
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
@@ -155,6 +161,9 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
         if (rows.length > 0) setValue("account_id", rows[0].id);
       })
       .catch(() => setAccounts([]));
+    getSavingsAccounts()
+      .then(setEpargnes)
+      .catch(() => setEpargnes([]));
   }, [setValue]);
 
   const selectedAccountId = watch("account_id");
@@ -190,14 +199,14 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
   }
 
   const typeToggle = (
-    <div className="grid grid-cols-2 gap-1.5 p-1 bg-muted rounded-[12px]">
+    <div className="grid grid-cols-3 gap-1.5 p-1 bg-muted rounded-[12px]">
       {(["expense", "income"] as TransactionType[]).map((txType) => {
-        const active = selectedType === txType;
+        const active = mode === "txn" && selectedType === txType;
         return (
           <button
             key={txType}
             type="button"
-            onClick={() => setValue("type", txType)}
+            onClick={() => { setMode("txn"); setValue("type", txType); }}
             className={cn(
               "flex items-center justify-center gap-1.5 rounded-[8px] py-2.5 text-[13px] font-semibold transition-all",
               active ? "text-white" : "text-muted-foreground hover:text-foreground/70"
@@ -209,6 +218,18 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
           </button>
         );
       })}
+      <button
+        type="button"
+        onClick={() => setMode("transfer")}
+        className={cn(
+          "flex items-center justify-center gap-1.5 rounded-[8px] py-2.5 text-[13px] font-semibold transition-all",
+          mode === "transfer" ? "text-white" : "text-muted-foreground hover:text-foreground/70"
+        )}
+        style={mode === "transfer" ? { background: "var(--ink)" } : {}}
+      >
+        <ArrowLeftRight className="w-3.5 h-3.5" />
+        {t("transfer")}
+      </button>
     </div>
   );
 
@@ -318,6 +339,22 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
       </div>
     </div>
   );
+
+  // -------------------------------------------------------------------------
+  // TRANSFER — dedicated body, shares the 3-way toggle and modal chrome.
+  // -------------------------------------------------------------------------
+  if (mode === "transfer") {
+    return (
+      <TransferForm
+        variant={variant}
+        toggle={typeToggle}
+        comptes={accounts}
+        epargnes={epargnes}
+        onSuccess={onSuccess}
+        onClose={onClose}
+      />
+    );
+  }
 
   // -------------------------------------------------------------------------
   // DESKTOP

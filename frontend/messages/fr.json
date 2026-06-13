@@ -150,7 +150,14 @@
       "addRecurring": "Ajouter la récurrence",
       "repeat": "Répéter",
       "account": "Compte",
-      "once": "Ponctuel"
+      "once": "Ponctuel",
+      "transfer": "Transfert",
+      "transferTitle": "Nouveau transfert",
+      "transferFrom": "Depuis",
+      "transferTo": "Vers",
+      "transferSubmit": "Transférer",
+      "transferNeedsCourant": "Au moins un compte courant",
+      "transferDifferent": "Choisis deux comptes différents"
     }
   },
   "goals": {
