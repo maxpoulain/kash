@@ -1,7 +1,7 @@
 """Schemas for transfers between accounts (00058 T3).
 
-Polymorphic legs: each side is a 'compte' (accounts) or 'patrimoine'
-(savings_accounts). At least one leg must be a compte — enforced both in the DB
+Polymorphic legs: each side is a 'courant' (accounts) or 'epargne'
+(savings_accounts). At least one leg must be a courant — enforced both in the DB
 and in the router (router returns a clean 422 instead of a DB error).
 """
 
@@ -11,7 +11,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-Kind = Literal["compte", "patrimoine"]
+Kind = Literal["courant", "epargne"]
 
 
 class TransferCreate(BaseModel):

@@ -1,6 +1,6 @@
 """Tests for the transfers endpoints (00058 T3).
 
-Polymorphic legs ({kind, id}); at least one leg must be a compte. Supabase is
+Polymorphic legs ({kind, id}); at least one leg must be a courant. Supabase is
 mocked — these cover routing, validation, and household scoping, not the DB.
 """
 
@@ -80,17 +80,17 @@ async def test_create_transfer_without_token_returns_401():
 
 
 @pytest.mark.asyncio
-async def test_create_transfer_compte_to_compte_returns_201():
+async def test_create_transfer_courant_to_courant_returns_201():
     p_jwks, p_decode, p_household, p_supabase = _patches()
     with p_jwks as mock_jwks, p_decode, p_household, p_supabase as mock_supabase:
         _mock_auth(mock_jwks)
-        _setup(mock_supabase, created_row=_row("compte", ACCOUNT_A, "compte", ACCOUNT_B))
+        _setup(mock_supabase, created_row=_row("courant", ACCOUNT_A, "courant", ACCOUNT_B))
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.post(
                 "/api/transfers",
                 json={
-                    "from_kind": "compte", "from_id": ACCOUNT_A,
-                    "to_kind": "compte", "to_id": ACCOUNT_B,
+                    "from_kind": "courant", "from_id": ACCOUNT_A,
+                    "to_kind": "courant", "to_id": ACCOUNT_B,
                     "amount": 100.0, "date": "2026-06-13",
                 },
                 headers={"Authorization": "Bearer valid.token"},
@@ -100,27 +100,27 @@ async def test_create_transfer_compte_to_compte_returns_201():
 
 
 @pytest.mark.asyncio
-async def test_create_transfer_compte_to_patrimoine_returns_201():
+async def test_create_transfer_courant_to_epargne_returns_201():
     p_jwks, p_decode, p_household, p_supabase = _patches()
     with p_jwks as mock_jwks, p_decode, p_household, p_supabase as mock_supabase:
         _mock_auth(mock_jwks)
-        _setup(mock_supabase, created_row=_row("compte", ACCOUNT_A, "patrimoine", SAVINGS_A))
+        _setup(mock_supabase, created_row=_row("courant", ACCOUNT_A, "epargne", SAVINGS_A))
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.post(
                 "/api/transfers",
                 json={
-                    "from_kind": "compte", "from_id": ACCOUNT_A,
-                    "to_kind": "patrimoine", "to_id": SAVINGS_A,
+                    "from_kind": "courant", "from_id": ACCOUNT_A,
+                    "to_kind": "epargne", "to_id": SAVINGS_A,
                     "amount": 100.0, "date": "2026-06-13",
                 },
                 headers={"Authorization": "Bearer valid.token"},
             )
     assert response.status_code == 201
-    assert response.json()["to_kind"] == "patrimoine"
+    assert response.json()["to_kind"] == "epargne"
 
 
 @pytest.mark.asyncio
-async def test_create_transfer_patrimoine_to_patrimoine_returns_422():
+async def test_create_transfer_epargne_to_epargne_returns_422():
     p_jwks, p_decode, p_household, p_supabase = _patches()
     with p_jwks as mock_jwks, p_decode, p_household, p_supabase as mock_supabase:
         _mock_auth(mock_jwks)
@@ -129,8 +129,8 @@ async def test_create_transfer_patrimoine_to_patrimoine_returns_422():
             response = await client.post(
                 "/api/transfers",
                 json={
-                    "from_kind": "patrimoine", "from_id": SAVINGS_A,
-                    "to_kind": "patrimoine", "to_id": SAVINGS_A,
+                    "from_kind": "epargne", "from_id": SAVINGS_A,
+                    "to_kind": "epargne", "to_id": SAVINGS_A,
                     "amount": 100.0, "date": "2026-06-13",
                 },
                 headers={"Authorization": "Bearer valid.token"},
@@ -148,8 +148,8 @@ async def test_create_transfer_leg_in_other_household_returns_404():
             response = await client.post(
                 "/api/transfers",
                 json={
-                    "from_kind": "compte", "from_id": ACCOUNT_A,
-                    "to_kind": "compte", "to_id": ACCOUNT_B,
+                    "from_kind": "courant", "from_id": ACCOUNT_A,
+                    "to_kind": "courant", "to_id": ACCOUNT_B,
                     "amount": 100.0, "date": "2026-06-13",
                 },
                 headers={"Authorization": "Bearer valid.token"},
@@ -167,8 +167,8 @@ async def test_create_transfer_rejects_non_positive_amount():
             response = await client.post(
                 "/api/transfers",
                 json={
-                    "from_kind": "compte", "from_id": ACCOUNT_A,
-                    "to_kind": "compte", "to_id": ACCOUNT_B,
+                    "from_kind": "courant", "from_id": ACCOUNT_A,
+                    "to_kind": "courant", "to_id": ACCOUNT_B,
                     "amount": 0, "date": "2026-06-13",
                 },
                 headers={"Authorization": "Bearer valid.token"},
@@ -198,7 +198,7 @@ async def test_list_transfers_returns_household_rows():
         instance = MagicMock()
         mock_supabase.return_value = instance
         listed = MagicMock()
-        listed.data = [_row("compte", ACCOUNT_A, "compte", ACCOUNT_B)]
+        listed.data = [_row("courant", ACCOUNT_A, "courant", ACCOUNT_B)]
         (
             instance.table.return_value
             .select.return_value

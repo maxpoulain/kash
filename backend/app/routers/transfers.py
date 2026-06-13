@@ -1,7 +1,7 @@
 """Transfers between accounts (00058 T3).
 
-Polymorphic legs ({kind, id}): a leg is a cash-flow account ('compte') or a wealth
-asset ('patrimoine'). Symmetric model. At least one leg must be a compte.
+Polymorphic legs ({kind, id}): a leg is a checking account ('courant') or a
+savings/wealth account ('epargne'). Symmetric model. At least one leg must be courant.
 
 Transfers never touch the `transactions` table, so summary/goals/budgets ignore
 them by construction (no income/expense effect). Their effect on a compte's
@@ -20,7 +20,7 @@ from app.schemas.transfers import Kind, TransferCreate, TransferOut
 router = APIRouter(prefix="/api/transfers")
 
 # Which table backs each leg kind.
-_KIND_TABLE = {"compte": "accounts", "patrimoine": "savings_accounts"}
+_KIND_TABLE = {"courant": "accounts", "epargne": "savings_accounts"}
 
 
 def _leg_belongs_to_household(kind: Kind, leg_id: str, household_id: str) -> bool:
@@ -59,14 +59,14 @@ async def create_transfer(
     payload: TransferCreate,
     claims: dict = Depends(get_current_user),
 ) -> TransferOut:
-    """Record a transfer. At least one leg must be a compte; both legs must belong
+    """Record a transfer. At least one leg must be courant; both legs must belong
     to the caller's household."""
     household_id = _get_household_id(claims["sub"])
 
-    if payload.from_kind != "compte" and payload.to_kind != "compte":
+    if payload.from_kind != "courant" and payload.to_kind != "courant":
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="At least one leg must be a compte (patrimoine→patrimoine not allowed)",
+            detail="At least one leg must be courant (epargne→epargne not allowed)",
         )
 
     for kind, leg_id in ((payload.from_kind, payload.from_id), (payload.to_kind, payload.to_id)):

@@ -1,27 +1,27 @@
 -- Transfers between accounts (00058 T3). Polymorphic legs: each side is either a
--- cash-flow account ('compte' → accounts) or a wealth asset ('patrimoine' →
--- savings_accounts). Symmetric model (from/to), no privileged direction.
+-- cash-flow checking account ('courant' → accounts) or a savings/wealth account
+-- ('epargne' → savings_accounts). Symmetric model (from/to), no privileged direction.
 --
 -- Balance effect (calculated, never stored):
---   compte leg     → debits (from) / credits (to) the computed account balance
---   patrimoine leg → recorded for history/flow only, NO effect on the asset value
---                    (which stays manual/snapshot — avoids double-counting).
+--   courant leg → debits (from) / credits (to) the computed account balance
+--   epargne leg → recorded for history/flow only, NO effect on the asset value
+--                 (which stays manual/snapshot — avoids double-counting).
 --
--- Constraint: at least one leg must be a 'compte' → forbids patrimoine→patrimoine
+-- Constraint: at least one leg must be a 'courant' → forbids epargne→epargne
 -- (pure net-worth reshuffle, handled by snapshots, not transfers).
 create table transfers (
   id            uuid primary key default gen_random_uuid(),
   household_id  uuid not null references households(id) on delete cascade,
-  from_kind     text not null check (from_kind in ('compte', 'patrimoine')),
+  from_kind     text not null check (from_kind in ('courant', 'epargne')),
   from_id       uuid not null,
-  to_kind       text not null check (to_kind in ('compte', 'patrimoine')),
+  to_kind       text not null check (to_kind in ('courant', 'epargne')),
   to_id         uuid not null,
   amount        numeric(12,2) not null check (amount > 0),
   date          date not null,
   note          text,
   created_by    uuid not null references users(id),
   created_at    timestamptz default now(),
-  check (from_kind = 'compte' or to_kind = 'compte')
+  check (from_kind = 'courant' or to_kind = 'courant')
 );
 
 create index transfers_household_idx on transfers (household_id);
