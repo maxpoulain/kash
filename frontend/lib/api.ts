@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import type { Account, AccountCreate, AccountUpdate, Category, CreateGoalPayload, CreateTransactionPayload, NetWorthHistoryPoint, RecurringTransaction, RecurringTransactionCreate, RecurringTransactionUpdate, SavingsAccountAPI, SavingsAccountCreate, SavingsAccountUpdate, SpendingGoal, SpendingGoalsResponse, Summary, Transaction } from "@/types/api";
+import type { Account, AccountCreate, AccountUpdate, Category, CreateGoalPayload, CreateTransactionPayload, NetWorthHistoryPoint, RecurringTransaction, RecurringTransactionCreate, RecurringTransactionUpdate, SavingsAccountAPI, SavingsAccountCreate, SavingsAccountUpdate, SpendingGoal, SpendingGoalsResponse, Summary, Transaction, Transfer, TransferCreate } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -97,6 +97,22 @@ export async function updateAccount(id: string, payload: AccountUpdate): Promise
 export async function deleteAccount(id: string): Promise<void> {
   const res = await apiFetch(`/api/accounts/${id}`, { method: "DELETE" });
   if (!res.ok) throw new Error("Failed to delete account");
+}
+
+// --- Transfers (00058 T3) ---
+
+export async function createTransfer(payload: TransferCreate): Promise<Transfer> {
+  const res = await apiFetch("/api/transfers", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to create transfer");
+  return res.json();
+}
+
+export async function deleteTransfer(id: string): Promise<void> {
+  const res = await apiFetch(`/api/transfers/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Failed to delete transfer");
 }
 
 export async function getSavingsAccounts(): Promise<SavingsAccountAPI[]> {
