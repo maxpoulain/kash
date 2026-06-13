@@ -14,12 +14,14 @@ class AccountCreate(BaseModel):
     name: str
     type: str = "checking"  # checking | savings | cash
     initial_balance: float = 0.0
+    institution: str | None = None
 
 
 class AccountUpdate(BaseModel):
     name: str | None = None
     type: str | None = None
     initial_balance: float | None = None
+    institution: str | None = None
     archived: bool | None = None  # True → set archived_at; False → clear it
 
 
@@ -31,5 +33,6 @@ class AccountOut(BaseModel):
     type: str
     visibility: str
     initial_balance: float
+    institution: str | None
     balance: float  # initial_balance + Σ income − Σ expense (transfers added in T3)
     archived_at: datetime | None
