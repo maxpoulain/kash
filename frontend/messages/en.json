@@ -150,7 +150,14 @@
       "addRecurring": "Add recurring",
       "repeat": "Repeat",
       "account": "Account",
-      "once": "One-off"
+      "once": "One-off",
+      "transfer": "Transfer",
+      "transferTitle": "New transfer",
+      "transferFrom": "From",
+      "transferTo": "To",
+      "transferSubmit": "Transfer",
+      "transferNeedsCourant": "At least one checking account",
+      "transferDifferent": "Pick two different accounts"
     }
   },
   "goals": {
