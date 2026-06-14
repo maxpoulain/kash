@@ -5,7 +5,7 @@ per-category breakdowns. Feeds the frontend "Analyse" page (Sankey + sections).
 """
 
 from datetime import datetime, timezone
-from typing import cast
+from typing import Literal, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -230,7 +230,7 @@ def _account_transfers(
     )
 
     # Collect counterpart legs to resolve names, split by which table backs them.
-    flows: list[tuple[str, str, str, float]] = []  # (direction, kind, counterpart_id, amount)
+    flows: list[tuple[Literal["in", "out"], str, str, float]] = []  # (direction, kind, counterpart_id, amount)
     for row in rows:
         amount = float(row["amount"])
         if row["from_id"] == account_id and row["to_kind"] == "courant":
