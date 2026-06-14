@@ -1,9 +1,10 @@
 // Pure geometry for the Analyse page money-flow diagram (Sankey-style).
 //
-// Income categories flow into a central pool, which flows out into expense
-// categories plus a savings node (the leftover when income exceeds spending).
-// Each side is scaled independently to fill the available height, so the
-// diagram stays legible whether the month is in surplus or deficit.
+// Income sources flow into a central pool, which flows out into expense
+// categories plus one or more savings nodes (named wealth destinations and the
+// leftover that stayed liquid — see 00058 T5a). Each side is scaled
+// independently to fill the available height, so the diagram stays legible
+// whether the month is in surplus or deficit.
 
 export interface SankeyItem {
   id: string;
@@ -15,12 +16,9 @@ export interface SankeyItem {
 export interface SankeyInput {
   income: SankeyItem[];
   expense: SankeyItem[];
-  /** Leftover (net) when positive; rendered as a savings outflow node. */
-  savings: number;
-  /** Token (CSS var) used for the savings node. */
-  savingsColor: string;
-  /** Label for the savings node (localized by the caller). */
-  savingsLabel?: string;
+  /** Savings outflow nodes (named wealth destinations + any leftover that stayed
+   *  liquid). Already labelled/coloured by the caller; empty in a deficit month. */
+  savings: SankeyItem[];
   width: number;
   height: number;
   nodeWidth?: number;
@@ -94,8 +92,6 @@ export function computeSankeyLayout(input: SankeyInput): SankeyLayout {
     income,
     expense,
     savings,
-    savingsColor,
-    savingsLabel = "Savings",
     width,
     height,
     nodeWidth = 12,
@@ -105,10 +101,8 @@ export function computeSankeyLayout(input: SankeyInput): SankeyLayout {
     padRight = 0,
   } = input;
 
-  const rightItems: SankeyItem[] = [...expense];
-  if (savings > 0) {
-    rightItems.push({ id: "savings", label: savingsLabel, amount: savings, color: savingsColor });
-  }
+  const savingsIds = new Set(savings.map((item) => item.id));
+  const rightItems: SankeyItem[] = [...expense, ...savings.filter((item) => item.amount > 0)];
 
   const leftBands = stack(income, height, gap);
   const rightBands = stack(rightItems, height, gap);
@@ -158,7 +152,7 @@ export function computeSankeyLayout(input: SankeyInput): SankeyLayout {
   rightBands.forEach((band, i) => {
     nodes.push({
       ...band.item,
-      side: band.item.id === "savings" ? "savings" : "expense",
+      side: savingsIds.has(band.item.id) ? "savings" : "expense",
       x: rightLeft,
       y: band.y0,
       w: nodeWidth,

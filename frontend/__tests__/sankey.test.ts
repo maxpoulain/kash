@@ -11,8 +11,7 @@ function baseInput(overrides: Partial<SankeyInput> = {}): SankeyInput {
       { id: "rent", label: "Rent", amount: 1200, color: "var(--pig)" },
       { id: "food", label: "Food", amount: 300, color: "var(--warn)" },
     ],
-    savings: 1000,
-    savingsColor: "var(--accent)",
+    savings: [{ id: "savings", label: "Savings", amount: 1000, color: "var(--accent)" }],
     width: 600,
     height: 240,
     ...overrides,
@@ -49,13 +48,43 @@ describe("computeSankeyLayout", () => {
   });
 
   it("omits the savings node when there is no surplus", () => {
-    const { nodes } = computeSankeyLayout(baseInput({ savings: 0 }));
+    const { nodes } = computeSankeyLayout(baseInput({ savings: [] }));
     expect(nodes.some((n) => n.side === "savings")).toBe(false);
+  });
+
+  it("lays out one node per savings destination, below the expenses", () => {
+    const { nodes } = computeSankeyLayout(
+      baseInput({
+        savings: [
+          { id: "pea", label: "Épargne PEA", amount: 500, color: "var(--gold)" },
+          { id: "livret", label: "Livret", amount: 200, color: "var(--gold)" },
+          { id: "liquid", label: "Resté liquide", amount: 300, color: "var(--accent)" },
+        ],
+      })
+    );
+    const savings = nodes.filter((n) => n.side === "savings");
+    expect(savings.map((n) => n.id)).toEqual(["pea", "livret", "liquid"]);
+    // Savings sit on the right, under the expense nodes (stacked after them).
+    const lastExpense = nodes.filter((n) => n.side === "expense").at(-1)!;
+    expect(savings.every((n) => n.y >= lastExpense.y)).toBe(true);
+  });
+
+  it("drops zero-amount savings nodes", () => {
+    const { nodes } = computeSankeyLayout(
+      baseInput({
+        savings: [
+          { id: "pea", label: "Épargne PEA", amount: 700, color: "var(--gold)" },
+          { id: "liquid", label: "Resté liquide", amount: 0, color: "var(--accent)" },
+        ],
+      })
+    );
+    const savings = nodes.filter((n) => n.side === "savings");
+    expect(savings.map((n) => n.id)).toEqual(["pea"]);
   });
 
   it("handles an empty month without throwing", () => {
     const { nodes, links } = computeSankeyLayout(
-      baseInput({ income: [], expense: [], savings: 0 })
+      baseInput({ income: [], expense: [], savings: [] })
     );
     expect(nodes).toHaveLength(0);
     expect(links).toHaveLength(0);

@@ -14,9 +14,7 @@ const MIN_LABEL_H = 12;
 interface SankeyFlowProps {
   income: SankeyItem[];
   expense: SankeyItem[];
-  savings: number;
-  savingsColor: string;
-  savingsLabel: string;
+  savings: SankeyItem[];
   formatCurrency: (amount: number) => string;
 }
 
@@ -24,14 +22,7 @@ interface SankeyFlowProps {
  *
  *  Ribbons/nodes are SVG (stretched to the box); labels are HTML overlaid on
  *  top so their font + size match the rest of the UI exactly. */
-export function SankeyFlow({
-  income,
-  expense,
-  savings,
-  savingsColor,
-  savingsLabel,
-  formatCurrency,
-}: SankeyFlowProps) {
+export function SankeyFlow({ income, expense, savings, formatCurrency }: SankeyFlowProps) {
   const [hovered, setHovered] = useState<string | null>(null);
 
   const { nodes, links } = useMemo(
@@ -40,14 +31,12 @@ export function SankeyFlow({
         income,
         expense,
         savings,
-        savingsColor,
-        savingsLabel,
         width: VIEW_W,
         height: VIEW_H,
         padLeft: PAD_LEFT,
         padRight: PAD_RIGHT,
       }),
-    [income, expense, savings, savingsColor, savingsLabel]
+    [income, expense, savings]
   );
 
   const enter = (id: string) => () => setHovered(id);
