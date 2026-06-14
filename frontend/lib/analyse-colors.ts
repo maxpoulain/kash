@@ -38,3 +38,5 @@ export const INCOME_FLOW_COLOR = "var(--accent)";
 export const SAVINGS_COLOR = "var(--gold)";
 /** Synthetic "prior balance" income source (drawdown) — muted, not earned income. */
 export const PRIOR_BALANCE_COLOR = "var(--ink-2)";
+/** Inter-account transfer flows (single-account view) — muted, internal movement. */
+export const TRANSFER_COLOR = "var(--ink-3)";
