@@ -5,8 +5,10 @@ from typing import cast
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.core.accounts import visible_account_ids
 from app.core.auth import get_current_user
 from app.core.supabase import get_supabase
+from app.routers.accounts import account_networth_events
 from app.schemas.savings_accounts import NetWorthHistoryPoint, SavingsAccountCreate, SavingsAccountOut, SavingsAccountUpdate
 
 router = APIRouter(prefix="/api/savings-accounts")
@@ -125,46 +127,58 @@ async def get_net_worth_history(
     household_id = _get_household_id(claims["sub"])
     supabase = get_supabase()
 
-    # All account IDs for this household
-    accounts_result = (
-        supabase.table("savings_accounts")
-        .select("id")
-        .eq("household_id", household_id)
-        .execute()
-    )
-    account_ids = [row["id"] for row in cast(list[dict], accounts_result.data or [])]
-    if not account_ids:
-        return []
-
-    # All snapshots for these accounts, ordered by date
-    snapshots_result = (
-        supabase.table("savings_snapshots")
-        .select("account_id, date, balance")
-        .in_("account_id", account_ids)
-        .order("date")
-        .execute()
-    )
-    rows = cast(list[dict], snapshots_result.data or [])
-
-    # For each date, sum the latest known balance per account
-    # Since we have one row per (account, date), we need to forward-fill:
-    # at each date, an account's balance is the most recent snapshot on or before that date.
-    # Build a sorted list of all distinct dates, then accumulate per-account last-known balance.
+    # Wealth (patrimoine): forward-filled snapshots — at each date, an account's
+    # value is its most recent snapshot on or before that date. A household may have
+    # no wealth accounts yet and still get history from its cash accounts below.
     from collections import defaultdict
 
-    dates: list[datetime.date] = sorted({datetime.date.fromisoformat(r["date"]) for r in rows})
+    by_account: dict[str, list[tuple[datetime.date, float]]] = defaultdict(list)
+    account_ids = [
+        row["id"]
+        for row in cast(
+            list[dict],
+            supabase.table("savings_accounts")
+            .select("id")
+            .eq("household_id", household_id)
+            .execute()
+            .data
+            or [],
+        )
+    ]
+    if account_ids:
+        snapshot_rows = cast(
+            list[dict],
+            supabase.table("savings_snapshots")
+            .select("account_id, date, balance")
+            .in_("account_id", account_ids)
+            .order("date")
+            .execute()
+            .data
+            or [],
+        )
+        for r in snapshot_rows:
+            by_account[r["account_id"]].append(
+                (datetime.date.fromisoformat(r["date"]), float(r["balance"]))
+            )
+
+    # Cash (comptes): each visible account's balance at a past date, computed on
+    # the fly from its dated events (00058 T5b). Sorted so we can sweep cumulatively.
+    visible = visible_account_ids(household_id, claims["sub"])
+    base_cash, cash_events = account_networth_events(visible)
+    cash_events.sort(key=lambda ev: ev[0])
+
+    # The axis is every date that moves net worth: snapshot dates ∪ cash-event dates.
+    dates: list[datetime.date] = sorted(
+        {d for snaps in by_account.values() for d, _ in snaps} | {d for d, _ in cash_events}
+    )
     if not dates:
         return []
 
-    # Group snapshots by account
-    by_account: dict[str, list[tuple[datetime.date, float]]] = defaultdict(list)
-    for r in rows:
-        by_account[r["account_id"]].append((datetime.date.fromisoformat(r["date"]), float(r["balance"])))
-
-    # For each date, compute total using last known balance per account
     last_known: dict[str, float] = {}
-    result_points: list[NetWorthHistoryPoint] = []
     snapshot_index: dict[str, int] = {aid: 0 for aid in by_account}
+    cash_index = 0
+    cash_running = 0.0
+    result_points: list[NetWorthHistoryPoint] = []
 
     for date in dates:
         for aid, snapshots in by_account.items():
@@ -173,7 +187,10 @@ async def get_net_worth_history(
                 last_known[aid] = snapshots[idx][1]
                 idx += 1
             snapshot_index[aid] = idx
-        total = sum(last_known.values())
+        while cash_index < len(cash_events) and cash_events[cash_index][0] <= date:
+            cash_running += cash_events[cash_index][1]
+            cash_index += 1
+        total = sum(last_known.values()) + base_cash + cash_running
         result_points.append(NetWorthHistoryPoint(date=date, total=total))
 
     return result_points
