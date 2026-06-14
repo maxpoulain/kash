@@ -15,7 +15,7 @@ from app.core.auth import get_current_user
 from app.core.supabase import get_supabase
 from app.routers.recurring_transactions import materialize_due_for_household
 from app.routers.transactions import _get_household_id
-from app.schemas.summary import CategoryAmount, SummaryOut
+from app.schemas.summary import CategoryAmount, SavingsDestination, SummaryOut
 
 router = APIRouter(prefix="/api")
 
@@ -119,6 +119,8 @@ async def get_summary(
 
     savings_rate = (total_income - total_expense) / total_income if total_income > 0 else None
 
+    savings_destinations = _savings_destinations(supabase, household_id, account_ids, start, end)
+
     return SummaryOut(
         month=month,
         total_income=total_income,
@@ -127,4 +129,58 @@ async def get_summary(
         savings_rate=savings_rate,
         income_by_category=_to_breakdown(by_category["income"]),
         expense_by_category=_to_breakdown(by_category["expense"]),
+        savings_destinations=savings_destinations,
     )
+
+
+def _savings_destinations(
+    supabase, household_id: str, account_ids: list[str], start: str, end: str
+) -> list[SavingsDestination]:
+    """Sum this month's savings contributions (``courant → epargne`` transfers).
+
+    Grouped by destination wealth account. Only transfers leaving a *visible*
+    checking account count; internal ``courant → courant`` and ``epargne →
+    courant`` withdrawals are excluded by the kind filters. Transfers never touch
+    ``transactions``, so income/expense totals stay unaffected — this only feeds
+    the Sankey's savings decomposition (00058 T5a).
+    """
+    if not account_ids:
+        return []
+
+    transfer_result = (
+        supabase.table("transfers")
+        .select("to_id,amount")
+        .eq("household_id", household_id)
+        .eq("from_kind", "courant")
+        .eq("to_kind", "epargne")
+        .in_("from_id", account_ids)
+        .gte("date", start)
+        .lt("date", end)
+        .execute()
+    )
+    transfer_rows = cast(
+        list[dict], transfer_result.data if isinstance(transfer_result.data, list) else []
+    )
+    if not transfer_rows:
+        return []
+
+    by_dest: dict[str, float] = {}
+    for row in transfer_rows:
+        to_id = row["to_id"]
+        by_dest[to_id] = by_dest.get(to_id, 0.0) + float(row["amount"])
+
+    name_result = (
+        supabase.table("savings_accounts")
+        .select("id,name")
+        .in_("id", list(by_dest.keys()))
+        .execute()
+    )
+    name_rows = cast(list[dict], name_result.data if isinstance(name_result.data, list) else [])
+    names = {row["id"]: row.get("name") for row in name_rows}
+
+    destinations = [
+        SavingsDestination(account_id=UUID(to_id), name=names.get(to_id), amount=amount)
+        for to_id, amount in by_dest.items()
+    ]
+    destinations.sort(key=lambda dest: dest.amount, reverse=True)
+    return destinations

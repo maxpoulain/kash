@@ -11,6 +11,8 @@ USER_ID = "00000000-0000-0000-0000-000000000001"
 HOUSEHOLD_ID = "00000000-0000-0000-0000-000000000002"
 CAT_FOOD = "00000000-0000-0000-0000-0000000000f0"
 CAT_SALARY = "00000000-0000-0000-0000-0000000000a0"
+PEA = "00000000-0000-0000-0000-0000000000e1"
+LIVRET = "00000000-0000-0000-0000-0000000000e2"
 
 FAKE_CLAIMS = {"sub": USER_ID, "email": "test@example.com"}
 
@@ -25,31 +27,31 @@ def _mock_auth(mock_jwks):
     mock_jwks.return_value.get_signing_key_from_jwt.return_value = mock_signing_key
 
 
-def _mock_supabase(mock_supabase, *, categories, transactions):
-    """Wire the two queries the endpoint issues: categories then transactions."""
+def _query(rows):
+    """A query mock whose builder methods chain back to itself, terminating in
+    ``.execute().data == rows`` regardless of the chain length/shape."""
+    q = MagicMock()
+    q.execute.return_value.data = rows
+    for method in ("select", "eq", "in_", "gte", "lt", "or_", "order", "neq"):
+        getattr(q, method).return_value = q
+    return q
+
+
+def _mock_supabase(
+    mock_supabase, *, categories, transactions, transfers=None, savings_accounts=None
+):
+    """Dispatch each ``table(name)`` call to its own query mock by table name."""
     supabase_instance = MagicMock()
     mock_supabase.return_value = supabase_instance
 
-    cat_result = MagicMock()
-    cat_result.data = categories
-    (
-        supabase_instance.table.return_value
-        .select.return_value
-        .or_.return_value
-        .execute.return_value
-    ) = cat_result
-
-    tx_result = MagicMock()
-    tx_result.data = transactions
-    (
-        supabase_instance.table.return_value
-        .select.return_value
-        .eq.return_value
-        .in_.return_value
-        .gte.return_value
-        .lt.return_value
-        .execute.return_value
-    ) = tx_result
+    tables = {
+        "categories": _query(categories),
+        "transactions": _query(transactions),
+        "transfers": _query(transfers or []),
+        "savings_accounts": _query(savings_accounts or []),
+    }
+    supabase_instance.table.side_effect = lambda name: tables[name]
+    return tables
 
 
 def _patches():
@@ -185,3 +187,101 @@ async def test_summary_empty_month_returns_zeros():
     assert data["savings_rate"] is None
     assert data["income_by_category"] == []
     assert data["expense_by_category"] == []
+    assert data["savings_destinations"] == []
+
+
+@pytest.mark.asyncio
+async def test_summary_savings_destinations_grouped_and_named():
+    # Two contributions to the PEA + one to a Livret. The query already filters to
+    # courant→epargne (asserted below); these are the rows it returns.
+    transfers = [
+        {"to_id": PEA, "amount": 500.0},
+        {"to_id": PEA, "amount": 200.0},
+        {"to_id": LIVRET, "amount": 300.0},
+    ]
+    savings_accounts = [
+        {"id": PEA, "name": "PEA"},
+        {"id": LIVRET, "name": "Livret A"},
+    ]
+    p_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase = _patches()
+    with p_jwks as mock_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase as mock_supabase:
+        _mock_auth(mock_jwks)
+        tables = _mock_supabase(
+            mock_supabase,
+            categories=CATEGORIES,
+            transactions=[{"amount": 2000.0, "type": "income", "category_id": CAT_SALARY}],
+            transfers=transfers,
+            savings_accounts=savings_accounts,
+        )
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get(
+                "/api/summary?month=2026-06",
+                headers={"Authorization": "Bearer valid.token"},
+            )
+
+    assert response.status_code == 200
+    dests = response.json()["savings_destinations"]
+    # Grouped by destination, largest first, names resolved.
+    assert dests == [
+        {"account_id": PEA, "name": "PEA", "amount": 700.0},
+        {"account_id": LIVRET, "name": "Livret A", "amount": 300.0},
+    ]
+
+    # The internal/withdrawal exclusion is enforced by the query's kind filters,
+    # and the visibility scope by from_id ∈ visible accounts.
+    eq_calls = tables["transfers"].eq.call_args_list
+    assert ("from_kind", "courant") in [c.args for c in eq_calls]
+    assert ("to_kind", "epargne") in [c.args for c in eq_calls]
+    tables["transfers"].in_.assert_any_call("from_id", ["acc-1"])
+
+
+@pytest.mark.asyncio
+async def test_summary_totals_unchanged_by_transfers():
+    # Same transactions as the totals test; adding transfers must not move totals.
+    transactions = [
+        {"amount": 2000.0, "type": "income", "category_id": CAT_SALARY},
+        {"amount": 300.0, "type": "expense", "category_id": CAT_FOOD},
+    ]
+    transfers = [{"to_id": PEA, "amount": 1500.0}]
+    p_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase = _patches()
+    with p_jwks as mock_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase as mock_supabase:
+        _mock_auth(mock_jwks)
+        _mock_supabase(
+            mock_supabase,
+            categories=CATEGORIES,
+            transactions=transactions,
+            transfers=transfers,
+            savings_accounts=[{"id": PEA, "name": "PEA"}],
+        )
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get(
+                "/api/summary?month=2026-06",
+                headers={"Authorization": "Bearer valid.token"},
+            )
+
+    data = response.json()
+    assert data["total_income"] == 2000.0
+    assert data["total_expense"] == 300.0
+    assert data["net"] == 1700.0
+    # The transfer surfaces only as a savings destination, never in the totals.
+    assert data["savings_destinations"][0]["amount"] == 1500.0
+
+
+@pytest.mark.asyncio
+async def test_summary_no_transfers_empty_destinations():
+    p_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase = _patches()
+    with p_jwks as mock_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase as mock_supabase:
+        _mock_auth(mock_jwks)
+        _mock_supabase(
+            mock_supabase,
+            categories=CATEGORIES,
+            transactions=[{"amount": 100.0, "type": "income", "category_id": CAT_SALARY}],
+            transfers=[],
+        )
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get(
+                "/api/summary?month=2026-06",
+                headers={"Authorization": "Bearer valid.token"},
+            )
+
+    assert response.json()["savings_destinations"] == []
