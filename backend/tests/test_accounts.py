@@ -4,6 +4,7 @@ T1 socle of 00058-comptes-multiples. The helper is a no-op today (all accounts
 shared) and is the single point T4 will flip to enforce private accounts.
 """
 
+from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -11,6 +12,7 @@ from httpx import ASGITransport, AsyncClient
 
 from app.core.accounts import visible_account_ids
 from app.main import app
+from app.routers.accounts import account_networth_events
 
 USER_ID = "00000000-0000-0000-0000-000000000001"
 HOUSEHOLD_ID = "00000000-0000-0000-0000-000000000002"
@@ -74,6 +76,97 @@ def test_visible_account_ids_empty_when_no_accounts():
         ids = visible_account_ids(HOUSEHOLD_ID, USER_ID)
 
     assert ids == []
+
+
+# --- account_networth_events helper (net worth history inputs, T5b) ---
+
+
+def _query(rows):
+    """Query mock whose builder methods chain back to itself, ending in
+    ``.execute().data == rows`` whatever the chain shape."""
+    q = MagicMock()
+    q.execute.return_value.data = rows
+    for method in ("select", "eq", "in_", "or_", "order", "limit"):
+        getattr(q, method).return_value = q
+    return q
+
+
+def _events_supabase(mock_supabase, *, accounts, transactions, transfers):
+    instance = MagicMock()
+    mock_supabase.return_value = instance
+    tables = {
+        "accounts": _query(accounts),
+        "transactions": _query(transactions),
+        "transfers": _query(transfers),
+    }
+    instance.table.side_effect = lambda name: tables[name]
+
+
+def test_account_networth_events_base_and_dated_deltas():
+    with patch("app.routers.accounts.get_supabase") as mock_supabase:
+        _events_supabase(
+            mock_supabase,
+            accounts=[{"initial_balance": 1000.0}, {"initial_balance": 0.0}],
+            transactions=[
+                {"amount": 500.0, "type": "income", "date": "2026-04-01"},
+                {"amount": 200.0, "type": "expense", "date": "2026-04-10"},
+            ],
+            transfers=[],
+        )
+        base, events = account_networth_events([ACCOUNT_ID, OTHER_ACCOUNT_ID])
+
+    assert base == 1000.0
+    assert (date(2026, 4, 1), 500.0) in events
+    assert (date(2026, 4, 10), -200.0) in events
+
+
+def test_account_networth_events_internal_transfer_nets_zero():
+    """A courant→courant transfer between two visible accounts emits ±amount → net 0."""
+    with patch("app.routers.accounts.get_supabase") as mock_supabase:
+        _events_supabase(
+            mock_supabase,
+            accounts=[{"initial_balance": 0.0}, {"initial_balance": 0.0}],
+            transactions=[],
+            transfers=[
+                {
+                    "from_kind": "courant", "from_id": ACCOUNT_ID,
+                    "to_kind": "courant", "to_id": OTHER_ACCOUNT_ID,
+                    "amount": 100.0, "date": "2026-05-01",
+                }
+            ],
+        )
+        base, events = account_networth_events([ACCOUNT_ID, OTHER_ACCOUNT_ID])
+
+    assert base == 0.0
+    assert (date(2026, 5, 1), -100.0) in events
+    assert (date(2026, 5, 1), 100.0) in events
+    assert sum(delta for _, delta in events) == 0.0
+
+
+def test_account_networth_events_to_epargne_only_debits_courant():
+    """A courant→epargne contribution debits the cash account; the epargne leg has no event."""
+    with patch("app.routers.accounts.get_supabase") as mock_supabase:
+        _events_supabase(
+            mock_supabase,
+            accounts=[{"initial_balance": 0.0}],
+            transactions=[],
+            transfers=[
+                {
+                    "from_kind": "courant", "from_id": ACCOUNT_ID,
+                    "to_kind": "epargne", "to_id": "00000000-0000-0000-0000-0000000000e1",
+                    "amount": 500.0, "date": "2026-05-02",
+                }
+            ],
+        )
+        _, events = account_networth_events([ACCOUNT_ID])
+
+    assert events == [(date(2026, 5, 2), -500.0)]
+
+
+def test_account_networth_events_empty_for_no_accounts():
+    base, events = account_networth_events([])
+    assert base == 0.0
+    assert events == []
 
 
 # --- POST /transactions account defaulting ---
