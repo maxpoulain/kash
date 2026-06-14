@@ -23,10 +23,12 @@ une source synthétique **« Solde antérieur »** quand les contributions dépa
 
 ## Critères de validation
 
-- [ ] Un transfert commun → PEA apparaît comme nœud d'épargne nommé « Épargne PEA » dans le Sankey
-- [ ] Les transferts commun → perso (`compte → compte`) n'apparaissent **pas** (internes)
-- [ ] Quand contributions > net, une source « Solde antérieur » équilibre le diagramme
-- [ ] Les totaux income/expense/net du summary restent **inchangés** (régression T3)
+- [x] Un transfert commun → PEA apparaît comme nœud d'épargne nommé « Épargne PEA » dans le Sankey
+- [x] Les transferts commun → perso (`compte → compte`) n'apparaissent **pas** (internes)
+- [x] Quand contributions > net, une source « Solde antérieur » équilibre le diagramme
+- [x] Les totaux income/expense/net du summary restent **inchangés** (régression T3)
+
+> Vérifié : tests automatisés (back + front) verts + vérif visuelle navigateur sur la page Analyse (scénarios PEA, exclusion perso, drawdown « Solde antérieur »).
 
 ## Hors scope (autres sous-tickets de T5)
 
