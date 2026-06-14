@@ -45,9 +45,12 @@ export async function createTransaction(payload: CreateTransactionPayload): Prom
 }
 
 
-export async function getSummary(month?: string): Promise<Summary> {
-  const url = month ? `/api/summary?month=${month}` : "/api/summary";
-  const res = await apiFetch(url);
+export async function getSummary(month?: string, accountId?: string): Promise<Summary> {
+  const params = new URLSearchParams();
+  if (month) params.set("month", month);
+  if (accountId) params.set("account_id", accountId);
+  const query = params.toString();
+  const res = await apiFetch(query ? `/api/summary?${query}` : "/api/summary");
   if (!res.ok) throw new Error("Failed to fetch summary");
   return res.json();
 }

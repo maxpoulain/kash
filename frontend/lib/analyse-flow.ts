@@ -1,40 +1,47 @@
-// Builds the Sankey's income/savings nodes from a month summary (00058 T5a).
+// Builds the Sankey's income/savings nodes from a month summary (00058 T5a/T5c).
 //
-// The summary totals never count transfers, so the money flow has to reconcile
-// two facts: `net` (= income − expense, undecomposed) and the named savings
-// contributions `D` (Σ courant→epargne transfers). Decision (feature 00058):
+// The summary totals never count transfers, so the money flow reconciles `net`
+// (= income − expense, undecomposed) with the flows that route money around:
+//   • savings destinations  D  (Σ courant→epargne)            — right side
+//   • transfers out         O  (Σ → another account, scoped)  — right side
+//   • transfers in          I  (Σ from another account, scoped) — left side
 //
-//   savings side  = one node per wealth destination + "Resté liquide" (net − D)
-//   income side   = revenus + "Solde antérieur" (D − net) when contributions
-//                   exceed net (the drawdown is financed from a prior balance)
-//
-// Either synthetic node only appears on the side where its amount is positive,
-// which keeps both sides of the diagram balanced (see the plan's proof).
+// Leftover  = net + I − D − O. Positive → "Resté liquide" (right); negative →
+// "Solde antérieur" (left, a drawdown from a prior balance). Each synthetic node
+// appears only on the side where it is positive, so both sides stay balanced.
+// In the combined view there are no transfers and the pre-T5a behaviour holds.
 
 import type { SankeyItem } from "@/lib/sankey";
-import type { SavingsDestination } from "@/types/api";
+import type { AccountTransferFlow, SavingsDestination } from "@/types/api";
 
 export interface FlowLabels {
   /** Real income source — "Revenus". Also the prefix for named destinations. */
   income: string;
-  /** Undecomposed leftover when there are no contributions — "Épargne". */
+  /** Undecomposed leftover when there is no savings/transfer activity — "Épargne". */
   savings: string;
-  /** Leftover that stayed liquid when net exceeds contributions — "Resté liquide". */
+  /** Leftover that stayed liquid — "Resté liquide". */
   remainedLiquid: string;
-  /** Synthetic drawdown source when contributions exceed net — "Solde antérieur". */
+  /** Synthetic drawdown source — "Solde antérieur". */
   priorBalance: string;
+  /** Incoming transfer label, e.g. name → "Depuis {name}". */
+  transferFrom: (name: string | null) => string;
+  /** Outgoing transfer label, e.g. name → "Vers {name}". */
+  transferTo: (name: string | null) => string;
 }
 
 export interface FlowColors {
   incomeFlow: string;
   savings: string;
   priorBalance: string;
+  /** Inter-account transfer flows (in/out) — internal movement, muted. */
+  transfer: string;
 }
 
 export interface FlowSummary {
   total_income: number;
   net: number;
   savings_destinations: SavingsDestination[];
+  account_transfers: AccountTransferFlow[];
 }
 
 /** Income and savings nodes for {@link computeSankeyLayout}, reconciled so both
@@ -44,46 +51,62 @@ export function buildFlowNodes(
   colors: FlowColors,
   labels: FlowLabels
 ): { income: SankeyItem[]; savings: SankeyItem[] } {
-  const { net, savings_destinations: destinations } = summary;
-  const contributed = destinations.reduce((sum, d) => sum + d.amount, 0);
+  const { net, savings_destinations: destinations, account_transfers: transfers } = summary;
+  const transfersIn = transfers.filter((t) => t.direction === "in");
+  const transfersOut = transfers.filter((t) => t.direction === "out");
 
+  const sum = (xs: { amount: number }[]) => xs.reduce((acc, x) => acc + x.amount, 0);
+  const contributed = sum(destinations);
+  const incoming = sum(transfersIn);
+  const outgoing = sum(transfersOut);
+  // Whatever isn't spent, saved, or transferred away stayed liquid (can go negative).
+  const leftover = net + incoming - contributed - outgoing;
+  const hasFlows = destinations.length > 0 || transfers.length > 0;
+
+  // ── Income side: real income, then incoming transfers, then any drawdown. ──
   const income: SankeyItem[] =
     summary.total_income > 0
       ? [{ id: "revenus", label: labels.income, amount: summary.total_income, color: colors.incomeFlow }]
       : [];
-
-  // Drawdown: contributions financed beyond this month's net come from a prior balance.
-  const priorBalance = contributed - net;
-  if (priorBalance > 0) {
+  transfersIn.forEach((t, i) =>
     income.push({
-      id: "prior-balance",
-      label: labels.priorBalance,
-      amount: priorBalance,
-      color: colors.priorBalance,
-    });
+      id: `transfer-in-${i}`,
+      label: labels.transferFrom(t.counterpart_name),
+      amount: t.amount,
+      color: colors.transfer,
+    })
+  );
+  if (leftover < 0) {
+    income.push({ id: "prior-balance", label: labels.priorBalance, amount: -leftover, color: colors.priorBalance });
   }
 
+  // ── Savings/outflow side: wealth destinations, outgoing transfers, leftover. ──
   const savings: SankeyItem[] = [];
-  if (destinations.length === 0) {
-    // No contributions: the whole positive net is undecomposed savings (the
-    // pre-T5a behaviour — a single "Épargne" node).
-    if (net > 0) {
-      savings.push({ id: "savings", label: labels.savings, amount: net, color: colors.savings });
-    }
-  } else {
-    for (const dest of destinations) {
-      savings.push({
-        id: `dest-${dest.account_id}`,
-        label: dest.name ? `${labels.savings} ${dest.name}` : labels.savings,
-        amount: dest.amount,
-        color: colors.savings,
-      });
-    }
-    // The slice of net that wasn't routed to a wealth account stayed liquid.
-    const liquid = net - contributed;
-    if (liquid > 0) {
-      savings.push({ id: "liquid", label: labels.remainedLiquid, amount: liquid, color: colors.savings });
-    }
+  for (const dest of destinations) {
+    savings.push({
+      id: `dest-${dest.account_id}`,
+      label: dest.name ? `${labels.savings} ${dest.name}` : labels.savings,
+      amount: dest.amount,
+      color: colors.savings,
+    });
+  }
+  transfersOut.forEach((t, i) =>
+    savings.push({
+      id: `transfer-out-${i}`,
+      label: labels.transferTo(t.counterpart_name),
+      amount: t.amount,
+      color: colors.transfer,
+    })
+  );
+  if (leftover > 0) {
+    // No savings/transfer activity at all ⇒ the whole net is undecomposed "Épargne"
+    // (preserves the combined-view behaviour); otherwise it is the liquid remainder.
+    savings.push({
+      id: hasFlows ? "liquid" : "savings",
+      label: hasFlows ? labels.remainedLiquid : labels.savings,
+      amount: leftover,
+      color: colors.savings,
+    });
   }
 
   return { income, savings };

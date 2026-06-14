@@ -5,37 +5,49 @@ import { useLocale, useTranslations } from "next-intl";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Card } from "@/components/ui/card";
 import { MonthSwitcher } from "@/components/ui/month-switcher";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SankeyFlow } from "@/components/analyse/sankey-flow";
 import { CategoryBreakdown, type BreakdownItem } from "@/components/analyse/category-breakdown";
-import { getSummary } from "@/lib/api";
+import { getSummary, getAccounts } from "@/lib/api";
 import {
   expenseColor,
   incomeColor,
   INCOME_FLOW_COLOR,
   PRIOR_BALANCE_COLOR,
   SAVINGS_COLOR,
+  TRANSFER_COLOR,
 } from "@/lib/analyse-colors";
 import { buildFlowNodes } from "@/lib/analyse-flow";
 import { currentMonth } from "@/lib/month";
-import type { CategoryAmount, Summary } from "@/types/api";
+import type { Account, CategoryAmount, Summary } from "@/types/api";
+
+const ALL_ACCOUNTS = "all";
 
 export function AnalyseClient() {
   const t = useTranslations("analyse");
   const locale = useLocale();
   const [month, setMonth] = useState(currentMonth);
+  const [accountId, setAccountId] = useState(ALL_ACCOUNTS);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      setSummary(await getSummary(month));
+      setSummary(await getSummary(month, accountId === ALL_ACCOUNTS ? undefined : accountId));
     } catch {
       setSummary(null);
     } finally {
       setLoading(false);
     }
-  }, [month]);
+  }, [month, accountId]);
 
   useEffect(() => {
     // load() flips a loading flag synchronously to show the skeleton during
@@ -43,6 +55,12 @@ export function AnalyseClient() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load]);
+
+  useEffect(() => {
+    // Account options for the scope selector; visible accounts only (the API
+    // already excludes archived ones).
+    getAccounts().then(setAccounts).catch(() => {});
+  }, []);
 
   const formatCurrency = useCallback(
     (amount: number) => amount.toLocaleString(locale, { style: "currency", currency: "EUR" }),
@@ -80,12 +98,15 @@ export function AnalyseClient() {
               incomeFlow: INCOME_FLOW_COLOR,
               savings: SAVINGS_COLOR,
               priorBalance: PRIOR_BALANCE_COLOR,
+              transfer: TRANSFER_COLOR,
             },
             {
               income: t("flowIncome"),
               savings: t("flowSavings"),
               remainedLiquid: t("flowRemainedLiquid"),
               priorBalance: t("flowPriorBalance"),
+              transferFrom: (name) => t("flowTransferFrom", { name: name ?? t("flowTransferUnknown") }),
+              transferTo: (name) => t("flowTransferTo", { name: name ?? t("flowTransferUnknown") }),
             }
           )
         : { income: [], savings: [] },
@@ -110,7 +131,24 @@ export function AnalyseClient() {
               {t("subtitle")}
             </p>
           </div>
-          <MonthSwitcher value={month} onChange={setMonth} />
+          <div className="flex flex-wrap items-center gap-3">
+            <MonthSwitcher value={month} onChange={setMonth} />
+            {accounts.length > 0 && (
+              <Select value={accountId} onValueChange={setAccountId}>
+                <SelectTrigger size="sm" aria-label={t("accountFilter")}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_ACCOUNTS}>{t("allAccounts")}</SelectItem>
+                  {accounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id}>
+                      {account.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
         </div>
 
         {loading && !summary ? (
