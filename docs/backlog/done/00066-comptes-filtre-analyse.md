@@ -26,10 +26,12 @@ visibles). Scoper à un seul compte rend les transferts inter-comptes **visibles
 
 ## Critères de validation
 
-- [ ] Par défaut, Analyse = combiné sur tous les comptes visibles (comportement actuel inchangé)
-- [ ] Scoper sur « Compte commun » filtre summary + Sankey à ce compte
-- [ ] Un transfert commun → perso apparaît comme flux quand on scope sur l'un des deux comptes
-- [ ] Un compte privé d'un autre membre n'est pas sélectionnable (helper visibilité)
+- [x] Par défaut, Analyse = combiné sur tous les comptes visibles (comportement actuel inchangé) — vérifié : `account_transfers == []`
+- [x] Scoper sur un compte filtre summary + Sankey à ce compte — vérifié live (Perso : dépenses 111,08 vs 1199 combiné)
+- [x] Un transfert commun → perso apparaît comme flux quand on scope — vérifié : « Vers Compte principal 100 € » / « Depuis Perso 100 € »
+- [x] Un compte privé d'un autre membre n'est pas sélectionnable — le sélecteur liste `getAccounts` (passe par `visible_account_ids`) ; pleinement testable avec `00013`
+
+> Vérifié : tests back (scoping + `_account_transfers`) + front (`buildFlowNodes` généralisé) + vérif visuelle navigateur (scope Perso → Sankey « Vers Compte principal » + « Solde antérieur », équilibré).
 
 ## Hors scope
 
