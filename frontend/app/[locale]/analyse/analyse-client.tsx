@@ -8,7 +8,14 @@ import { MonthSwitcher } from "@/components/ui/month-switcher";
 import { SankeyFlow } from "@/components/analyse/sankey-flow";
 import { CategoryBreakdown, type BreakdownItem } from "@/components/analyse/category-breakdown";
 import { getSummary } from "@/lib/api";
-import { expenseColor, incomeColor, INCOME_FLOW_COLOR, SAVINGS_COLOR } from "@/lib/analyse-colors";
+import {
+  expenseColor,
+  incomeColor,
+  INCOME_FLOW_COLOR,
+  PRIOR_BALANCE_COLOR,
+  SAVINGS_COLOR,
+} from "@/lib/analyse-colors";
+import { buildFlowNodes } from "@/lib/analyse-flow";
 import { currentMonth } from "@/lib/month";
 import type { CategoryAmount, Summary } from "@/types/api";
 
@@ -64,7 +71,27 @@ export function AnalyseClient() {
     [summary, toItems]
   );
 
-  const savings = summary ? Math.max(summary.net, 0) : 0;
+  const flow = useMemo(
+    () =>
+      summary
+        ? buildFlowNodes(
+            summary,
+            {
+              incomeFlow: INCOME_FLOW_COLOR,
+              savings: SAVINGS_COLOR,
+              priorBalance: PRIOR_BALANCE_COLOR,
+            },
+            {
+              income: t("flowIncome"),
+              savings: t("flowSavings"),
+              remainedLiquid: t("flowRemainedLiquid"),
+              priorBalance: t("flowPriorBalance"),
+            }
+          )
+        : { income: [], savings: [] },
+    [summary, t]
+  );
+
   const hasData = summary && (summary.total_income > 0 || summary.total_expense > 0);
 
   const savingsRateLabel =
@@ -127,22 +154,9 @@ export function AnalyseClient() {
                 <div className="font-display text-lg font-semibold">{t("flowTitle")}</div>
               </div>
               <SankeyFlow
-                income={
-                  summary!.total_income > 0
-                    ? [
-                        {
-                          id: "revenus",
-                          label: t("flowIncome"),
-                          amount: summary!.total_income,
-                          color: INCOME_FLOW_COLOR,
-                        },
-                      ]
-                    : []
-                }
+                income={flow.income}
                 expense={expenseItems}
-                savings={savings}
-                savingsColor={SAVINGS_COLOR}
-                savingsLabel={t("flowSavings")}
+                savings={flow.savings}
                 formatCurrency={formatCurrency}
               />
             </Card>

@@ -36,3 +36,5 @@ export function incomeColor(index: number): string {
 export const INCOME_FLOW_COLOR = "var(--accent)";
 /** Savings outflow on the flow diagram (gold). */
 export const SAVINGS_COLOR = "var(--gold)";
+/** Synthetic "prior balance" income source (drawdown) — muted, not earned income. */
+export const PRIOR_BALANCE_COLOR = "var(--ink-2)";
