@@ -26,9 +26,11 @@ courants est absent de l'historique. Back-filler les soldes de comptes à des da
 
 ## Critères de validation
 
-- [ ] La sparkline net worth inclut l'historique des soldes de comptes
-- [ ] Le point le plus récent de la sparkline = en-tête net worth (Σ comptes + Σ patrimoine)
-- [ ] Un foyer sans patrimoine (que des comptes) a une sparkline non vide
+- [x] L'historique net worth (`GET /api/savings-accounts/history`) inclut le cash des comptes
+- [x] Le point le plus récent = en-tête net worth (Σ comptes + Σ patrimoine) — vérifié live : 11 522,83 €
+- [x] Un foyer sans patrimoine (que des comptes) a un historique non vide
+
+> **Note de scope** : le composant `NetWorthSparkline` n'est monté nulle part (code mort). `00065` livre la **donnée** correcte (et enrichit le badge delta, seul consommateur actuel). Le **rendu** de la sparkline est déplacé vers `00068`.
 
 ## Hors scope
 
