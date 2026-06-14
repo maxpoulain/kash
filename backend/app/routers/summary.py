@@ -15,7 +15,12 @@ from app.core.auth import get_current_user
 from app.core.supabase import get_supabase
 from app.routers.recurring_transactions import materialize_due_for_household
 from app.routers.transactions import _get_household_id
-from app.schemas.summary import CategoryAmount, SavingsDestination, SummaryOut
+from app.schemas.summary import (
+    AccountTransferFlow,
+    CategoryAmount,
+    SavingsDestination,
+    SummaryOut,
+)
 
 router = APIRouter(prefix="/api")
 
@@ -42,12 +47,15 @@ def _month_bounds(month: str) -> tuple[str, str]:
 @router.get("/summary", response_model=SummaryOut)
 async def get_summary(
     month: str | None = Query(None, description="Month to summarize, format YYYY-MM"),
+    account_id: str | None = Query(None, description="Scope to a single account (default: all visible)"),
     claims: dict = Depends(get_current_user),
 ) -> SummaryOut:
     """Aggregate the household's transactions for ``month`` (defaults to current).
 
     Materializes any due recurring transactions first, so the summary matches
-    what ``GET /transactions`` would return for the same month.
+    what ``GET /transactions`` would return for the same month. When ``account_id``
+    is given, the summary is scoped to that one account and inter-account transfers
+    touching it surface as flows (00058 T5c).
     """
     if month is None:
         now = datetime.now(timezone.utc)
@@ -70,7 +78,13 @@ async def get_summary(
 
     # Scope to visible accounts. No-op in T1 (all shared); T4 flips the helper to
     # exclude other members' private accounts, and the summary follows automatically.
-    account_ids = visible_account_ids(household_id, claims["sub"])
+    visible = visible_account_ids(household_id, claims["sub"])
+    if account_id is not None:
+        if account_id not in visible:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found")
+        account_ids = [account_id]
+    else:
+        account_ids = visible
 
     tx_result = (
         supabase.table("transactions")
@@ -120,6 +134,11 @@ async def get_summary(
     savings_rate = (total_income - total_expense) / total_income if total_income > 0 else None
 
     savings_destinations = _savings_destinations(supabase, household_id, account_ids, start, end)
+    account_transfers = (
+        _account_transfers(supabase, household_id, account_id, start, end)
+        if account_id is not None
+        else []
+    )
 
     return SummaryOut(
         month=month,
@@ -130,6 +149,7 @@ async def get_summary(
         income_by_category=_to_breakdown(by_category["income"]),
         expense_by_category=_to_breakdown(by_category["expense"]),
         savings_destinations=savings_destinations,
+        account_transfers=account_transfers,
     )
 
 
@@ -184,3 +204,56 @@ def _savings_destinations(
     ]
     destinations.sort(key=lambda dest: dest.amount, reverse=True)
     return destinations
+
+
+def _account_transfers(
+    supabase, household_id: str, account_id: str, start: str, end: str
+) -> list[AccountTransferFlow]:
+    """Inter-account transfers touching ``account_id`` this month, as Sankey flows.
+
+    Single-account view only (00058 T5c): ``out`` = ``account_id → another courant``,
+    ``in`` = ``→ account_id`` from a courant or epargne. ``account_id → epargne`` is a
+    SavingsDestination, not a transfer flow, so it is excluded here. The counterpart's
+    name is resolved from ``accounts`` (courant legs) or ``savings_accounts`` (epargne).
+    """
+    rows = cast(
+        list[dict],
+        supabase.table("transfers")
+        .select("from_kind,from_id,to_kind,to_id,amount")
+        .eq("household_id", household_id)
+        .or_(f"from_id.eq.{account_id},to_id.eq.{account_id}")
+        .gte("date", start)
+        .lt("date", end)
+        .execute()
+        .data
+        or [],
+    )
+
+    # Collect counterpart legs to resolve names, split by which table backs them.
+    flows: list[tuple[str, str, str, float]] = []  # (direction, kind, counterpart_id, amount)
+    for row in rows:
+        amount = float(row["amount"])
+        if row["from_id"] == account_id and row["to_kind"] == "courant":
+            flows.append(("out", row["to_kind"], row["to_id"], amount))
+        elif row["to_id"] == account_id:
+            flows.append(("in", row["from_kind"], row["from_id"], amount))
+        # from_id == account_id and to_kind == 'epargne' → handled as a SavingsDestination.
+
+    if not flows:
+        return []
+
+    courant_ids = {cid for _, kind, cid, _ in flows if kind == "courant"}
+    epargne_ids = {cid for _, kind, cid, _ in flows if kind == "epargne"}
+    names: dict[str, str | None] = {}
+    for table, ids in (("accounts", courant_ids), ("savings_accounts", epargne_ids)):
+        if ids:
+            for row in cast(
+                list[dict],
+                supabase.table(table).select("id,name").in_("id", list(ids)).execute().data or [],
+            ):
+                names[row["id"]] = row.get("name")
+
+    return [
+        AccountTransferFlow(direction=direction, counterpart_name=names.get(cid), amount=amount)
+        for direction, _, cid, amount in flows
+    ]

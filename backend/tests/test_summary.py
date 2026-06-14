@@ -38,7 +38,7 @@ def _query(rows):
 
 
 def _mock_supabase(
-    mock_supabase, *, categories, transactions, transfers=None, savings_accounts=None
+    mock_supabase, *, categories, transactions, transfers=None, savings_accounts=None, accounts=None
 ):
     """Dispatch each ``table(name)`` call to its own query mock by table name."""
     supabase_instance = MagicMock()
@@ -49,6 +49,7 @@ def _mock_supabase(
         "transactions": _query(transactions),
         "transfers": _query(transfers or []),
         "savings_accounts": _query(savings_accounts or []),
+        "accounts": _query(accounts or []),
     }
     supabase_instance.table.side_effect = lambda name: tables[name]
     return tables
@@ -285,3 +286,91 @@ async def test_summary_no_transfers_empty_destinations():
             )
 
     assert response.json()["savings_destinations"] == []
+
+
+@pytest.mark.asyncio
+async def test_summary_scopes_to_account_and_no_transfers_by_default():
+    """account_id scopes the transactions query; combined view has no transfer flows."""
+    p_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase = _patches()
+    with p_jwks as mock_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase as mock_supabase:
+        _mock_auth(mock_jwks)
+        tables = _mock_supabase(
+            mock_supabase,
+            categories=CATEGORIES,
+            transactions=[{"amount": 800.0, "type": "income", "category_id": CAT_SALARY}],
+        )
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get(
+                "/api/summary?month=2026-06&account_id=acc-1",
+                headers={"Authorization": "Bearer valid.token"},
+            )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_income"] == 800.0
+    # The transactions query was scoped to the single account.
+    tables["transactions"].in_.assert_any_call("account_id", ["acc-1"])
+    # No account_id on a combined call ⇒ this scoped call still classifies transfers,
+    # but with none present the flow list is empty.
+    assert data["account_transfers"] == []
+
+
+@pytest.mark.asyncio
+async def test_summary_combined_has_no_account_transfers():
+    p_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase = _patches()
+    with p_jwks as mock_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase as mock_supabase:
+        _mock_auth(mock_jwks)
+        _mock_supabase(mock_supabase, categories=CATEGORIES, transactions=[])
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get(
+                "/api/summary?month=2026-06",  # no account_id
+                headers={"Authorization": "Bearer valid.token"},
+            )
+
+    assert response.json()["account_transfers"] == []
+
+
+@pytest.mark.asyncio
+async def test_summary_account_id_not_visible_returns_404():
+    p_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase = _patches()
+    with p_jwks as mock_jwks, p_decode, p_household, p_materialize, p_visible, p_supabase as mock_supabase:
+        _mock_auth(mock_jwks)
+        _mock_supabase(mock_supabase, categories=CATEGORIES, transactions=[])
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get(
+                "/api/summary?month=2026-06&account_id=not-mine",
+                headers={"Authorization": "Bearer valid.token"},
+            )
+
+    assert response.status_code == 404
+
+
+def test_account_transfers_classifies_in_out_and_excludes_epargne():
+    """Unit: out = A→other courant, in = →A; A→epargne is a savings destination (skipped)."""
+    from app.routers.summary import _account_transfers
+
+    acc, other, pea = "acc-1", "acc-2", "pea-1"
+    transfers = [
+        {"from_kind": "courant", "from_id": acc, "to_kind": "courant", "to_id": other, "amount": 100.0},
+        {"from_kind": "courant", "from_id": other, "to_kind": "courant", "to_id": acc, "amount": 50.0},
+        {"from_kind": "courant", "from_id": acc, "to_kind": "epargne", "to_id": pea, "amount": 500.0},
+        {"from_kind": "epargne", "from_id": pea, "to_kind": "courant", "to_id": acc, "amount": 200.0},
+    ]
+    instance = MagicMock()
+    tables = {
+        "transfers": _query(transfers),
+        "accounts": _query([{"id": other, "name": "Perso"}]),
+        "savings_accounts": _query([{"id": pea, "name": "PEA"}]),
+    }
+    instance.table.side_effect = lambda name: tables[name]
+
+    flows = _account_transfers(instance, HOUSEHOLD_ID, acc, "2026-06-01", "2026-07-01")
+    as_tuples = {(f.direction, f.counterpart_name, f.amount) for f in flows}
+
+    assert as_tuples == {
+        ("out", "Perso", 100.0),   # acc → other courant
+        ("in", "Perso", 50.0),     # other courant → acc
+        ("in", "PEA", 200.0),      # epargne → acc (withdrawal)
+    }
+    # The acc → epargne contribution is NOT a transfer flow (it's a SavingsDestination).
+    assert all(not (f.direction == "out" and f.amount == 500.0) for f in flows)
