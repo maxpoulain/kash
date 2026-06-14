@@ -40,6 +40,12 @@ export interface CategoryAmount {
   amount: number;
 }
 
+export interface SavingsDestination {
+  account_id: string;
+  name: string | null;
+  amount: number;
+}
+
 export interface Summary {
   month: string;
   total_income: number;
@@ -48,6 +54,7 @@ export interface Summary {
   savings_rate: number | null;
   income_by_category: CategoryAmount[];
   expense_by_category: CategoryAmount[];
+  savings_destinations: SavingsDestination[];
 }
 
 // Accounts (cash-flow containers, calculated balance) — 00058 comptes multiples

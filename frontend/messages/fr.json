@@ -21,6 +21,8 @@
     "flowIncome": "Revenus",
     "flowExpenses": "Dépenses",
     "flowSavings": "Épargne",
+    "flowRemainedLiquid": "Resté liquide",
+    "flowPriorBalance": "Solde antérieur",
     "incomeByCategory": "Revenus par catégorie",
     "expenseByCategory": "Dépenses par catégorie",
     "noIncome": "Aucun revenu ce mois-ci.",

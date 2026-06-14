@@ -21,6 +21,8 @@
     "flowIncome": "Income",
     "flowExpenses": "Expenses",
     "flowSavings": "Savings",
+    "flowRemainedLiquid": "Stayed liquid",
+    "flowPriorBalance": "Prior balance",
     "incomeByCategory": "Income by category",
     "expenseByCategory": "Spending by category",
     "noIncome": "No income this month.",
