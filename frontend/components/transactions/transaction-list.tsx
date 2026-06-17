@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeftRight, Check, Filter, MoreVertical, Package, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeftRight, Check, Filter, MoreVertical, Package, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations, useLocale } from "next-intl";
 import { Dialog } from "@base-ui/react/dialog";
@@ -112,40 +112,71 @@ function DeleteConfirmDialog({
     <Dialog.Root open={!!pending} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 duration-200" />
-        <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-[18px] bg-background p-6 shadow-2xl data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 duration-200">
-          <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-warn-soft text-warning">
-              <Trash2 className="h-4 w-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <Dialog.Title className="font-display text-xl font-medium tracking-tight">
+        <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-[420px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[20px] bg-background shadow-2xl data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 duration-200">
+          {/* header — mirrors the add-transaction modal */}
+          <div className="flex items-center justify-between border-b px-[22px] py-3.5">
+            <div className="flex items-center gap-3">
+              <div
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px]"
+                style={{ background: "var(--warn-soft)", color: "var(--warn)" }}
+              >
+                <Trash2 className="h-[18px] w-[18px]" />
+              </div>
+              <Dialog.Title className="font-display text-[20px] font-medium leading-tight tracking-[-0.02em]">
                 {isTransfer ? t("deleteTransferTitle") : t("deleteTransactionTitle")}
               </Dialog.Title>
-              <p className="mt-1 text-[13px] text-muted-foreground">{t("deleteDescription")}</p>
             </div>
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              className="flex h-8 w-8 items-center justify-center rounded-[8px] text-muted-foreground transition-colors hover:text-foreground"
+              style={{ background: "var(--bg-sunk)" }}
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
 
-          {pending && (
-            <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-muted p-3.5">
-              <span className="truncate text-[13px] font-medium">{pending.label}</span>
-              <span className="ml-3 shrink-0 font-mono text-sm font-semibold">{pending.amount}</span>
-            </div>
-          )}
+          {/* body */}
+          <div className="space-y-3 px-[22px] py-[18px]">
+            <p className="text-[13px] text-muted-foreground">{t("deleteDescription")}</p>
+            {pending && (
+              <div
+                className="flex items-center justify-between gap-3 rounded-[12px] px-3.5 py-3"
+                style={{ background: "var(--bg-elev)", border: "1px solid var(--line)" }}
+              >
+                <span className="truncate text-[13px] font-medium">{pending.label}</span>
+                <span className="ml-3 shrink-0 font-mono text-[13px] font-semibold">{pending.amount}</span>
+              </div>
+            )}
+          </div>
 
-          <div className="mt-5 flex gap-2">
-            {/* Cancel = quiet (ghost) so the destructive confirm stays dominant. */}
-            <Button variant="ghost" className="flex-1" onClick={() => onOpenChange(false)} disabled={deleting}>
+          {/* footer — mirrors the add-transaction modal */}
+          <div
+            className="flex items-center justify-end gap-2 border-t px-[22px] py-3"
+            style={{ background: "var(--bg-elev)" }}
+          >
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              disabled={deleting}
+              className="w-28 rounded-[10px] py-2.5 text-center text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+              style={{ background: "var(--bg-sunk)" }}
+            >
               {t("deleteCancel")}
-            </Button>
-            {/* Destructive confirm = tonal warn (soft orange fill + orange text). */}
-            <Button
-              variant="ghost"
-              className="flex-1 bg-warn-soft text-warning hover:bg-warn-soft/70 hover:text-warning"
+            </button>
+            <button
+              type="button"
               onClick={confirm}
               disabled={deleting}
+              className="flex w-40 items-center justify-center gap-1.5 rounded-[10px] py-2.5 text-[13px] font-semibold transition-opacity disabled:opacity-60"
+              style={{ background: "var(--warn)", color: "var(--bg)" }}
             >
-              {t("delete")}
-            </Button>
+              {deleting ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              ) : (
+                t("delete")
+              )}
+            </button>
           </div>
         </Dialog.Popup>
       </Dialog.Portal>
