@@ -133,13 +133,14 @@ function DeleteConfirmDialog({
           )}
 
           <div className="mt-5 flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)} disabled={deleting}>
+            {/* Cancel = quiet (ghost) so the destructive confirm stays dominant. */}
+            <Button variant="ghost" className="flex-1" onClick={() => onOpenChange(false)} disabled={deleting}>
               {t("deleteCancel")}
             </Button>
-            {/* Destructive = ghost + warn (orange), per DS "Delete jar" / Danger zone. */}
+            {/* Destructive confirm = tonal warn (soft orange fill + orange text). */}
             <Button
               variant="ghost"
-              className="flex-1 text-warning hover:bg-warn-soft hover:text-warning"
+              className="flex-1 bg-warn-soft text-warning hover:bg-warn-soft/70 hover:text-warning"
               onClick={confirm}
               disabled={deleting}
             >
