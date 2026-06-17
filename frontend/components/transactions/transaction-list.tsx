@@ -76,7 +76,7 @@ function RowActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => 
           <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           {t("edit")}
         </button>
-        <button className={cn(itemClass, "text-destructive hover:bg-destructive/10")} onClick={() => { setOpen(false); onDelete(); }}>
+        <button className={cn(itemClass, "text-warning hover:bg-warn-soft")} onClick={() => { setOpen(false); onDelete(); }}>
           <Trash2 className="h-3.5 w-3.5 shrink-0" />
           {t("delete")}
         </button>
@@ -114,7 +114,7 @@ function DeleteConfirmDialog({
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 duration-200" />
         <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-[18px] bg-background p-6 shadow-2xl data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 duration-200">
           <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-destructive/10 text-destructive">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-warn-soft text-warning">
               <Trash2 className="h-4 w-4" />
             </div>
             <div className="min-w-0 flex-1">
@@ -136,7 +136,13 @@ function DeleteConfirmDialog({
             <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)} disabled={deleting}>
               {t("deleteCancel")}
             </Button>
-            <Button variant="destructive" className="flex-1" onClick={confirm} disabled={deleting}>
+            {/* Destructive = ghost + warn (orange), per DS "Delete jar" / Danger zone. */}
+            <Button
+              variant="ghost"
+              className="flex-1 text-warning hover:bg-warn-soft hover:text-warning"
+              onClick={confirm}
+              disabled={deleting}
+            >
               {t("delete")}
             </Button>
           </div>
