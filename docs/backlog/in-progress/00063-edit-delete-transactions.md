@@ -41,7 +41,9 @@ côté liste.
 - [ ] Foyer B ne peut éditer/supprimer ni les transactions ni les transferts du foyer A
 - [ ] Tests écrits et passants (`just check` passe)
 
-## Assumptions à confirmer
+## Décisions
 
-- Édition d'un transfert : utile, ou suppression + recréation suffit pour le MVP ?
-- Affordance : clic sur la ligne (ouvre un détail/édition) vs menu d'actions par ligne ?
+- **Édition transfert : complète** → ajouter `PATCH /api/transfers/{id}` backend +
+  réutiliser la modale en mode édition.
+- **Affordance : menu d'actions (⋮) par ligne** avec Éditer / Supprimer (explicite,
+  pas de clic accidentel), cohérent transactions et transferts.
