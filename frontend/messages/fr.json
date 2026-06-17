@@ -130,7 +130,9 @@
       "actions": "Actions",
       "edit": "Éditer",
       "delete": "Supprimer",
-      "deleteConfirm": "Supprimer cette entrée ?",
+      "deleteTransactionTitle": "Supprimer la transaction ?",
+      "deleteTransferTitle": "Supprimer le transfert ?",
+      "deleteDescription": "Cette action est irréversible et met à jour les soldes concernés.",
       "deleteCancel": "Annuler",
       "deleteSuccess": "Entrée supprimée"
     },

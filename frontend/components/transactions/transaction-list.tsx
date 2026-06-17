@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ArrowLeftRight, Check, Filter, MoreVertical, Package, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations, useLocale } from "next-intl";
+import { Dialog } from "@base-ui/react/dialog";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,27 +47,22 @@ function groupRowsByDate(rows: Row[], locale: string): { date: string; label: st
 
 type FilterType = "all" | "expense" | "income";
 
-/** Per-row ⋮ menu: Edit, then Delete with an inline confirm step. */
-function RowActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => Promise<void> }) {
+/** A row queued for deletion, with display data precomputed by the list. */
+interface PendingDelete {
+  row: Row;
+  label: string;
+  amount: string;
+}
+
+/** Per-row ⋮ menu: Edit + Delete. Delete defers to the list-level confirm dialog. */
+function RowActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
   const t = useTranslations("transactions.list");
   const [open, setOpen] = useState(false);
-  const [confirming, setConfirming] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-
-  async function confirmDelete() {
-    setDeleting(true);
-    try {
-      await onDelete();
-      setOpen(false);
-    } finally {
-      setDeleting(false);
-    }
-  }
 
   const itemClass = "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted";
 
   return (
-    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setConfirming(false); }}>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
           aria-label={t("actions")}
@@ -75,33 +71,78 @@ function RowActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => 
           <MoreVertical className="h-4 w-4" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-48 p-1.5">
-        {confirming ? (
-          <div className="space-y-2.5 p-1.5">
-            <p className="text-sm font-medium">{t("deleteConfirm")}</p>
-            <div className="flex justify-end gap-2">
-              <Button size="xs" variant="ghost" onClick={() => setConfirming(false)} disabled={deleting}>
-                {t("deleteCancel")}
-              </Button>
-              <Button size="xs" variant="destructive" onClick={confirmDelete} disabled={deleting}>
-                {t("delete")}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <button className={itemClass} onClick={() => { setOpen(false); onEdit(); }}>
-              <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              {t("edit")}
-            </button>
-            <button className={cn(itemClass, "text-destructive hover:bg-destructive/10")} onClick={() => setConfirming(true)}>
-              <Trash2 className="h-3.5 w-3.5 shrink-0" />
-              {t("delete")}
-            </button>
-          </>
-        )}
+      <PopoverContent align="end" className="w-44 p-1.5">
+        <button className={itemClass} onClick={() => { setOpen(false); onEdit(); }}>
+          <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          {t("edit")}
+        </button>
+        <button className={cn(itemClass, "text-destructive hover:bg-destructive/10")} onClick={() => { setOpen(false); onDelete(); }}>
+          <Trash2 className="h-3.5 w-3.5 shrink-0" />
+          {t("delete")}
+        </button>
       </PopoverContent>
     </Popover>
+  );
+}
+
+/** DS-style centered confirmation modal for a destructive delete. */
+function DeleteConfirmDialog({
+  pending,
+  onOpenChange,
+  onConfirm,
+}: {
+  pending: PendingDelete | null;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => Promise<void>;
+}) {
+  const t = useTranslations("transactions.list");
+  const [deleting, setDeleting] = useState(false);
+  const isTransfer = pending?.row.kind === "transfer";
+
+  async function confirm() {
+    setDeleting(true);
+    try {
+      await onConfirm();
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <Dialog.Root open={!!pending} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 duration-200" />
+        <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-[18px] bg-background p-6 shadow-2xl data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 duration-200">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-destructive/10 text-destructive">
+              <Trash2 className="h-4 w-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <Dialog.Title className="font-display text-xl font-medium tracking-tight">
+                {isTransfer ? t("deleteTransferTitle") : t("deleteTransactionTitle")}
+              </Dialog.Title>
+              <p className="mt-1 text-[13px] text-muted-foreground">{t("deleteDescription")}</p>
+            </div>
+          </div>
+
+          {pending && (
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-muted p-3.5">
+              <span className="truncate text-[13px] font-medium">{pending.label}</span>
+              <span className="ml-3 shrink-0 font-mono text-sm font-semibold">{pending.amount}</span>
+            </div>
+          )}
+
+          <div className="mt-5 flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)} disabled={deleting}>
+              {t("deleteCancel")}
+            </Button>
+            <Button variant="destructive" className="flex-1" onClick={confirm} disabled={deleting}>
+              {t("delete")}
+            </Button>
+          </div>
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 
@@ -125,6 +166,7 @@ export function TransactionList({ refreshKey = 0, onAdd, onEdit, onChanged }: Tr
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<FilterType>("all");
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -197,9 +239,20 @@ export function TransactionList({ refreshKey = 0, onAdd, onEdit, onChanged }: Tr
     );
   }
 
-  async function handleDelete(row: Row) {
+  function requestDelete(row: Row) {
+    const summary: PendingDelete =
+      row.kind === "txn"
+        ? { row, label: getCategoryInfo(row.txn.category_id).name, amount: formatAmount(row.txn) }
+        : { row, label: transferLabel(row.transfer), amount: fmtCurrency(row.transfer.amount) };
+    setPendingDelete(summary);
+  }
+
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    const { row } = pendingDelete;
     if (row.kind === "transfer") await deleteTransfer(row.id);
     else await deleteTransaction(row.id);
+    setPendingDelete(null);
     toast.success(t("deleteSuccess"));
     await load();
     onChanged?.();
@@ -372,7 +425,7 @@ export function TransactionList({ refreshKey = 0, onAdd, onEdit, onChanged }: Tr
                         {fmtCurrency(tr.amount)}
                       </div>
                       <div className="flex justify-end">
-                        <RowActions onEdit={() => handleEdit(row)} onDelete={() => handleDelete(row)} />
+                        <RowActions onEdit={() => handleEdit(row)} onDelete={() => requestDelete(row)} />
                       </div>
                     </div>
                   );
@@ -402,7 +455,7 @@ export function TransactionList({ refreshKey = 0, onAdd, onEdit, onChanged }: Tr
                       {formatAmount(tx)}
                     </div>
                     <div className="flex justify-end">
-                      <RowActions onEdit={() => handleEdit(row)} onDelete={() => handleDelete(row)} />
+                      <RowActions onEdit={() => handleEdit(row)} onDelete={() => requestDelete(row)} />
                     </div>
                   </div>
                 );
@@ -436,7 +489,7 @@ export function TransactionList({ refreshKey = 0, onAdd, onEdit, onChanged }: Tr
                             {fmtCurrency(tr.amount)}
                           </span>
                           <div className="ml-1 shrink-0">
-                            <RowActions onEdit={() => handleEdit(row)} onDelete={() => handleDelete(row)} />
+                            <RowActions onEdit={() => handleEdit(row)} onDelete={() => requestDelete(row)} />
                           </div>
                         </li>
                       );
@@ -466,7 +519,7 @@ export function TransactionList({ refreshKey = 0, onAdd, onEdit, onChanged }: Tr
                           {formatAmount(tx)}
                         </span>
                         <div className="ml-1 shrink-0">
-                          <RowActions onEdit={() => handleEdit(row)} onDelete={() => handleDelete(row)} />
+                          <RowActions onEdit={() => handleEdit(row)} onDelete={() => requestDelete(row)} />
                         </div>
                       </li>
                     );
@@ -477,6 +530,12 @@ export function TransactionList({ refreshKey = 0, onAdd, onEdit, onChanged }: Tr
           </div>
         </>
       )}
+
+      <DeleteConfirmDialog
+        pending={pendingDelete}
+        onOpenChange={(open) => { if (!open) setPendingDelete(null); }}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

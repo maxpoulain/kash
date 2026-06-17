@@ -130,7 +130,9 @@
       "actions": "Actions",
       "edit": "Edit",
       "delete": "Delete",
-      "deleteConfirm": "Delete this entry?",
+      "deleteTransactionTitle": "Delete this transaction?",
+      "deleteTransferTitle": "Delete this transfer?",
+      "deleteDescription": "This action is irreversible and updates the affected balances.",
       "deleteCancel": "Cancel",
       "deleteSuccess": "Entry deleted"
     },
