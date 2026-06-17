@@ -40,6 +40,7 @@ class TransactionUpdate(BaseModel):
     amount: float | None = None
     type: TransactionType | None = None
     category_id: UUID | None = None
+    account_id: UUID | None = None
     date: Date | None = None
     note: str | None = None
 

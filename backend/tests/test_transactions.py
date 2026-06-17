@@ -240,6 +240,52 @@ async def test_update_transaction_from_other_household_returns_403():
 
 
 @pytest.mark.asyncio
+async def test_update_transaction_changes_account():
+    NEW_ACCOUNT = "00000000-0000-0000-0000-0000000000a9"
+    with (
+        patch("app.core.auth.get_jwks_client") as mock_jwks,
+        patch("app.routers.transactions.get_supabase") as mock_supabase,
+        patch("app.core.auth.jwt.decode", return_value=FAKE_CLAIMS),
+        patch("app.routers.transactions._get_household_id", return_value=HOUSEHOLD_ID),
+    ):
+        _mock_auth(mock_jwks)
+        instance = MagicMock()
+        mock_supabase.return_value = instance
+
+        existing = MagicMock()
+        existing.data = {"household_id": HOUSEHOLD_ID}
+        (
+            instance.table.return_value
+            .select.return_value
+            .eq.return_value
+            .single.return_value
+            .execute.return_value
+        ) = existing
+
+        updated = MagicMock()
+        updated.data = [{**FAKE_TRANSACTION, "account_id": NEW_ACCOUNT}]
+        (
+            instance.table.return_value
+            .update.return_value
+            .eq.return_value
+            .execute.return_value
+        ) = updated
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.put(
+                f"/api/transactions/{TX_ID}",
+                json={"account_id": NEW_ACCOUNT},
+                headers={"Authorization": "Bearer valid.token"},
+            )
+
+    assert response.status_code == 200
+    assert response.json()["account_id"] == NEW_ACCOUNT
+    # account_id is forwarded to the DB update as a plain string.
+    sent = instance.table.return_value.update.call_args[0][0]
+    assert sent["account_id"] == NEW_ACCOUNT
+
+
+@pytest.mark.asyncio
 async def test_create_transaction_with_unknown_suggested_category_creates_it():
     """Using a suggested category ID not yet in the household creates it lazily."""
     from uuid import UUID

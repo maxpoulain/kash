@@ -47,3 +47,34 @@ côté liste.
   réutiliser la modale en mode édition.
 - **Affordance : menu d'actions (⋮) par ligne** avec Éditer / Supprimer (explicite,
   pas de clic accidentel), cohérent transactions et transferts.
+
+## Implementation Plan
+
+### État de l'existant
+- `PUT /transactions/{id}` ✅ (mais `TransactionUpdate` sans `account_id`)
+- `DELETE /transactions/{id}` ✅ (mais `deleteTransaction` absent de `lib/api.ts`)
+- `DELETE /transfers/{id}` ✅
+- Pas de `PATCH /transfers/{id}`, pas de primitive `dropdown-menu`/`alert-dialog`
+  → on réutilise `Popover` + `Button` (déjà en place).
+
+### Phase 1 — Backend
+- `TransactionUpdate` : ajouter `account_id: UUID | None` ; le router valide que le
+  compte appartient au foyer (cohérent avec `create`).
+- `TransferUpdate` schema + `PATCH /api/transfers/{id}` : check foyer (403),
+  validation des legs (404), règle « ≥1 courant » (422). Champs éditables :
+  from/to (kind+id), amount, date, note.
+- Tests : `test_transactions.py` (édition account, 403 cross-foyer),
+  `test_transfers_api.py` (PATCH ok, 403, leg manquant, règle courant).
+
+### Phase 2 — Frontend API + types
+- `lib/api.ts` : `updateTransaction(id, payload)` (PUT), `deleteTransaction(id)`
+  (DELETE), `updateTransfer(id, payload)` (PATCH).
+- `types/api.ts` : `TransactionUpdate`, `TransferUpdate`.
+
+### Phase 3 — Frontend UI
+- Menu d'actions (⋮) par ligne (Popover) sur transaction **et** transfert, desktop
+  + mobile.
+- Mode édition dans `TransactionForm` / `TransferForm` : props `mode`/`initial`,
+  préremplissage, appelle update au lieu de create.
+- Confirmation de suppression (Popover + Button DS) → recharge la liste.
+- i18n FR/EN pour les nouveaux libellés (Éditer, Supprimer, Confirmer…).

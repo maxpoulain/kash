@@ -176,6 +176,123 @@ async def test_create_transfer_rejects_non_positive_amount():
     assert response.status_code == 422
 
 
+def _setup_patch(mock_supabase, *, existing_row, legs_exist=True):
+    """Wire supabase for PATCH: single() reads (existing/refreshed) + leg selects."""
+    instance = MagicMock()
+    mock_supabase.return_value = instance
+
+    single = MagicMock()
+    single.data = existing_row
+    (
+        instance.table.return_value
+        .select.return_value
+        .eq.return_value
+        .single.return_value
+        .execute.return_value
+    ) = single
+
+    leg = MagicMock()
+    leg.data = [{"id": "x"}] if legs_exist else []
+    (
+        instance.table.return_value
+        .select.return_value
+        .eq.return_value
+        .eq.return_value
+        .execute.return_value
+    ) = leg
+    return instance
+
+
+@pytest.mark.asyncio
+async def test_update_transfer_returns_200():
+    p_jwks, p_decode, p_household, p_supabase = _patches()
+    with p_jwks as mock_jwks, p_decode, p_household, p_supabase as mock_supabase:
+        _mock_auth(mock_jwks)
+        _setup_patch(mock_supabase, existing_row=_row("courant", ACCOUNT_A, "courant", ACCOUNT_B))
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.patch(
+                f"/api/transfers/{TRANSFER_ID}",
+                json={"amount": 250.0, "note": "rent"},
+                headers={"Authorization": "Bearer valid.token"},
+            )
+    assert response.status_code == 200
+    assert response.json()["id"] == TRANSFER_ID
+
+
+@pytest.mark.asyncio
+async def test_update_transfer_not_found_returns_404():
+    p_jwks, p_decode, p_household, p_supabase = _patches()
+    with p_jwks as mock_jwks, p_decode, p_household, p_supabase as mock_supabase:
+        _mock_auth(mock_jwks)
+        _setup_patch(mock_supabase, existing_row=None)
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.patch(
+                f"/api/transfers/{TRANSFER_ID}",
+                json={"amount": 250.0},
+                headers={"Authorization": "Bearer valid.token"},
+            )
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_update_transfer_other_household_returns_403():
+    p_jwks, p_decode, p_household, p_supabase = _patches()
+    with p_jwks as mock_jwks, p_decode, p_household, p_supabase as mock_supabase:
+        _mock_auth(mock_jwks)
+        other = _row("courant", ACCOUNT_A, "courant", ACCOUNT_B)
+        other["household_id"] = "00000000-0000-0000-0000-0000000000ff"
+        _setup_patch(mock_supabase, existing_row=other)
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.patch(
+                f"/api/transfers/{TRANSFER_ID}",
+                json={"amount": 250.0},
+                headers={"Authorization": "Bearer valid.token"},
+            )
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_update_transfer_to_epargne_epargne_returns_422():
+    p_jwks, p_decode, p_household, p_supabase = _patches()
+    with p_jwks as mock_jwks, p_decode, p_household, p_supabase as mock_supabase:
+        _mock_auth(mock_jwks)
+        # Existing has a courant leg; patching from→epargne makes both epargne.
+        _setup_patch(mock_supabase, existing_row=_row("courant", ACCOUNT_A, "epargne", SAVINGS_A))
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.patch(
+                f"/api/transfers/{TRANSFER_ID}",
+                json={"from_kind": "epargne", "from_id": SAVINGS_A},
+                headers={"Authorization": "Bearer valid.token"},
+            )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_update_transfer_leg_in_other_household_returns_404():
+    p_jwks, p_decode, p_household, p_supabase = _patches()
+    with p_jwks as mock_jwks, p_decode, p_household, p_supabase as mock_supabase:
+        _mock_auth(mock_jwks)
+        _setup_patch(
+            mock_supabase,
+            existing_row=_row("courant", ACCOUNT_A, "courant", ACCOUNT_B),
+            legs_exist=False,
+        )
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.patch(
+                f"/api/transfers/{TRANSFER_ID}",
+                json={"to_id": SAVINGS_A, "to_kind": "epargne"},
+                headers={"Authorization": "Bearer valid.token"},
+            )
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_update_transfer_without_token_returns_401():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.patch(f"/api/transfers/{TRANSFER_ID}", json={"amount": 1})
+    assert response.status_code == 401
+
+
 @pytest.mark.asyncio
 async def test_delete_transfer_returns_204():
     p_jwks, p_decode, p_household, p_supabase = _patches()
