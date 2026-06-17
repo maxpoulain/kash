@@ -223,6 +223,8 @@ async def update_transaction(
         updates["category_id"] = _ensure_category_exists(
             household_id, str(updates["category_id"])
         )
+    if "account_id" in updates:
+        updates["account_id"] = str(updates["account_id"])
 
     result = (
         supabase.table("transactions").update(updates).eq("id", transaction_id).execute()

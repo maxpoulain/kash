@@ -13,6 +13,10 @@ from pydantic import BaseModel, Field
 
 Kind = Literal["courant", "epargne"]
 
+# Alias so an optional `date` field can reference the type without the field name
+# shadowing it (the `date = None` default rebinds `date` in the class namespace).
+DateType = date
+
 
 class TransferCreate(BaseModel):
     from_kind: Kind
@@ -21,6 +25,16 @@ class TransferCreate(BaseModel):
     to_id: UUID
     amount: float = Field(gt=0)
     date: date
+    note: str | None = None
+
+
+class TransferUpdate(BaseModel):
+    from_kind: Kind | None = None
+    from_id: UUID | None = None
+    to_kind: Kind | None = None
+    to_id: UUID | None = None
+    amount: float | None = Field(default=None, gt=0)
+    date: DateType | None = None
     note: str | None = None
 
 

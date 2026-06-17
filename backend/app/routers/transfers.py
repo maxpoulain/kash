@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.core.auth import get_current_user
 from app.core.supabase import get_supabase
 from app.routers.transactions import _get_household_id
-from app.schemas.transfers import Kind, TransferCreate, TransferOut
+from app.schemas.transfers import Kind, TransferCreate, TransferOut, TransferUpdate
 
 router = APIRouter(prefix="/api/transfers")
 
@@ -104,6 +104,68 @@ async def create_transfer(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Insert failed"
         )
     return TransferOut(**rows[0])
+
+
+@router.patch("/{transfer_id}", response_model=TransferOut)
+async def update_transfer(
+    transfer_id: str,
+    payload: TransferUpdate,
+    claims: dict = Depends(get_current_user),
+) -> TransferOut:
+    """Update a transfer. 404 if missing, 403 if it belongs to another household.
+
+    Validation mirrors create but runs on the merged (existing + patch) legs: at
+    least one leg must stay courant, and any leg must belong to the household.
+    """
+    household_id = _get_household_id(claims["sub"])
+    supabase = get_supabase()
+
+    existing_result = (
+        supabase.table("transfers").select("*").eq("id", transfer_id).single().execute()
+    )
+    existing: dict = existing_result.data if isinstance(existing_result.data, dict) else {}
+    if not existing:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transfer not found")
+    if existing["household_id"] != household_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
+    updates = payload.model_dump(exclude_unset=True)
+
+    # Merge patch over existing to validate the resulting legs.
+    from_kind = cast(Kind, updates.get("from_kind", existing["from_kind"]))
+    from_id = str(updates.get("from_id", existing["from_id"]))
+    to_kind = cast(Kind, updates.get("to_kind", existing["to_kind"]))
+    to_id = str(updates.get("to_id", existing["to_id"]))
+
+    if from_kind != "courant" and to_kind != "courant":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="At least one leg must be courant (epargne→epargne not allowed)",
+        )
+
+    legs: list[tuple[Kind, str]] = [(from_kind, from_id), (to_kind, to_id)]
+    for kind, leg_id in legs:
+        if not _leg_belongs_to_household(kind, leg_id, household_id):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"{kind} {leg_id} not found in household",
+            )
+
+    # Normalise UUID/date fields for the DB.
+    if "from_id" in updates:
+        updates["from_id"] = str(updates["from_id"])
+    if "to_id" in updates:
+        updates["to_id"] = str(updates["to_id"])
+    if "date" in updates:
+        updates["date"] = updates["date"].isoformat()
+
+    if updates:
+        supabase.table("transfers").update(updates).eq("id", transfer_id).execute()
+
+    refreshed = (
+        supabase.table("transfers").select("*").eq("id", transfer_id).single().execute()
+    )
+    return TransferOut(**cast(dict, refreshed.data))
 
 
 @router.delete("/{transfer_id}", status_code=status.HTTP_204_NO_CONTENT)
