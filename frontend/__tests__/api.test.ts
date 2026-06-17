@@ -2,12 +2,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   getCategories,
   createTransaction,
+  updateTransaction,
+  deleteTransaction,
   getTransactions,
   getSummary,
   getRecurringTransactions,
   createRecurringTransaction,
   updateRecurringTransaction,
   deleteRecurringTransaction,
+  updateTransfer,
 } from "@/lib/api";
 
 // Mock the Supabase client used by apiFetch
@@ -123,6 +126,70 @@ describe("createTransaction", () => {
     await expect(
       createTransaction({ amount: 10, type: "expense", category_id: "uuid", date: "2026-04-15" })
     ).rejects.toThrow("Failed to create transaction");
+  });
+});
+
+describe("updateTransaction", () => {
+  it("PUTs the partial payload by id", async () => {
+    const payload = { account_id: "00000000-0000-0000-0000-0000000000a9", amount: 75 };
+    const updated = { id: "tx-1", ...payload };
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => updated });
+
+    const result = await updateTransaction("tx-1", payload);
+
+    expect(result).toEqual(updated);
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/transactions/tx-1"),
+      expect.objectContaining({ method: "PUT", body: JSON.stringify(payload) })
+    );
+  });
+
+  it("throws on non-ok response", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false });
+    await expect(updateTransaction("tx-1", { amount: 5 })).rejects.toThrow(
+      "Failed to update transaction"
+    );
+  });
+});
+
+describe("deleteTransaction", () => {
+  it("DELETEs the transaction by id", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true });
+
+    await deleteTransaction("tx-1");
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/transactions/tx-1"),
+      expect.objectContaining({ method: "DELETE" })
+    );
+  });
+
+  it("throws on non-ok response", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false });
+    await expect(deleteTransaction("tx-1")).rejects.toThrow("Failed to delete transaction");
+  });
+});
+
+describe("updateTransfer", () => {
+  it("PATCHes the transfer by id", async () => {
+    const payload = { amount: 250, date: "2026-06-13" };
+    const updated = { id: "tr-1", ...payload };
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => updated });
+
+    const result = await updateTransfer("tr-1", payload);
+
+    expect(result).toEqual(updated);
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/transfers/tr-1"),
+      expect.objectContaining({ method: "PATCH", body: JSON.stringify(payload) })
+    );
+  });
+
+  it("throws on non-ok response", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false });
+    await expect(updateTransfer("tr-1", { amount: 5 })).rejects.toThrow(
+      "Failed to update transfer"
+    );
   });
 });
 

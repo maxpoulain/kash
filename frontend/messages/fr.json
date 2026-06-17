@@ -126,12 +126,20 @@
       "uncategorized": "Sans catégorie",
       "today": "Aujourd'hui",
       "yesterday": "Hier",
-      "transfer": "Transfert"
+      "transfer": "Transfert",
+      "actions": "Actions",
+      "edit": "Éditer",
+      "delete": "Supprimer",
+      "deleteConfirm": "Supprimer cette entrée ?",
+      "deleteCancel": "Annuler",
+      "deleteSuccess": "Entrée supprimée"
     },
     "sheet": {
       "title": "Nouvelle transaction",
       "success": "Transaction enregistrée !",
-      "transferSuccess": "Transfert effectué !"
+      "transferSuccess": "Transfert effectué !",
+      "updateSuccess": "Transaction modifiée !",
+      "transferUpdateSuccess": "Transfert modifié !"
     },
     "form": {
       "piggyGains": "Piggy gagne",
@@ -140,6 +148,9 @@
       "income": "Revenu",
       "mobileTitle": "Ajouter une transaction",
       "desktopTitle": "Nouvelle transaction",
+      "mobileEditTitle": "Modifier la transaction",
+      "desktopEditTitle": "Modifier la transaction",
+      "saveChanges": "Enregistrer",
       "amount": "Montant",
       "date": "Date",
       "today": "Aujourd'hui",
@@ -162,6 +173,8 @@
       "once": "Ponctuel",
       "transfer": "Transfert",
       "transferTitle": "Nouveau transfert",
+      "transferEditTitle": "Modifier le transfert",
+      "transferSaveChanges": "Enregistrer",
       "transferFrom": "Depuis",
       "transferTo": "Vers",
       "transferSubmit": "Transférer",

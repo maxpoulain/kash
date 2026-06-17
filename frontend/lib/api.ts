@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import type { Account, AccountCreate, AccountUpdate, Category, CreateGoalPayload, CreateTransactionPayload, NetWorthHistoryPoint, RecurringTransaction, RecurringTransactionCreate, RecurringTransactionUpdate, SavingsAccountAPI, SavingsAccountCreate, SavingsAccountUpdate, SpendingGoal, SpendingGoalsResponse, Summary, Transaction, Transfer, TransferCreate } from "@/types/api";
+import type { Account, AccountCreate, AccountUpdate, Category, CreateGoalPayload, CreateTransactionPayload, NetWorthHistoryPoint, RecurringTransaction, RecurringTransactionCreate, RecurringTransactionUpdate, SavingsAccountAPI, SavingsAccountCreate, SavingsAccountUpdate, SpendingGoal, SpendingGoalsResponse, Summary, Transaction, TransactionUpdate, Transfer, TransferCreate, TransferUpdate } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -42,6 +42,21 @@ export async function createTransaction(payload: CreateTransactionPayload): Prom
   });
   if (!res.ok) throw new Error("Failed to create transaction");
   return res.json();
+}
+
+
+export async function updateTransaction(id: string, payload: TransactionUpdate): Promise<Transaction> {
+  const res = await apiFetch(`/api/transactions/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to update transaction");
+  return res.json();
+}
+
+export async function deleteTransaction(id: string): Promise<void> {
+  const res = await apiFetch(`/api/transactions/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Failed to delete transaction");
 }
 
 
@@ -116,6 +131,15 @@ export async function createTransfer(payload: TransferCreate): Promise<Transfer>
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error("Failed to create transfer");
+  return res.json();
+}
+
+export async function updateTransfer(id: string, payload: TransferUpdate): Promise<Transfer> {
+  const res = await apiFetch(`/api/transfers/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to update transfer");
   return res.json();
 }
 

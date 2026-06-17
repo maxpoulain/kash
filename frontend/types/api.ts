@@ -17,11 +17,22 @@ export interface CreateTransactionPayload {
   note?: string;
 }
 
+// Partial update — every field optional (PUT /transactions/{id}).
+export interface TransactionUpdate {
+  amount?: number;
+  type?: TransactionType;
+  category_id?: string;
+  account_id?: string;
+  date?: string; // YYYY-MM-DD
+  note?: string;
+}
+
 export interface Transaction {
   id: string;
   household_id: string;
   created_by: string;
   category_id: string | null;
+  account_id: string | null;
   amount: number;
   type: TransactionType;
   date: string;
@@ -108,6 +119,17 @@ export interface TransferCreate {
   to_id: string;
   amount: number;
   date: string;
+  note?: string;
+}
+
+// Partial update — every field optional (PATCH /transfers/{id}).
+export interface TransferUpdate {
+  from_kind?: TransferKind;
+  from_id?: string;
+  to_kind?: TransferKind;
+  to_id?: string;
+  amount?: number;
+  date?: string;
   note?: string;
 }
 

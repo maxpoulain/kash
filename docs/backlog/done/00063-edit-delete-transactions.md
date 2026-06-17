@@ -33,13 +33,14 @@ côté liste.
 
 ## Critères de validation
 
-- [ ] Éditer une transaction met à jour montant/catégorie/compte/date/note dans la liste
-- [ ] Supprimer une transaction la retire et recalcule le solde du compte concerné
-- [ ] Supprimer un transfert le retire et recalcule les soldes des comptes courants
-- [ ] Confirmation avant toute suppression (composant DS)
-- [ ] Affordances cohérentes entre transactions et transferts
-- [ ] Foyer B ne peut éditer/supprimer ni les transactions ni les transferts du foyer A
-- [ ] Tests écrits et passants (`just check` passe)
+- [x] Éditer une transaction met à jour montant/catégorie/compte/date/note dans la liste
+- [x] Supprimer une transaction la retire et recalcule le solde du compte concerné
+- [x] Supprimer un transfert le retire et recalcule les soldes des comptes courants
+- [x] Confirmation avant toute suppression (popover + Button DS, étape inline)
+- [x] Affordances cohérentes entre transactions et transferts (menu ⋮ partagé)
+- [x] Foyer B ne peut éditer/supprimer ni les transactions ni les transferts du foyer A
+      (403 backend, testé sur transaction et transfert)
+- [x] Tests écrits et passants (`just check` passe : 105 backend, 56 frontend)
 
 ## Décisions
 

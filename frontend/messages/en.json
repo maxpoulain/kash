@@ -126,12 +126,20 @@
       "uncategorized": "Uncategorized",
       "today": "Today",
       "yesterday": "Yesterday",
-      "transfer": "Transfer"
+      "transfer": "Transfer",
+      "actions": "Actions",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this entry?",
+      "deleteCancel": "Cancel",
+      "deleteSuccess": "Entry deleted"
     },
     "sheet": {
       "title": "New transaction",
       "success": "Transaction saved!",
-      "transferSuccess": "Transfer completed!"
+      "transferSuccess": "Transfer completed!",
+      "updateSuccess": "Transaction updated!",
+      "transferUpdateSuccess": "Transfer updated!"
     },
     "form": {
       "piggyGains": "Piggy gains",
@@ -140,6 +148,9 @@
       "income": "Income",
       "mobileTitle": "Add a transaction",
       "desktopTitle": "New transaction",
+      "mobileEditTitle": "Edit transaction",
+      "desktopEditTitle": "Edit transaction",
+      "saveChanges": "Save changes",
       "amount": "Amount",
       "date": "Date",
       "today": "Today",
@@ -162,6 +173,8 @@
       "once": "One-off",
       "transfer": "Transfer",
       "transferTitle": "New transfer",
+      "transferEditTitle": "Edit transfer",
+      "transferSaveChanges": "Save changes",
       "transferFrom": "From",
       "transferTo": "To",
       "transferSubmit": "Transfer",
