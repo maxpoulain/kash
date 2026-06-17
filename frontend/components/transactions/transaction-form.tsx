@@ -24,8 +24,8 @@ import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PiggyMark } from "@/components/kash-piggy";
-import { getCategories, createTransaction, createRecurringTransaction, getAccounts, getSavingsAccounts } from "@/lib/api";
-import type { Account, Category, SavingsAccountAPI, TransactionType } from "@/types/api";
+import { getCategories, createTransaction, updateTransaction, createRecurringTransaction, getAccounts, getSavingsAccounts } from "@/lib/api";
+import type { Account, Category, SavingsAccountAPI, Transaction, TransactionType, Transfer } from "@/types/api";
 import { TransferForm } from "./transfer-form";
 
 type Mode = "txn" | "transfer";
@@ -100,10 +100,16 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+/** When set, the form edits an existing entry instead of creating one. */
+export type EditingTarget =
+  | { kind: "txn"; txn: Transaction }
+  | { kind: "transfer"; transfer: Transfer };
+
 export interface TransactionFormProps {
   onSuccess: (kind?: "transaction" | "transfer") => void;
   onClose?: () => void;
   variant?: "mobile" | "desktop";
+  editing?: EditingTarget;
 }
 
 function today(): string {
@@ -120,14 +126,17 @@ function shortLabel(name: string) {
   return SHORT_LABEL[name] ?? name;
 }
 
-export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: TransactionFormProps) {
+export function TransactionForm({ onSuccess, onClose, variant = "mobile", editing }: TransactionFormProps) {
   const t = useTranslations("transactions.form");
   const locale = useLocale();
   const dateFnsLocale = DATE_FNS_LOCALES[locale] ?? enUS;
+  const editingTxn = editing?.kind === "txn" ? editing.txn : undefined;
+  const editingTransfer = editing?.kind === "transfer" ? editing.transfer : undefined;
+  const isEditTxn = !!editingTxn;
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [epargnes, setEpargnes] = useState<SavingsAccountAPI[]>([]);
-  const [mode, setMode] = useState<Mode>("txn");
+  const [mode, setMode] = useState<Mode>(editingTransfer ? "transfer" : "txn");
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
@@ -138,7 +147,16 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { type: "expense", date: today(), repeat: "once" },
+    defaultValues: editingTxn
+      ? {
+          type: editingTxn.type,
+          amount: editingTxn.amount,
+          category_id: editingTxn.category_id ?? undefined,
+          date: editingTxn.date,
+          note: editingTxn.note ?? undefined,
+          repeat: "once",
+        }
+      : { type: "expense", date: today(), repeat: "once" },
   });
 
   const selectedType = watch("type") as TransactionType;
@@ -157,14 +175,15 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
     getAccounts()
       .then((rows) => {
         setAccounts(rows);
-        // Pre-fill the principal (first/oldest) account.
-        if (rows.length > 0) setValue("account_id", rows[0].id);
+        // Edit: keep the txn's account; create: pre-fill the principal (oldest).
+        const preselect = editingTxn?.account_id ?? rows[0]?.id;
+        if (preselect) setValue("account_id", preselect);
       })
       .catch(() => setAccounts([]));
     getSavingsAccounts()
       .then(setEpargnes)
       .catch(() => setEpargnes([]));
-  }, [setValue]);
+  }, [setValue, editingTxn]);
 
   const selectedAccountId = watch("account_id");
 
@@ -173,6 +192,18 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
   async function onSubmit(values: FormValues) {
     setSubmitError(null);
     try {
+      if (editingTxn) {
+        await updateTransaction(editingTxn.id, {
+          amount: values.amount,
+          type: values.type,
+          category_id: values.category_id,
+          account_id: values.account_id,
+          date: values.date,
+          note: values.note,
+        });
+        onSuccess();
+        return;
+      }
       if (values.repeat && values.repeat !== "once") {
         await createRecurringTransaction({
           amount: values.amount,
@@ -199,7 +230,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
   }
 
   const typeToggle = (
-    <div className="grid grid-cols-3 gap-1.5 p-1 bg-muted rounded-[12px]">
+    <div className={cn("grid gap-1.5 p-1 bg-muted rounded-[12px]", isEditTxn ? "grid-cols-2" : "grid-cols-3")}>
       {(["expense", "income"] as TransactionType[]).map((txType) => {
         const active = mode === "txn" && selectedType === txType;
         return (
@@ -218,18 +249,20 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
           </button>
         );
       })}
-      <button
-        type="button"
-        onClick={() => setMode("transfer")}
-        className={cn(
-          "flex items-center justify-center gap-1.5 rounded-[8px] py-2.5 text-[13px] font-semibold transition-all",
-          mode === "transfer" ? "text-white" : "text-muted-foreground hover:text-foreground/70"
-        )}
-        style={mode === "transfer" ? { background: "var(--ink)" } : {}}
-      >
-        <ArrowLeftRight className="w-3.5 h-3.5" />
-        {t("transfer")}
-      </button>
+      {!isEditTxn && (
+        <button
+          type="button"
+          onClick={() => setMode("transfer")}
+          className={cn(
+            "flex items-center justify-center gap-1.5 rounded-[8px] py-2.5 text-[13px] font-semibold transition-all",
+            mode === "transfer" ? "text-white" : "text-muted-foreground hover:text-foreground/70"
+          )}
+          style={mode === "transfer" ? { background: "var(--ink)" } : {}}
+        >
+          <ArrowLeftRight className="w-3.5 h-3.5" />
+          {t("transfer")}
+        </button>
+      )}
     </div>
   );
 
@@ -347,9 +380,10 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
     return (
       <TransferForm
         variant={variant}
-        toggle={typeToggle}
+        toggle={editingTransfer ? undefined : typeToggle}
         comptes={accounts}
         epargnes={epargnes}
+        initial={editingTransfer}
         onSuccess={onSuccess}
         onClose={onClose}
       />
@@ -377,7 +411,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
             </div>
             <div>
               <div className="font-display text-[20px] font-medium tracking-[-0.02em] leading-tight">
-                {t("desktopTitle")}
+                {isEditTxn ? t("desktopEditTitle") : t("desktopTitle")}
               </div>
             </div>
           </div>
@@ -465,7 +499,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
             </div>
 
             {accounts.length > 1 && accountSection}
-            {recurringSection}
+            {!isEditTxn && recurringSection}
 
             {/* note */}
             <div>
@@ -553,6 +587,8 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
             >
               {isSubmitting ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : isEditTxn ? (
+                t("saveChanges")
               ) : (
                 <>{isRecurring ? t("addRecurring") : isIncome ? t("addIncome") : t("addExpense")}</>
               )}
@@ -577,7 +613,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
         {/* header */}
         <div className="flex items-center justify-between">
           <div className="font-display text-[22px] font-medium tracking-[-0.02em]">
-            {t("mobileTitle")}
+            {isEditTxn ? t("mobileEditTitle") : t("mobileTitle")}
           </div>
           {onClose && (
             <button
@@ -696,7 +732,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
           </Popover>
 
           {accounts.length > 1 && accountRowMobile}
-          {recurringRowMobile}
+          {!isEditTxn && recurringRowMobile}
 
           {/* note row */}
           <div
@@ -755,6 +791,8 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile" }: Tran
           >
             {isSubmitting ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : isEditTxn ? (
+              t("saveChanges")
             ) : (
               <>{isIncome ? t("addIncome") : t("addExpense")}</>
             )}

@@ -10,8 +10,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PiggyMark } from "@/components/kash-piggy";
-import { createTransfer } from "@/lib/api";
-import type { Account, SavingsAccountAPI, TransferKind } from "@/types/api";
+import { createTransfer, updateTransfer } from "@/lib/api";
+import type { Account, SavingsAccountAPI, Transfer, TransferKind } from "@/types/api";
 
 const DATE_FNS_LOCALES: Record<string, Locale> = { en: enUS, fr };
 
@@ -89,15 +89,17 @@ function today(): string {
 
 export interface TransferFormProps {
   variant: "mobile" | "desktop";
-  /** The shared 3-way Dépense / Revenu / Transfert toggle. */
-  toggle: React.ReactNode;
+  /** The shared 3-way Dépense / Revenu / Transfert toggle. Hidden when editing. */
+  toggle?: React.ReactNode;
   comptes: Account[];
   epargnes: SavingsAccountAPI[];
+  /** When set, the form edits this transfer (PATCH) instead of creating one. */
+  initial?: Transfer;
   onSuccess: (kind?: "transaction" | "transfer") => void;
   onClose?: () => void;
 }
 
-export function TransferForm({ variant, toggle, comptes, epargnes, onSuccess, onClose }: TransferFormProps) {
+export function TransferForm({ variant, toggle, comptes, epargnes, initial, onSuccess, onClose }: TransferFormProps) {
   const t = useTranslations("transactions.form");
   const locale = useLocale();
   const dateFnsLocale = DATE_FNS_LOCALES[locale] ?? enUS;
@@ -108,10 +110,11 @@ export function TransferForm({ variant, toggle, comptes, epargnes, onSuccess, on
     ...epargnes.map((e) => ({ id: e.id, name: e.name, kind: "epargne" as const })),
   ];
 
-  const [fromId, setFromId] = useState("");
-  const [toId, setToId] = useState("");
-  const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(today);
+  const isEdit = !!initial;
+  const [fromId, setFromId] = useState(initial?.from_id ?? "");
+  const [toId, setToId] = useState(initial?.to_id ?? "");
+  const [amount, setAmount] = useState(initial ? String(initial.amount) : "");
+  const [date, setDate] = useState(initial?.date ?? today());
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -129,12 +132,17 @@ export function TransferForm({ variant, toggle, comptes, epargnes, onSuccess, on
     }
     setError(null);
     setSubmitting(true);
+    const body = {
+      from_kind: fromOpt.kind, from_id: fromId,
+      to_kind: toOpt.kind, to_id: toId,
+      amount: amt, date,
+    };
     try {
-      await createTransfer({
-        from_kind: fromOpt.kind, from_id: fromId,
-        to_kind: toOpt.kind, to_id: toId,
-        amount: amt, date,
-      });
+      if (initial) {
+        await updateTransfer(initial.id, body);
+      } else {
+        await createTransfer(body);
+      }
       onSuccess("transfer");
     } catch {
       setError(t("submitError"));
@@ -157,7 +165,7 @@ export function TransferForm({ variant, toggle, comptes, epargnes, onSuccess, on
           <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[10px]" style={{ background: "var(--ink)", color: "var(--pig)" }}>
             <PiggyMark size={22} />
           </div>
-          <div className="font-display text-[20px] font-medium tracking-[-0.02em] leading-tight">{t("transferTitle")}</div>
+          <div className="font-display text-[20px] font-medium tracking-[-0.02em] leading-tight">{isEdit ? t("transferEditTitle") : t("transferTitle")}</div>
         </div>
         {onClose && (
           <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-[8px] text-muted-foreground hover:text-foreground transition-colors" style={{ background: "var(--bg-sunk)" }}>
@@ -228,7 +236,7 @@ export function TransferForm({ variant, toggle, comptes, epargnes, onSuccess, on
           className="rounded-[10px] px-6 py-2.5 text-[13px] font-semibold text-background transition-opacity disabled:opacity-40"
           style={{ background: "var(--ink)" }}
         >
-          {t("transferSubmit")}
+          {isEdit ? t("transferSaveChanges") : t("transferSubmit")}
         </button>
       </div>
     </div>

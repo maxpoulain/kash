@@ -1,17 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeftRight, Check, Filter, Package, Plus } from "lucide-react";
+import { ArrowLeftRight, Check, Filter, MoreVertical, Package, Pencil, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { useTranslations, useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { MonthSwitcher } from "@/components/ui/month-switcher";
-import { getTransactions, getCategories, getTransfers, getAccounts, getSavingsAccounts } from "@/lib/api";
+import { getTransactions, getCategories, getTransfers, getAccounts, getSavingsAccounts, deleteTransaction, deleteTransfer } from "@/lib/api";
 import { CATEGORY_ICONS } from "@/lib/category-icons";
 import { currentMonth } from "@/lib/month";
 import type { Category, Transaction, Transfer } from "@/types/api";
+import type { EditingTarget } from "./transaction-form";
 
 // A list row is either a transaction or a transfer (rendered distinctly).
 type Row =
@@ -44,12 +46,74 @@ function groupRowsByDate(rows: Row[], locale: string): { date: string; label: st
 
 type FilterType = "all" | "expense" | "income";
 
+/** Per-row ⋮ menu: Edit, then Delete with an inline confirm step. */
+function RowActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => Promise<void> }) {
+  const t = useTranslations("transactions.list");
+  const [open, setOpen] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function confirmDelete() {
+    setDeleting(true);
+    try {
+      await onDelete();
+      setOpen(false);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  const itemClass = "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted";
+
+  return (
+    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setConfirming(false); }}>
+      <PopoverTrigger asChild>
+        <button
+          aria-label={t("actions")}
+          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <MoreVertical className="h-4 w-4" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-48 p-1.5">
+        {confirming ? (
+          <div className="space-y-2.5 p-1.5">
+            <p className="text-sm font-medium">{t("deleteConfirm")}</p>
+            <div className="flex justify-end gap-2">
+              <Button size="xs" variant="ghost" onClick={() => setConfirming(false)} disabled={deleting}>
+                {t("deleteCancel")}
+              </Button>
+              <Button size="xs" variant="destructive" onClick={confirmDelete} disabled={deleting}>
+                {t("delete")}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <button className={itemClass} onClick={() => { setOpen(false); onEdit(); }}>
+              <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              {t("edit")}
+            </button>
+            <button className={cn(itemClass, "text-destructive hover:bg-destructive/10")} onClick={() => setConfirming(true)}>
+              <Trash2 className="h-3.5 w-3.5 shrink-0" />
+              {t("delete")}
+            </button>
+          </>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 interface TransactionListProps {
   refreshKey?: number;
   onAdd?: () => void;
+  onEdit?: (target: EditingTarget) => void;
+  /** Called after a row is deleted, so the parent can refresh sibling views. */
+  onChanged?: () => void;
 }
 
-export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps) {
+export function TransactionList({ refreshKey = 0, onAdd, onEdit, onChanged }: TransactionListProps) {
   const t = useTranslations("transactions.list");
   const td = useTranslations("dashboard");
   const locale = useLocale();
@@ -123,6 +187,22 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
 
   function fmtCurrency(amount: number) {
     return amount.toLocaleString(locale, { style: "currency", currency: "EUR" });
+  }
+
+  function handleEdit(row: Row) {
+    onEdit?.(
+      row.kind === "txn"
+        ? { kind: "txn", txn: row.txn }
+        : { kind: "transfer", transfer: row.transfer },
+    );
+  }
+
+  async function handleDelete(row: Row) {
+    if (row.kind === "transfer") await deleteTransfer(row.id);
+    else await deleteTransaction(row.id);
+    toast.success(t("deleteSuccess"));
+    await load();
+    onChanged?.();
   }
 
   const activeCategoryName = categoryFilter
@@ -260,11 +340,12 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
           <div className="hidden lg:block">
             <div
               className="grid gap-3.5 px-3.5 pb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
-              style={{ gridTemplateColumns: "130px 1fr 110px" }}
+              style={{ gridTemplateColumns: "130px 1fr 110px 36px" }}
             >
               <span>{t("date")}</span>
               <span>{t("category")}</span>
               <span className="text-right">{t("amount")}</span>
+              <span />
             </div>
             <Card className="gap-0 py-0">
               {rows.map((row, i) => {
@@ -275,7 +356,7 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
                     <div
                       key={tr.id}
                       className={cn("grid items-center gap-3.5 px-3.5 py-3.5", border)}
-                      style={{ gridTemplateColumns: "130px 1fr 110px" }}
+                      style={{ gridTemplateColumns: "130px 1fr 110px 36px" }}
                     >
                       <p className="text-[13px] font-medium">{formatDateShort(tr.date, locale)}</p>
                       <div className="flex items-center gap-3 min-w-0">
@@ -290,6 +371,9 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
                       <div className="text-right font-mono text-[13px] font-semibold text-muted-foreground">
                         {fmtCurrency(tr.amount)}
                       </div>
+                      <div className="flex justify-end">
+                        <RowActions onEdit={() => handleEdit(row)} onDelete={() => handleDelete(row)} />
+                      </div>
                     </div>
                   );
                 }
@@ -299,7 +383,7 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
                   <div
                     key={tx.id}
                     className={cn("grid items-center gap-3.5 px-3.5 py-3.5", border)}
-                    style={{ gridTemplateColumns: "130px 1fr 110px" }}
+                    style={{ gridTemplateColumns: "130px 1fr 110px 36px" }}
                   >
                     <p className="text-[13px] font-medium">{formatDateShort(tx.date, locale)}</p>
                     <div className="flex items-center gap-3 min-w-0">
@@ -316,6 +400,9 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
                       tx.type === "expense" ? "text-foreground" : "text-success"
                     )}>
                       {formatAmount(tx)}
+                    </div>
+                    <div className="flex justify-end">
+                      <RowActions onEdit={() => handleEdit(row)} onDelete={() => handleDelete(row)} />
                     </div>
                   </div>
                 );
@@ -348,6 +435,9 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
                           <span className="ml-3 shrink-0 font-mono text-sm font-semibold text-muted-foreground">
                             {fmtCurrency(tr.amount)}
                           </span>
+                          <div className="ml-1 shrink-0">
+                            <RowActions onEdit={() => handleEdit(row)} onDelete={() => handleDelete(row)} />
+                          </div>
                         </li>
                       );
                     }
@@ -375,6 +465,9 @@ export function TransactionList({ refreshKey = 0, onAdd }: TransactionListProps)
                         )}>
                           {formatAmount(tx)}
                         </span>
+                        <div className="ml-1 shrink-0">
+                          <RowActions onEdit={() => handleEdit(row)} onDelete={() => handleDelete(row)} />
+                        </div>
                       </li>
                     );
                   })}
