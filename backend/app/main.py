@@ -20,8 +20,7 @@ _is_dev = settings.environment == "development"
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if _is_dev else ["https://kash.vercel.app"],
-    allow_origin_regex=None if _is_dev else r"https://.*\.vercel\.app",
+    allow_origins=["*"] if _is_dev else [settings.frontend_url],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
