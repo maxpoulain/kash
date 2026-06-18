@@ -7,53 +7,42 @@
 
 Suite à la livraison de l'US 00051 (suggestions de catégories en code), la modale "Nouvelle transaction" affiche une section CATÉGORIE vide en production. Il est impossible de créer une transaction avec une catégorie.
 
-## Hypothèses de cause racine
+## Diagnostic
 
-1. **Collision d'IDs suggérés en base (bug de conception)** : `_ensure_category_exists` tente d'insérer les catégories suggérées avec leurs IDs fixes (`SUGGESTED_CATEGORIES.*.id`). Or `categories.id` est une primary key. Seul le premier foyer à utiliser une suggestion peut créer la ligne ; tous les autres foyers échoueront avec un conflit de clé.
-2. **Schema mismatch possible** : si la migration `20260610130000_remove_global_categories.sql` n'est pas appliquée en production, `list_categories` lève une erreur Pydantic car `CategoryOut.type` est absent des lignes DB.
+Le bug n'est **pas** dans la logique catégories, ni dans les migrations. La base de production est à jour (`type` présent, catégories locales par foyer).
+
+La console navigateur montre un blocage **CORS** sur `/api/categories`, `/api/accounts` et `/api/savings-accounts` : l'origine `https://kash-pi-ten.vercel.app` n'est pas autorisée par le backend Railway.
+
+Racine : `backend/app/main.py` hardcode `allow_origins=["https://kash.vercel.app"]` en production. Le frontend prod est déployé sur `https://kash-pi-ten.vercel.app`, donc toutes les requêtes API échouent silencieusement et le frontend affiche des listes vides.
 
 ## Objectif
 
-Corriger le backend pour que :
-- l'ID public d'une suggestion (fixe) ne soit jamais utilisé comme clé primaire en DB ;
-- chaque foyer ait ses propres lignes `categories` avec des UUID locaux ;
-- `list_categories` soit résilient en cas de données incomplètes ;
-- la création/édition de transaction et de récurrente fonctionne dans tous les foyers.
+Rendre la configuration CORS du backend pilotable par variable d'environnement, avec une valeur par défaut sûre, pour que le frontend de production puisse appeler l'API.
 
 ## Périmètre
 
-- Backend : `backend/app/core/categories.py`
-- Backend : `backend/app/routers/transactions.py` (`list_categories`, `_ensure_category_exists`, `create_transaction`, `update_transaction`)
-- Backend : `backend/app/routers/recurring_transactions.py` (même logique d'auto-création)
-- Tests backend : `backend/tests/test_transactions.py`, `backend/tests/test_recurring_transactions.py`
-- Frontend : robustesse minimale pour `getCategories` et `filteredCategories`
-- Migration SQL corrective si nécessaire
+- Backend : `backend/app/config.py` (ajouter `frontend_url`)
+- Backend : `backend/app/main.py` (utiliser `settings.frontend_url` pour CORS, garder `*` en dev)
+- Documentation : indiquer la variable d'environnement `FRONTEND_URL` à renseigner en production.
 
 ## Plan d'implémentation
 
-### Phase 1 — Diagnostiquer
-- [ ] Vérifier via Supabase/logs si `/api/categories` renvoie 500 en production et le message exact.
-- [ ] Vérifier la structure de la table `categories` en production (colonne `type` présente ?, `household_id NOT NULL` ?, catégories globales restantes ?).
+### Phase 1 — Config
+- [ ] Ajouter `frontend_url: str = "https://kash.vercel.app"` dans `Settings`.
+- [ ] Utiliser `settings.frontend_url` dans `CORSMiddleware` au lieu de l'URL en dur.
+- [ ] Conserver `allow_origins=["*"]` quand `environment == "development"`.
 
-### Phase 2 — Corriger l'ID suggéré
-- [ ] Mapper l'ID public d'une suggestion vers un UUID local unique par foyer (généré ou récupéré par nom).
-- [ ] Conserver la correspondance nom/couleur/suggestion pour l'affichage.
-- [ ] Insérer avec `ON CONFLICT (household_id, name) DO UPDATE ... RETURNING id` ou équivalent Supabase.
-- [ ] Utiliser l'ID local ainsi obtenu dans les insert/update de transactions et récurrentes.
+### Phase 2 — Déploiement
+- [ ] Mettre à jour la variable d'environnement `FRONTEND_URL` côté Railway avec `https://kash-pi-ten.vercel.app`.
+- [ ] Redéployer le backend.
 
-### Phase 3 — Résilience
-- [ ] Rendre `list_categories` résilient aux lignes sans `type` (fallback `expense` + log/sentry).
-- [ ] Rendre le frontend résilient si `category.type` est absent (afficher dans la liste et fallback vers le type courant).
-
-### Phase 4 — Tests & migration
-- [ ] Ajouter un test simulant deux foyers qui utilisent la même suggestion.
-- [ ] Mettre à jour les mocks existants si besoin.
-- [ ] Si la migration n'a pas été appliquée en production, créer une migration SQL corrective idempotente.
-- [ ] Lancer `just check`.
+### Phase 3 — Vérification
+- [ ] Ouvrir la modale Transaction en prod.
+- [ ] Vérifier que `/api/categories`, `/api/accounts`, `/api/savings-accounts` ne sont plus bloqués par CORS.
+- [ ] Créer une transaction avec une catégorie suggérée.
 
 ## Critères de validation
 
-- [ ] Un foyer A peut créer une transaction "Loyer".
-- [ ] Un foyer B distinct peut ensuite créer une transaction "Loyer" sans erreur.
-- [ ] La modale de transaction affiche les catégories (suggestions + perso) pour les deux foyers.
-- [ ] `just check` passe.
+- [ ] Les appels API depuis `https://kash-pi-ten.vercel.app` ne génèrent plus d'erreur CORS.
+- [ ] Les catégories apparaissent dans la modale de transaction en production.
+- [ ] Une transaction peut être créée avec une catégorie en production.
