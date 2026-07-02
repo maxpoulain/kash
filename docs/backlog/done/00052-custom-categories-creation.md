@@ -81,3 +81,17 @@ Testé via `agent-browser` contre le dev local (backend :8000, frontend :3000), 
 4. **`04-duplicate-error.png`** — tentative de créer « courses bio » (minuscules) alors que « Courses Bio » existe → erreur « Une catégorie avec ce nom existe déjà », modale reste ouverte.
 
 `just check` passe (lint + typecheck + 31 tests frontend / ruff + pyright + 67 tests backend).
+
+## Retours UX (itération 2)
+
+Retours utilisateur après la première implémentation :
+
+1. **Tuiles surdimensionnées** — le libellé « Nouvelle catégorie » sur deux lignes agrandissait toute la dernière rangée de la grille. → Libellé raccourci en « Créer » (une ligne), toutes les tuiles ont la même hauteur.
+2. **Double popup** — la création ouvrait une seconde modale par-dessus le formulaire de transaction. → Remplacé par un **inline panel swap** : la section CATÉGORIE du panneau droit est remplacée en place par le formulaire (nom + icônes) avec une flèche retour. Échap ferme d'abord le formulaire inline, puis la modale.
+3. **Type hérité** — le toggle Dépense/Revenu redondant est supprimé : la catégorie hérite du type sélectionné dans le formulaire de transaction (desktop et mobile).
+
+Vérifié E2E via `agent-browser` :
+
+5. **`05-uniform-grid.png`** — tuile « Créer » sur une ligne, rangées uniformes.
+6. **`06-inline-create-form.png`** — panneau droit remplacé en place (flèche retour, nom, icônes, Annuler/Créer), pas de seconde modale, pas de toggle de type.
+7. **`07-inline-created.png`** — création de « Voyages » → toast, retour à la grille, catégorie ajoutée et sélectionnée.

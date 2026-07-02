@@ -25,7 +25,8 @@ import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PiggyMark } from "@/components/kash-piggy";
-import { CreateCategoryModal } from "@/components/categories/create-category-modal";
+import { toast } from "sonner";
+import { CreateCategoryForm, CreateCategoryModal } from "@/components/categories/create-category-modal";
 import { getCategories, createTransaction, updateTransaction, createRecurringTransaction, getAccounts, getSavingsAccounts } from "@/lib/api";
 import type { Account, Category, SavingsAccountAPI, Transaction, TransactionType, Transfer } from "@/types/api";
 import { TransferForm } from "./transfer-form";
@@ -414,7 +415,16 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile", editin
       <>
       <form
         onSubmit={handleSubmit(onSubmit)}
-        onKeyDown={(e) => { if (e.key === "Escape") onClose?.(); }}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            if (createCategoryOpen) {
+              e.stopPropagation();
+              setCreateCategoryOpen(false);
+            } else {
+              onClose?.();
+            }
+          }
+        }}
         className="bg-background"
       >
         {/* header */}
@@ -540,6 +550,18 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile", editin
           >
             <PiggyPreview amount={amount} isIncome={isIncome} />
 
+            {createCategoryOpen ? (
+              <CreateCategoryForm
+                variant="inline"
+                fixedType={selectedType}
+                onSuccess={(category) => {
+                  handleCategoryCreated(category);
+                  setCreateCategoryOpen(false);
+                  toast.success(tc("form.success"));
+                }}
+                onClose={() => setCreateCategoryOpen(false)}
+              />
+            ) : (
             <div>
               <div className="text-[10px] font-mono text-muted-foreground tracking-[0.12em] uppercase mb-2">
                 {t("category")}
@@ -575,10 +597,11 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile", editin
                   style={{ background: "var(--bg-elev)" }}
                 >
                   <Plus className="w-4 h-4" />
-                  <span>{tc("newCategory")}</span>
+                  <span>{tc("newCategoryShort")}</span>
                 </button>
               </div>
             </div>
+            )}
           </div>
         </div>
 
@@ -622,11 +645,6 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile", editin
           </div>
         </div>
       </form>
-      <CreateCategoryModal
-        open={createCategoryOpen}
-        onOpenChange={setCreateCategoryOpen}
-        onCategoryCreated={handleCategoryCreated}
-      />
     </>
   );
 }
@@ -846,6 +864,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile", editin
       open={createCategoryOpen}
       onOpenChange={setCreateCategoryOpen}
       onCategoryCreated={handleCategoryCreated}
+      fixedType={selectedType}
     />
     </>
   );
