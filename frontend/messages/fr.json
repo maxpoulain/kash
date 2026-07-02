@@ -205,7 +205,8 @@
       "duplicate": "Une catégorie avec ce nom existe déjà",
       "submitError": "Une erreur est survenue. Veuillez réessayer."
     },
-    "newCategory": "Nouvelle catégorie"
+    "newCategory": "Nouvelle catégorie",
+    "newCategoryShort": "Créer"
   },
   "goals": {
     "list": {

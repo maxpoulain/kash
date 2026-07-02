@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Dialog } from "@base-ui/react/dialog";
-import { Minus, Plus, X, Tag } from "lucide-react";
+import { ArrowLeft, Minus, Plus, X, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { ALLOWED_CATEGORY_ICONS } from "@/lib/category-icons";
@@ -27,10 +27,12 @@ type FormValues = z.infer<typeof schema>;
 interface CreateCategoryFormProps {
   onSuccess: (category: Category) => void;
   onClose: () => void;
-  variant?: "mobile" | "desktop";
+  variant?: "mobile" | "desktop" | "inline";
+  /** Inherit the type from the host form: hides the expense/income toggle. */
+  fixedType?: TransactionType;
 }
 
-function CreateCategoryForm({ onSuccess, onClose, variant = "mobile" }: CreateCategoryFormProps) {
+export function CreateCategoryForm({ onSuccess, onClose, variant = "mobile", fixedType }: CreateCategoryFormProps) {
   const t = useTranslations("categories.form");
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -42,10 +44,10 @@ function CreateCategoryForm({ onSuccess, onClose, variant = "mobile" }: CreateCa
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { type: "expense", icon: "Package" },
+    defaultValues: { type: fixedType ?? "expense", icon: "Package" },
   });
 
-  const selectedType = watch("type") as TransactionType;
+  const selectedType = (fixedType ?? watch("type")) as TransactionType;
   const selectedIcon = watch("icon");
   const isIncome = selectedType === "income";
 
@@ -55,7 +57,7 @@ function CreateCategoryForm({ onSuccess, onClose, variant = "mobile" }: CreateCa
       const category = await createCategory({
         name: values.name.trim(),
         icon: values.icon,
-        type: values.type,
+        type: fixedType ?? values.type,
       });
       onSuccess(category);
     } catch (err) {
@@ -67,7 +69,7 @@ function CreateCategoryForm({ onSuccess, onClose, variant = "mobile" }: CreateCa
     }
   }
 
-  const typeToggle = (
+  const typeToggle = fixedType ? null : (
     <div className="grid grid-cols-2 gap-1.5 p-1 bg-muted rounded-[12px]">
       {(["expense", "income"] as TransactionType[]).map((txType) => {
         const active = selectedType === txType;
@@ -123,6 +125,90 @@ function CreateCategoryForm({ onSuccess, onClose, variant = "mobile" }: CreateCa
       </div>
     </div>
   );
+
+  // -------------------------------------------------------------------------
+  // INLINE — embedded in a host <form>, so no nested <form> element
+  // -------------------------------------------------------------------------
+  if (variant === "inline") {
+    return (
+      <div className="space-y-[18px]">
+        {/* back header */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t("cancel")}
+            className="w-7 h-7 rounded-[8px] flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            style={{ background: "var(--bg-elev)" }}
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div className="text-[10px] font-mono text-muted-foreground tracking-[0.12em] uppercase">
+            {t("title")}
+          </div>
+        </div>
+
+        {typeToggle}
+
+        {/* name */}
+        <div>
+          <Label className="text-[10px] font-mono text-muted-foreground tracking-[0.12em] uppercase mb-2 block">
+            {t("name")}
+          </Label>
+          <Input
+            {...register("name")}
+            placeholder={t("namePlaceholder")}
+            maxLength={50}
+            className="text-[13px]"
+            autoFocus
+            onKeyDown={(e) => {
+              // Enter must create the category, not submit the host form.
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleSubmit(onSubmit)();
+              }
+            }}
+          />
+          {errors.name && (
+            <p className="text-destructive text-xs mt-1">{t(errors.name.message as string)}</p>
+          )}
+        </div>
+
+        {iconPicker}
+
+        {submitError && (
+          <p role="alert" className="text-destructive text-xs">{submitError}</p>
+        )}
+
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-[10px] text-muted-foreground font-medium text-[13px] hover:text-foreground transition-colors"
+            style={{ background: "var(--bg-elev)" }}
+          >
+            {t("cancel")}
+          </button>
+          <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={() => handleSubmit(onSubmit)()}
+            className="flex-[2] py-2.5 rounded-[10px] text-[13px] font-semibold flex items-center justify-center gap-1.5 transition-opacity disabled:opacity-60"
+            style={{
+              background: isIncome ? "var(--accent)" : "var(--ink)",
+              color: isIncome ? "var(--accent-foreground)" : "var(--bg)",
+            }}
+          >
+            {isSubmitting ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              t("create")
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // -------------------------------------------------------------------------
   // DESKTOP
@@ -310,9 +396,10 @@ interface CreateCategoryModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCategoryCreated: (category: Category) => void;
+  fixedType?: TransactionType;
 }
 
-export function CreateCategoryModal({ open, onOpenChange, onCategoryCreated }: CreateCategoryModalProps) {
+export function CreateCategoryModal({ open, onOpenChange, onCategoryCreated, fixedType }: CreateCategoryModalProps) {
   const t = useTranslations("categories.form");
   const [isMobile, setIsMobile] = useState(true);
 
@@ -343,6 +430,7 @@ export function CreateCategoryModal({ open, onOpenChange, onCategoryCreated }: C
               onSuccess={handleSuccess}
               onClose={handleClose}
               variant="mobile"
+              fixedType={fixedType}
             />
           </SheetContent>
         </Sheet>
@@ -356,6 +444,7 @@ export function CreateCategoryModal({ open, onOpenChange, onCategoryCreated }: C
                 onSuccess={handleSuccess}
                 onClose={handleClose}
                 variant="desktop"
+                fixedType={fixedType}
               />
             </Dialog.Popup>
           </Dialog.Portal>
