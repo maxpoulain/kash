@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from postgrest.exceptions import APIError
 
 from app.core.auth import get_current_user
+from app.core.categories import _ensure_category_exists
 from app.core.supabase import get_supabase
 from app.schemas.spending_goals import GoalCreate, GoalOut, GoalUpdate, SpendingGoalsResponse
 
@@ -179,6 +180,10 @@ async def create_spending_goal(
 
     month_start = _get_first_day_of_month(payload.month)
 
+    # Suggested categories only get a DB row on first use (same lazy creation
+    # as transactions) — a goal must be able to be the first use.
+    category_id = _ensure_category_exists(household_id, str(payload.category_id))
+
     try:
         result = (
             supabase.table("spending_goals")
@@ -186,7 +191,7 @@ async def create_spending_goal(
                 {
                     "household_id": household_id,
                     "created_by": claims["sub"],
-                    "category_id": str(payload.category_id),
+                    "category_id": category_id,
                     "month": month_start,
                     "amount": payload.amount,
                 }
@@ -198,6 +203,11 @@ async def create_spending_goal(
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="A goal already exists for this category and month",
+            )
+        if "foreign key" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Category not found",
             )
         raise
 
