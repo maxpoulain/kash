@@ -187,6 +187,26 @@
       "transferDifferent": "Choisis deux comptes différents"
     }
   },
+  "categories": {
+    "form": {
+      "title": "Nouvelle catégorie",
+      "name": "Nom",
+      "namePlaceholder": "ex. Courses bio",
+      "nameRequired": "Un nom est requis",
+      "nameTooLong": "Nom trop long (50 caractères max)",
+      "icon": "Icône",
+      "iconRequired": "Choisissez une icône",
+      "type": "Type",
+      "expense": "Dépense",
+      "income": "Revenu",
+      "cancel": "Annuler",
+      "create": "Créer",
+      "success": "Catégorie créée",
+      "duplicate": "Une catégorie avec ce nom existe déjà",
+      "submitError": "Une erreur est survenue. Veuillez réessayer."
+    },
+    "newCategory": "Nouvelle catégorie"
+  },
   "goals": {
     "list": {
       "title": "Objectifs",

@@ -18,10 +18,10 @@ Permettre à l'utilisateur de créer des catégories totalement libres en dehors
 
 ## Critères de validation
 
-- [ ] Créer une catégorie "Courses Bio" avec une icône, elle apparaît immédiatement dans l'autocomplete
-- [ ] Essayer de créer "courses bio" quand "Courses Bio" existe → erreur doublon
-- [ ] Une catégorie perso créée par le foyer A n'est pas visible du foyer B
-- [ ] Les catégories perso fonctionnent dans les transactions, les objectifs de dépenses et le dashboard
+- [x] Créer une catégorie "Courses Bio" avec une icône, elle apparaît immédiatement dans l'autocomplete — ✅ vérifié E2E (cf. `screenshots/03-category-created.png`)
+- [x] Essayer de créer "courses bio" quand "Courses Bio" existe → erreur doublon — ✅ vérifié E2E, message « Une catégorie avec ce nom existe déjà » (`screenshots/04-duplicate-error.png`)
+- [x] Une catégorie perso créée par le foyer A n'est pas visible du foyer B — ✅ couvert par test backend `test_create_category_isolated_per_household` (POST du foyer B filtre sur `household_id`)
+- [x] Les catégories perso fonctionnent dans les transactions, les objectifs de dépenses et le dashboard — ✅ `mergeCategories()` appliqué aux 3 consommateurs (`transaction-form`, `transaction-list`, `create-goal-modal`) ; `goal-card` résout l'icône via lookup statique
 
 ## Plan d'implémentation
 
@@ -70,3 +70,14 @@ Permettre à l'utilisateur de créer des catégories totalement libres en dehors
 - [b] L'utilisateur crée la catégorie **depuis le formulaire de transaction** (bouton dans la grille), pas depuis une page dédiée — cohérent avec le périmètre « bouton dans le formulaire ».
 - [c] Pas de suppression/édition de catégorie perso dans cette tâche (non listé dans le périmètre).
 - [d] Le dashboard continue de fonctionner car `summary.py` lit déjà `categories` par foyer.
+
+## Vérification E2E
+
+Testé via `agent-browser` contre le dev local (backend :8000, frontend :3000), utilisateur `test@example.com`. Captures dans `screenshots/` :
+
+1. **`01-transaction-form.png`** — bouton « Nouvelle catégorie » présent dans la grille du formulaire de transaction (bordure pointillée).
+2. **`02-create-modal.png`** — modale de création ouverte : saisie du nom + picker d'icônes (18 icônes) + toggle expense/income.
+3. **`03-category-created.png`** — création de « Courses Bio » (icône ShoppingCart) → toast de succès + la catégorie apparaît immédiatement dans la grille d'autocomplete du formulaire.
+4. **`04-duplicate-error.png`** — tentative de créer « courses bio » (minuscules) alors que « Courses Bio » existe → erreur « Une catégorie avec ce nom existe déjà », modale reste ouverte.
+
+`just check` passe (lint + typecheck + 31 tests frontend / ruff + pyright + 67 tests backend).

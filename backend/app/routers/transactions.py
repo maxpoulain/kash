@@ -7,17 +7,17 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.core.accounts import visible_account_ids
 from app.core.auth import get_current_user
 from app.core.categories import (
-    SUGGESTED_BY_ID,
     _ensure_category_exists,
+    find_duplicate_category,
 )
 from app.core.supabase import get_supabase
 from app.routers.recurring_transactions import materialize_due_for_household
+from app.schemas.categories import CategoryCreate
 from app.schemas.transactions import (
     CategoryOut,
     TransactionCreate,
     TransactionOut,
     TransactionUpdate,
-    TransactionType,
 )
 
 router = APIRouter(prefix="/api")
@@ -64,7 +64,12 @@ def _get_default_account_id(household_id: str) -> str | None:
 
 @router.get("/categories", response_model=list[CategoryOut])
 async def list_categories(claims: dict = Depends(get_current_user)) -> list[CategoryOut]:
-    """List suggested categories plus custom ones for the user's household."""
+    """List categories created for the user's household.
+
+    Suggested categories are merged on the frontend (see 00052), so this returns
+    only the household's own categories. A suggestion becomes a real row here the
+    first time it is used (lazy creation in transactions/recurring routes).
+    """
     household_id = _get_household_id(claims["sub"])
     supabase = get_supabase()
     result = (
@@ -74,36 +79,34 @@ async def list_categories(claims: dict = Depends(get_current_user)) -> list[Cate
         .execute()
     )
     rows = cast(list[dict], result.data if isinstance(result.data, list) else [])
-    custom_names = {row["name"] for row in rows}
-    categories = [
-        CategoryOut(
-            id=s.id,
-            household_id=None,
-            name=s.name,
-            icon=s.icon,
-            type=s.type,
-        )
-        for s in SUGGESTED_BY_ID.values()
-        if s.name not in custom_names
-    ]
-    for row in rows:
-        categories.append(CategoryOut(**row))
-    return categories
+    return [CategoryOut(**row) for row in rows]
 
 
 @router.post("/categories", response_model=CategoryOut, status_code=status.HTTP_201_CREATED)
 async def create_category(
-    name: str,
-    icon: str | None = None,
-    type: TransactionType = TransactionType.expense,
+    category: CategoryCreate,
     claims: dict = Depends(get_current_user),
 ) -> CategoryOut:
-    """Create a custom category for the user's household."""
+    """Create a custom category for the user's household.
+
+    Duplicate detection is case-insensitive and trimmed (the DB unique
+    constraint on (household_id, name) is case-sensitive in Postgres).
+    """
     household_id = _get_household_id(claims["sub"])
+    name = category.name.strip()
+    if find_duplicate_category(household_id, name):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="duplicate")
     supabase = get_supabase()
     result = (
         supabase.table("categories")
-        .insert({"household_id": household_id, "name": name, "icon": icon, "type": type.value})
+        .insert(
+            {
+                "household_id": household_id,
+                "name": name,
+                "icon": category.icon,
+                "type": category.type.value,
+            }
+        )
         .execute()
     )
     rows = cast(list[dict], result.data if isinstance(result.data, list) else [])

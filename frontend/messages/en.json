@@ -187,6 +187,26 @@
       "transferDifferent": "Pick two different accounts"
     }
   },
+  "categories": {
+    "form": {
+      "title": "New category",
+      "name": "Name",
+      "namePlaceholder": "e.g. Organic groceries",
+      "nameRequired": "A name is required",
+      "nameTooLong": "Name is too long (50 chars max)",
+      "icon": "Icon",
+      "iconRequired": "Pick an icon",
+      "type": "Type",
+      "expense": "Expense",
+      "income": "Income",
+      "cancel": "Cancel",
+      "create": "Create",
+      "success": "Category created",
+      "duplicate": "A category with this name already exists",
+      "submitError": "Something went wrong. Please try again."
+    },
+    "newCategory": "New category"
+  },
   "goals": {
     "list": {
       "title": "Goals",

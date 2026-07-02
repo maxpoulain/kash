@@ -94,6 +94,27 @@ SUGGESTED_BY_ID: dict[UUID, SuggestedCategory] = {c.id: c for c in SUGGESTED_CAT
 SUGGESTED_BY_NAME: dict[str, SuggestedCategory] = {c.name: c for c in SUGGESTED_CATEGORIES}
 
 
+def find_duplicate_category(household_id: str, name: str) -> bool:
+    """Return True if a category with the same (trimmed, case-insensitive) name
+    already exists for the household. Comparison is case-insensitive because the
+    DB unique constraint on (household_id, name) is case-sensitive in Postgres.
+    """
+    cleaned = name.strip()
+    if not cleaned:
+        return False
+    supabase = get_supabase()
+    result = (
+        supabase.table("categories")
+        .select("id")
+        .eq("household_id", household_id)
+        .ilike("name", cleaned)
+        .limit(1)
+        .execute()
+    )
+    rows = result.data if isinstance(result.data, list) else []
+    return len(rows) > 0
+
+
 def _ensure_category_exists(household_id: str, category_id: str | None) -> str | None:
     """If category_id is a suggested category not yet created for the household, create it."""
     if category_id is None:
