@@ -184,6 +184,23 @@ async def create_spending_goal(
     # as transactions) — a goal must be able to be the first use.
     category_id = _ensure_category_exists(household_id, str(payload.category_id))
 
+    # Progress only counts expense transactions, so a goal on an income
+    # category would sit at 0% forever — reject it.
+    cat_result = (
+        supabase.table("categories")
+        .select("type")
+        .eq("id", category_id)
+        .eq("household_id", household_id)
+        .limit(1)
+        .execute()
+    )
+    cat_rows = cast(list[dict], cat_result.data or [])
+    if cat_rows and cat_rows[0].get("type") != "expense":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Spending goals can only target expense categories",
+        )
+
     try:
         result = (
             supabase.table("spending_goals")

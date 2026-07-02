@@ -60,7 +60,7 @@ function CreateGoalForm({ month, usedCategoryIds, onSuccess, onClose, variant = 
     getCategories().then((rows) => setCategories(mergeCategories(rows))).catch(() => setCategories(mergeCategories([])));
   }, []);
 
-  const availableCategories = categories.filter((c) => !usedCategoryIds.has(c.id));
+  const availableCategories = categories.filter((c) => c.type === "expense" && !usedCategoryIds.has(c.id));
 
   async function onSubmit(values: FormValues) {
     setSubmitError(null);
