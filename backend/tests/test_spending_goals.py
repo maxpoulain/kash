@@ -51,6 +51,21 @@ def _mock_goals_query(supabase, goals_data: list[dict]):
     return result
 
 
+def _mock_category_type_query(supabase, rows: list[dict]):
+    """Mock the category type SELECT chain (select().eq().eq().limit().execute())."""
+    result = MagicMock()
+    result.data = rows
+    (
+        supabase.table.return_value
+        .select.return_value
+        .eq.return_value
+        .eq.return_value
+        .limit.return_value
+        .execute.return_value
+    ) = result
+    return result
+
+
 def _mock_transactions_query(supabase, tx_data: list[dict]):
     """Mock transactions SELECT query chain."""
     result = MagicMock()
@@ -522,6 +537,7 @@ async def test_post_spending_goal_valid_returns_201():
         _mock_auth(mock_jwks)
         supabase = MagicMock()
         mock_supabase.return_value = supabase
+        _mock_category_type_query(supabase, [{"type": "expense"}])
         supabase.table.return_value.insert.return_value.execute.return_value = insert_result
         supabase.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = refetch_result
 
@@ -558,6 +574,7 @@ async def test_post_spending_goal_duplicate_returns_409():
         _mock_auth(mock_jwks)
         supabase = MagicMock()
         mock_supabase.return_value = supabase
+        _mock_category_type_query(supabase, [{"type": "expense"}])
         supabase.table.return_value.insert.return_value.execute.side_effect = APIError(
             {"message": "duplicate key value violates unique constraint", "code": "23505"}
         )
@@ -617,9 +634,12 @@ async def test_post_spending_goal_suggested_category_lazily_created():
         mock_supabase.return_value = supabase
         mock_core_supabase.return_value = supabase
 
-        # categories SELECT in _ensure_category_exists → not found
+        # First: categories SELECT in _ensure_category_exists → not found.
+        # Second: the route's type check on the freshly created category.
         not_found = MagicMock()
         not_found.data = []
+        expense_type = MagicMock()
+        expense_type.data = [{"type": "expense"}]
         (
             supabase.table.return_value
             .select.return_value
@@ -627,7 +647,7 @@ async def test_post_spending_goal_suggested_category_lazily_created():
             .eq.return_value
             .limit.return_value
             .execute
-        ).side_effect = [not_found]
+        ).side_effect = [not_found, expense_type]
 
         # First INSERT: lazy category creation; second INSERT: the goal
         supabase.table.return_value.insert.return_value.execute.side_effect = [
@@ -658,6 +678,33 @@ async def test_post_spending_goal_suggested_category_lazily_created():
 
 
 @pytest.mark.asyncio
+async def test_post_spending_goal_income_category_returns_422():
+    """Goal on an income category → 422 (progress only counts expenses)."""
+    with (
+        patch("app.core.auth.get_jwks_client") as mock_jwks,
+        patch("app.core.auth.jwt.decode", return_value=FAKE_CLAIMS),
+        patch("app.routers.spending_goals._get_household_id", return_value=HOUSEHOLD_ID),
+        patch("app.routers.spending_goals.get_supabase") as mock_supabase,
+    ):
+        _mock_auth(mock_jwks)
+        supabase = MagicMock()
+        mock_supabase.return_value = supabase
+        _mock_category_type_query(supabase, [{"type": "income"}])
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post(
+                "/api/spending-goals",
+                json={"month": "2026-04", "category_id": CATEGORY_ID, "amount": 500.0},
+                headers={"Authorization": "Bearer faketoken"},
+            )
+
+    assert response.status_code == 422
+    assert "expense" in response.json()["detail"]
+    # Nothing was inserted
+    supabase.table.return_value.insert.assert_not_called()
+
+
+@pytest.mark.asyncio
 async def test_post_spending_goal_unknown_category_returns_404():
     """Goal on a UUID that is neither suggested nor in DB → clean 404, not 500."""
     from postgrest.exceptions import APIError
@@ -673,6 +720,7 @@ async def test_post_spending_goal_unknown_category_returns_404():
         _mock_auth(mock_jwks)
         supabase = MagicMock()
         mock_supabase.return_value = supabase
+        _mock_category_type_query(supabase, [])  # unknown id → no category row
         supabase.table.return_value.insert.return_value.execute.side_effect = APIError(
             {
                 "message": 'insert or update on table "spending_goals" violates foreign key constraint',
