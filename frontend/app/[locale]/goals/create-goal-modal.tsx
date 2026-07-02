@@ -8,14 +8,17 @@ import { Dialog } from "@base-ui/react/dialog";
 import { Package, Target, X } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations, useLocale } from "next-intl";
-import { CATEGORY_ICONS } from "@/lib/category-icons";
+import { CATEGORY_ICON_BY_KEY, CATEGORY_ICONS } from "@/lib/category-icons";
+import { mergeCategories } from "@/lib/suggested-categories";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { getCategories, createGoal } from "@/lib/api";
 import type { Category } from "@/types/api";
 
-function CategoryIcon({ name, className }: { name: string; className?: string }) {
-  const Icon = CATEGORY_ICONS[name] ?? Package;
+function CategoryIcon({ category, className }: { category: Category; className?: string }) {
+  const Icon = (category.icon && CATEGORY_ICON_BY_KEY[category.icon])
+    ? CATEGORY_ICON_BY_KEY[category.icon]
+    : CATEGORY_ICONS[category.name] ?? Package;
   return <Icon className={className} />;
 }
 
@@ -54,7 +57,7 @@ function CreateGoalForm({ month, usedCategoryIds, onSuccess, onClose, variant = 
   const amount = watch("amount");
 
   useEffect(() => {
-    getCategories().then(setCategories).catch(() => setCategories([]));
+    getCategories().then((rows) => setCategories(mergeCategories(rows))).catch(() => setCategories(mergeCategories([])));
   }, []);
 
   const availableCategories = categories.filter((c) => !usedCategoryIds.has(c.id));
@@ -163,7 +166,7 @@ function CreateGoalForm({ month, usedCategoryIds, onSuccess, onClose, variant = 
                       )}
                       style={active ? { background: "var(--ink)" } : { background: "var(--bg-elev)" }}
                     >
-                      <CategoryIcon name={c.name} className="w-4 h-4" />
+                      <CategoryIcon category={c} className="w-4 h-4" />
                       <span>{c.name}</span>
                     </button>
                   );
@@ -297,7 +300,7 @@ function CreateGoalForm({ month, usedCategoryIds, onSuccess, onClose, variant = 
                       color: "var(--ink)",
                     }}
                   >
-                    <CategoryIcon name={c.name} className="w-3.5 h-3.5" />
+                    <CategoryIcon category={c} className="w-3.5 h-3.5" />
                     {c.name}
                   </button>
                 );

@@ -4,7 +4,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import type { SpendingGoal } from "@/types/api";
-import { CATEGORY_ICONS } from "@/lib/category-icons";
+import { CATEGORY_ICON_BY_KEY, CATEGORY_ICONS } from "@/lib/category-icons";
 import { Package } from "lucide-react";
 
 interface GoalCardProps {
@@ -14,7 +14,12 @@ interface GoalCardProps {
 export function GoalCard({ goal }: GoalCardProps) {
   const t = useTranslations("goals.card");
   const locale = useLocale();
-  const Icon = CATEGORY_ICONS[goal.category_name] ?? Package;
+  // Resolve via static lookups (a function returning a component would trip
+  // react-hooks/static-components). Custom categories store a Lucide key as
+  // `category_icon`; suggestions store an emoji, so resolve by name.
+  const Icon = (goal.category_icon && CATEGORY_ICON_BY_KEY[goal.category_icon])
+    ? CATEGORY_ICON_BY_KEY[goal.category_icon]
+    : CATEGORY_ICONS[goal.category_name] ?? Package;
   const isOverBudget = goal.status === "over_budget";
   const isUnderPace = goal.status === "under_pace";
 

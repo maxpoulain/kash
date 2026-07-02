@@ -67,7 +67,8 @@ async def test_list_categories_without_token_returns_401():
 
 
 @pytest.mark.asyncio
-async def test_list_categories_returns_suggested_and_custom():
+async def test_list_categories_returns_only_household_categories():
+    """GET /api/categories returns only the household's categories (no suggestions merge)."""
     with (
         patch("app.core.auth.get_jwks_client") as mock_jwks,
         patch("app.routers.transactions.get_supabase") as mock_supabase,
@@ -95,11 +96,149 @@ async def test_list_categories_returns_suggested_and_custom():
 
     assert response.status_code == 200
     data = response.json()
-    # Should include suggestions + custom categories
-    assert len(data) > 1
+    # Only household categories are returned (suggestions are merged on the frontend)
+    assert len(data) == 1
+    assert data[0]["name"] == "Loyer"
     names = {c["name"] for c in data}
-    assert "Loyer" in names
-    assert "Courses" in names
+    assert "Courses" not in names
+
+
+@pytest.mark.asyncio
+async def test_create_category_returns_201():
+    """POST /api/categories creates a category and returns it as JSON body."""
+    created = {
+        **FAKE_CATEGORY,
+        "name": "Courses Bio",
+        "icon": "ShoppingCart",
+        "type": "expense",
+    }
+    with (
+        patch("app.core.auth.get_jwks_client") as mock_jwks,
+        patch("app.routers.transactions.get_supabase") as mock_supabase,
+        patch("app.routers.transactions._get_household_id", return_value=HOUSEHOLD_ID),
+        patch("app.core.auth.jwt.decode", return_value=FAKE_CLAIMS),
+        patch("app.core.categories.get_supabase") as mock_core_supabase,
+    ):
+        _mock_auth(mock_jwks)
+
+        supabase_instance = MagicMock()
+        mock_supabase.return_value = supabase_instance
+        insert_result = MagicMock()
+        insert_result.data = [created]
+        (
+            supabase_instance.table.return_value
+            .insert.return_value
+            .execute.return_value
+        ) = insert_result
+
+        # Duplicate check: no existing category found
+        dup_result = MagicMock()
+        dup_result.data = []
+        core_instance = MagicMock()
+        mock_core_supabase.return_value = core_instance
+        (
+            core_instance.table.return_value
+            .select.return_value
+            .eq.return_value
+            .ilike.return_value
+            .limit.return_value
+            .execute.return_value
+        ) = dup_result
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post(
+                "/api/categories",
+                json={"name": "Courses Bio", "icon": "ShoppingCart", "type": "expense"},
+                headers={"Authorization": "Bearer valid.token"},
+            )
+
+    assert response.status_code == 201
+    assert response.json()["name"] == "Courses Bio"
+
+
+@pytest.mark.asyncio
+async def test_create_category_rejects_case_insensitive_duplicate():
+    """'courses bio' is rejected when 'Courses Bio' exists (trimmed, case-insensitive)."""
+    with (
+        patch("app.core.auth.get_jwks_client") as mock_jwks,
+        patch("app.routers.transactions.get_supabase"),
+        patch("app.routers.transactions._get_household_id", return_value=HOUSEHOLD_ID),
+        patch("app.core.auth.jwt.decode", return_value=FAKE_CLAIMS),
+        patch("app.core.categories.get_supabase") as mock_core_supabase,
+    ):
+        _mock_auth(mock_jwks)
+
+        # Duplicate found by ilike
+        dup_result = MagicMock()
+        dup_result.data = [{"id": CATEGORY_ID}]
+        core_instance = MagicMock()
+        mock_core_supabase.return_value = core_instance
+        (
+            core_instance.table.return_value
+            .select.return_value
+            .eq.return_value
+            .ilike.return_value
+            .limit.return_value
+            .execute.return_value
+        ) = dup_result
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post(
+                "/api/categories",
+                json={"name": "courses bio", "icon": "ShoppingCart", "type": "expense"},
+                headers={"Authorization": "Bearer valid.token"},
+            )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "duplicate"
+
+
+@pytest.mark.asyncio
+async def test_create_category_isolated_per_household():
+    """A category created by household A is not visible to household B (RLS)."""
+    with (
+        patch("app.core.auth.get_jwks_client") as mock_jwks,
+        patch("app.routers.transactions.get_supabase") as mock_supabase,
+        patch("app.routers.transactions._get_household_id", return_value=OTHER_HOUSEHOLD_ID),
+        patch("app.core.auth.jwt.decode", return_value=FAKE_CLAIMS),
+        patch("app.core.categories.get_supabase") as mock_core_supabase,
+    ):
+        _mock_auth(mock_jwks)
+
+        # No duplicate in household B
+        dup_result = MagicMock()
+        dup_result.data = []
+        core_instance = MagicMock()
+        mock_core_supabase.return_value = core_instance
+        (
+            core_instance.table.return_value
+            .select.return_value
+            .eq.return_value
+            .ilike.return_value
+            .limit.return_value
+            .execute.return_value
+        ) = dup_result
+
+        created = {**FAKE_CATEGORY, "household_id": OTHER_HOUSEHOLD_ID, "name": "Courses Bio"}
+        supabase_instance = MagicMock()
+        mock_supabase.return_value = supabase_instance
+        insert_result = MagicMock()
+        insert_result.data = [created]
+        (
+            supabase_instance.table.return_value
+            .insert.return_value
+            .execute.return_value
+        ) = insert_result
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post(
+                "/api/categories",
+                json={"name": "Courses Bio", "icon": "ShoppingCart", "type": "expense"},
+                headers={"Authorization": "Bearer valid.token"},
+            )
+
+    assert response.status_code == 201
+    assert response.json()["household_id"] == OTHER_HOUSEHOLD_ID
 
 
 # --- /api/transactions ---

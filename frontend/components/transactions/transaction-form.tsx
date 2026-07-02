@@ -19,11 +19,13 @@ import {
   X,
 } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
-import { CATEGORY_ICONS } from "@/lib/category-icons";
+import { CATEGORY_ICON_BY_KEY, CATEGORY_ICONS } from "@/lib/category-icons";
+import { mergeCategories } from "@/lib/suggested-categories";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PiggyMark } from "@/components/kash-piggy";
+import { CreateCategoryModal } from "@/components/categories/create-category-modal";
 import { getCategories, createTransaction, updateTransaction, createRecurringTransaction, getAccounts, getSavingsAccounts } from "@/lib/api";
 import type { Account, Category, SavingsAccountAPI, Transaction, TransactionType, Transfer } from "@/types/api";
 import { TransferForm } from "./transfer-form";
@@ -35,8 +37,10 @@ const DATE_FNS_LOCALES: Record<string, Locale> = {
   fr,
 };
 
-function CategoryIcon({ name, className }: { name: string; className?: string }) {
-  const Icon = CATEGORY_ICONS[name] ?? Package;
+function CategoryIcon({ category, className }: { category: Category; className?: string }) {
+  const Icon = (category.icon && CATEGORY_ICON_BY_KEY[category.icon])
+    ? CATEGORY_ICON_BY_KEY[category.icon]
+    : CATEGORY_ICONS[category.name] ?? Package;
   return <Icon className={className} />;
 }
 
@@ -128,6 +132,7 @@ function shortLabel(name: string) {
 
 export function TransactionForm({ onSuccess, onClose, variant = "mobile", editing }: TransactionFormProps) {
   const t = useTranslations("transactions.form");
+  const tc = useTranslations("categories");
   const locale = useLocale();
   const dateFnsLocale = DATE_FNS_LOCALES[locale] ?? enUS;
   const editingTxn = editing?.kind === "txn" ? editing.txn : undefined;
@@ -138,6 +143,17 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile", editin
   const [epargnes, setEpargnes] = useState<SavingsAccountAPI[]>([]);
   const [mode, setMode] = useState<Mode>(editingTransfer ? "transfer" : "txn");
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [createCategoryOpen, setCreateCategoryOpen] = useState(false);
+
+  function handleCategoryCreated(category: Category) {
+    setCategories((prev) => {
+      // Insert before any suggestion with the same id (merge helper would drop
+      // the household one otherwise) — prepend the real row.
+      const next = [category, ...prev.filter((c) => c.id !== category.id)];
+      return next;
+    });
+    setValue("category_id", category.id);
+  }
 
   const {
     register,
@@ -170,8 +186,8 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile", editin
 
   useEffect(() => {
     getCategories()
-      .then(setCategories)
-      .catch(() => setCategories([]));
+      .then((rows) => setCategories(mergeCategories(rows)))
+      .catch(() => setCategories(mergeCategories([])));
     getAccounts()
       .then((rows) => {
         setAccounts(rows);
@@ -395,6 +411,7 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile", editin
   // -------------------------------------------------------------------------
   if (variant === "desktop") {
     return (
+      <>
       <form
         onSubmit={handleSubmit(onSubmit)}
         onKeyDown={(e) => { if (e.key === "Escape") onClose?.(); }}
@@ -546,11 +563,20 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile", editin
                       )}
                       style={active ? { background: "var(--ink)" } : { background: "var(--bg-elev)" }}
                     >
-                      <CategoryIcon name={c.name} className="w-4 h-4" />
+                      <CategoryIcon category={c} className="w-4 h-4" />
                       <span>{shortLabel(c.name)}</span>
                     </button>
                   );
                 })}
+                <button
+                  type="button"
+                  onClick={() => setCreateCategoryOpen(true)}
+                  className="flex flex-col items-center justify-center gap-1 px-1.5 py-2.5 rounded-[10px] text-[10px] border border-dashed border-border text-muted-foreground hover:border-foreground/40 transition-all cursor-pointer leading-tight text-center"
+                  style={{ background: "var(--bg-elev)" }}
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>{tc("newCategory")}</span>
+                </button>
               </div>
             </div>
           </div>
@@ -596,13 +622,20 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile", editin
           </div>
         </div>
       </form>
-    );
-  }
+      <CreateCategoryModal
+        open={createCategoryOpen}
+        onOpenChange={setCreateCategoryOpen}
+        onCategoryCreated={handleCategoryCreated}
+      />
+    </>
+  );
+}
 
   // -------------------------------------------------------------------------
   // MOBILE (default)
   // -------------------------------------------------------------------------
   return (
+    <>
     <form onSubmit={handleSubmit(onSubmit)} className="bg-background">
       {/* grabber */}
       <div className="flex justify-center pt-3.5 mb-1.5">
@@ -689,11 +722,20 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile", editin
                     color: "var(--ink)",
                   }}
                 >
-                  <CategoryIcon name={c.name} className="w-3.5 h-3.5" />
+                  <CategoryIcon category={c} className="w-3.5 h-3.5" />
                   {c.name}
                 </button>
               );
             })}
+            <button
+              type="button"
+              onClick={() => setCreateCategoryOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-full text-[12px] font-medium whitespace-nowrap shrink-0 border border-dashed border-border text-muted-foreground hover:border-foreground/40 transition-all"
+              style={{ background: "var(--bg-elev)", color: "var(--ink)" }}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              {tc("newCategory")}
+            </button>
           </div>
         </div>
 
@@ -800,5 +842,11 @@ export function TransactionForm({ onSuccess, onClose, variant = "mobile", editin
         </div>
       </div>
     </form>
+    <CreateCategoryModal
+      open={createCategoryOpen}
+      onOpenChange={setCreateCategoryOpen}
+      onCategoryCreated={handleCategoryCreated}
+    />
+    </>
   );
 }

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import type { Account, AccountCreate, AccountUpdate, Category, CreateGoalPayload, CreateTransactionPayload, NetWorthHistoryPoint, RecurringTransaction, RecurringTransactionCreate, RecurringTransactionUpdate, SavingsAccountAPI, SavingsAccountCreate, SavingsAccountUpdate, SpendingGoal, SpendingGoalsResponse, Summary, Transaction, TransactionUpdate, Transfer, TransferCreate, TransferUpdate } from "@/types/api";
+import type { Account, AccountCreate, AccountUpdate, Category, CreateGoalPayload, CreateTransactionPayload, NetWorthHistoryPoint, RecurringTransaction, RecurringTransactionCreate, RecurringTransactionUpdate, SavingsAccountAPI, SavingsAccountCreate, SavingsAccountUpdate, SpendingGoal, SpendingGoalsResponse, Summary, Transaction, TransactionType, TransactionUpdate, Transfer, TransferCreate, TransferUpdate } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -25,6 +25,23 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 export async function getCategories(): Promise<Category[]> {
   const res = await apiFetch("/api/categories");
   if (!res.ok) throw new Error("Failed to fetch categories");
+  return res.json();
+}
+
+export interface CreateCategoryPayload {
+  name: string;
+  icon: string;
+  type: TransactionType;
+}
+
+export async function createCategory(payload: CreateCategoryPayload): Promise<Category> {
+  const res = await apiFetch("/api/categories", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  // 409 duplicate → propagate a stable message the form maps to a friendly error.
+  if (res.status === 409) throw new Error("duplicate");
+  if (!res.ok) throw new Error("Failed to create category");
   return res.json();
 }
 

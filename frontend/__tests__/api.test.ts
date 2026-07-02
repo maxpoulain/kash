@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   getCategories,
+  createCategory,
   createTransaction,
   updateTransaction,
   deleteTransaction,
@@ -56,6 +57,39 @@ describe("getCategories", () => {
     mockFetch.mockResolvedValueOnce({ ok: false });
 
     await expect(getCategories()).rejects.toThrow("Failed to fetch categories");
+  });
+});
+
+describe("createCategory", () => {
+  const payload = { name: "Courses Bio", icon: "ShoppingCart", type: "expense" as const };
+
+  it("POSTs the JSON payload and returns the created category", async () => {
+    const created = { id: "cat-1", household_id: "hh-1", ...payload };
+    mockFetch.mockResolvedValueOnce({ ok: true, status: 201, json: async () => created });
+
+    const result = await createCategory(payload);
+
+    expect(result).toEqual(created);
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/categories"),
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: expect.objectContaining({ Authorization: "Bearer fake-token" }),
+      })
+    );
+  });
+
+  it("propagates 'duplicate' on a 409 conflict", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 409 });
+
+    await expect(createCategory(payload)).rejects.toThrow("duplicate");
+  });
+
+  it("throws a generic error on other failures", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+
+    await expect(createCategory(payload)).rejects.toThrow("Failed to create category");
   });
 });
 

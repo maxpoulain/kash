@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { MonthSwitcher } from "@/components/ui/month-switcher";
 import { getTransactions, getCategories, getTransfers, getAccounts, getSavingsAccounts, deleteTransaction, deleteTransfer } from "@/lib/api";
-import { CATEGORY_ICONS } from "@/lib/category-icons";
+import { CATEGORY_ICON_BY_KEY, CATEGORY_ICONS } from "@/lib/category-icons";
+import { mergeCategories } from "@/lib/suggested-categories";
 import { currentMonth } from "@/lib/month";
 import type { Category, Transaction, Transfer } from "@/types/api";
 import type { EditingTarget } from "./transaction-form";
@@ -213,7 +214,7 @@ export function TransactionList({ refreshKey = 0, onAdd, onEdit, onChanged }: Tr
         getTransactions(month), getCategories(), getTransfers(), getAccounts(), getSavingsAccounts(),
       ]);
       setTransactions(txs);
-      setCategories(cats);
+      setCategories(mergeCategories(cats));
       setTransfers(trs);
       const names: Record<string, string> = {};
       for (const a of accs) names[a.id] = a.name;
@@ -238,7 +239,10 @@ export function TransactionList({ refreshKey = 0, onAdd, onEdit, onChanged }: Tr
     if (!categoryId) return { name: t("uncategorized"), Icon: Package };
     const cat = categories.find((c) => c.id === categoryId);
     if (!cat) return { name: t("uncategorized"), Icon: Package };
-    return { name: cat.name, Icon: CATEGORY_ICONS[cat.name] ?? Package };
+    const Icon = (cat.icon && CATEGORY_ICON_BY_KEY[cat.icon])
+      ? CATEGORY_ICON_BY_KEY[cat.icon]
+      : CATEGORY_ICONS[cat.name] ?? Package;
+    return { name: cat.name, Icon };
   }
 
   const uncategorizedCount = transactions.filter((t) => !t.category_id).length;
@@ -397,7 +401,9 @@ export function TransactionList({ refreshKey = 0, onAdd, onEdit, onChanged }: Tr
             </button>
             {visibleCategories.map((cat) => {
               const isActive = categoryFilter === cat.id;
-              const Icon = CATEGORY_ICONS[cat.name] ?? Package;
+              const Icon = (cat.icon && CATEGORY_ICON_BY_KEY[cat.icon])
+                ? CATEGORY_ICON_BY_KEY[cat.icon]
+                : CATEGORY_ICONS[cat.name] ?? Package;
               return (
                 <button
                   key={cat.id}
