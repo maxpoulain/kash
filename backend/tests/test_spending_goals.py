@@ -572,6 +572,124 @@ async def test_post_spending_goal_duplicate_returns_409():
     assert response.status_code == 409
 
 
+@pytest.mark.asyncio
+async def test_post_spending_goal_suggested_category_lazily_created():
+    """Goal on a suggested category never used before → category is created, then the goal."""
+    from uuid import UUID
+
+    from app.core.categories import SUGGESTED_BY_ID
+
+    suggested = SUGGESTED_BY_ID[
+        UUID("0192a8c4-7b3d-7f2a-9e1b-4c5d6e7f8a9e")
+    ]  # Restaurants
+    suggested_id = str(suggested.id)
+
+    category_insert_result = MagicMock()
+    category_insert_result.data = [
+        {
+            "id": suggested_id,
+            "household_id": HOUSEHOLD_ID,
+            "name": suggested.name,
+            "icon": suggested.icon,
+            "type": suggested.type.value,
+        }
+    ]
+
+    goal_insert_result = MagicMock()
+    goal_insert_result.data = [{"id": GOAL_ID}]
+
+    refetch_result = MagicMock()
+    refetch_result.data = {
+        **FAKE_GOAL,
+        "category_id": suggested_id,
+        "categories": {"id": suggested_id, "name": suggested.name, "icon": suggested.icon},
+    }
+
+    with (
+        patch("app.core.auth.get_jwks_client") as mock_jwks,
+        patch("app.core.auth.jwt.decode", return_value=FAKE_CLAIMS),
+        patch("app.routers.spending_goals._get_household_id", return_value=HOUSEHOLD_ID),
+        patch("app.routers.spending_goals.get_supabase") as mock_supabase,
+        patch("app.core.categories.get_supabase") as mock_core_supabase,
+    ):
+        _mock_auth(mock_jwks)
+        supabase = MagicMock()
+        mock_supabase.return_value = supabase
+        mock_core_supabase.return_value = supabase
+
+        # categories SELECT in _ensure_category_exists → not found
+        not_found = MagicMock()
+        not_found.data = []
+        (
+            supabase.table.return_value
+            .select.return_value
+            .eq.return_value
+            .eq.return_value
+            .limit.return_value
+            .execute
+        ).side_effect = [not_found]
+
+        # First INSERT: lazy category creation; second INSERT: the goal
+        supabase.table.return_value.insert.return_value.execute.side_effect = [
+            category_insert_result,
+            goal_insert_result,
+        ]
+        # Goal re-fetch with category join
+        supabase.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = refetch_result
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post(
+                "/api/spending-goals",
+                json={"month": "2026-04", "category_id": suggested_id, "amount": 300.0},
+                headers={"Authorization": "Bearer faketoken"},
+            )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["category_id"] == suggested_id
+    assert data["category_name"] == suggested.name
+    assert data["category_icon"] == suggested.icon
+
+    # The category row was inserted with the fixed suggested UUID
+    category_row = supabase.table.return_value.insert.call_args_list[0][0][0]
+    assert category_row["id"] == suggested_id
+    assert category_row["household_id"] == HOUSEHOLD_ID
+    assert category_row["name"] == suggested.name
+
+
+@pytest.mark.asyncio
+async def test_post_spending_goal_unknown_category_returns_404():
+    """Goal on a UUID that is neither suggested nor in DB → clean 404, not 500."""
+    from postgrest.exceptions import APIError
+
+    unknown_id = "00000000-0000-0000-0000-00000000dead"
+
+    with (
+        patch("app.core.auth.get_jwks_client") as mock_jwks,
+        patch("app.core.auth.jwt.decode", return_value=FAKE_CLAIMS),
+        patch("app.routers.spending_goals._get_household_id", return_value=HOUSEHOLD_ID),
+        patch("app.routers.spending_goals.get_supabase") as mock_supabase,
+    ):
+        _mock_auth(mock_jwks)
+        supabase = MagicMock()
+        mock_supabase.return_value = supabase
+        supabase.table.return_value.insert.return_value.execute.side_effect = APIError(
+            {
+                "message": 'insert or update on table "spending_goals" violates foreign key constraint',
+                "code": "23503",
+            }
+        )
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post(
+                "/api/spending-goals",
+                json={"month": "2026-04", "category_id": unknown_id, "amount": 500.0},
+                headers={"Authorization": "Bearer faketoken"},
+            )
+
+    assert response.status_code == 404
+
+
 # --- PUT /api/spending-goals/{goal_id} ---
 
 
